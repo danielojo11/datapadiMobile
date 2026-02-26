@@ -1,5 +1,6 @@
 // app/actions/payment.ts
 
+import api from "./api";
 import { authorizedFetch } from "./api-client";
 
 /**
@@ -8,14 +9,12 @@ import { authorizedFetch } from "./api-client";
  */
 export async function initializeGatewayFunding(amount: number) {
   try {
-    const response = await authorizedFetch("/api/v1/payment/fund/init", {
-      method: "POST",
-      body: JSON.stringify({ amount }), // [cite: 239, 240]
+    const response = await api.post("/payment/fund/init", {
+      amount,
     });
 
-    const result = await response.json();
+    const result = response.data;
     return {
-      success: response.ok,
       paymentLink: result.paymentLink,
       error: result.message,
     };
@@ -33,17 +32,16 @@ export async function verifyBVN(
   lastName: string,
 ) {
   try {
-    const response = await authorizedFetch("/api/v1/payment/kyc/create", {
-      method: "POST",
-      body: JSON.stringify({ bvn }), // [cite: 256]
+    const response = await api.post("/payment/kyc/create", {
+      bvn,
     });
 
-    const result = await response.json();
-    return {
-      success: response.ok,
-      data: result.data,
-      error: result.message || "Verification failed",
-    };
+    const result = response.data;
+    // return {
+    //   success: response.ok,
+    //   data: result.data,
+    //   error: result.message || "Verification failed",
+    // };
   } catch (error) {
     return { success: false, error: "Network connection failed" };
   }

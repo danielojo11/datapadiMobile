@@ -13,16 +13,8 @@ export default function WalletCard({
   todaySpent,
   onFundWallet,
 }: WalletProps) {
-  const [gottenBalance, setGottenBalance] = useState(
-    `₦${balance?.toLocaleString() || 0}`,
-  );
-  const changeBalanceText = () => {
-    if (gottenBalance === "****") {
-      setGottenBalance(`₦${balance.toLocaleString()}`);
-    } else {
-      setGottenBalance("****");
-    }
-  };
+  const [hidden, setHidden] = useState(false);
+
   return (
     <View
       style={{
@@ -38,11 +30,22 @@ export default function WalletCard({
           name="eye-outline"
           size={18}
           color="white"
-          onPress={() => changeBalanceText()}
+          onPress={() => setHidden(!hidden)}
         />
       </View>
+      {
+        hidden ? (
+          <Text style={{ color: "white", fontSize: 32, fontWeight: "bold", marginTop: 10 }}>
+            ****
+          </Text>
+        ) : (
+          <Text style={{ color: "white", fontSize: 32, fontWeight: "bold", marginTop: 10 }}>
+            ₦{Number(balance).toLocaleString()}
+          </Text>
+        )
+      }
 
-      <Text
+      {/* <Text
         style={{
           color: "white",
           fontSize: 32,
@@ -50,8 +53,8 @@ export default function WalletCard({
           marginTop: 10,
         }}
       >
-        {gottenBalance.toLocaleString()}
-      </Text>
+        ₦{Number(balance).toLocaleString()}
+      </Text> */}
 
       <View
         style={{

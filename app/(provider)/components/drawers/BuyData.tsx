@@ -96,6 +96,7 @@ const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
   };
 
   const handlePlanSelect = (plan: UIPlan) => {
+    console.log("Plan: ", plan);
     setSelectedPlan(plan);
     setErrorMessage('');
     setStep('PHONE');
@@ -195,7 +196,7 @@ const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
           {errorMessage && step !== 'SUCCESS' ? (
             <View style={styles.errorBox}>
               <Ionicons name="alert-circle-outline" size={18} color="#E53935" />
-              <Text style={styles.errorText}>Errors...</Text>
+              <Text style={styles.errorText}>{errorMessage}</Text>
             </View>
           ) : null}
 

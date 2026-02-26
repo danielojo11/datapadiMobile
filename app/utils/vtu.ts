@@ -85,6 +85,10 @@ export async function buyData(
       phoneNumber,
     });
 
+    console.log("Network: ", network);
+    console.log("Plan ID: ", planId);
+    console.log("Phone Number: ", phoneNumber);
+
     const result = await response.data;
 
     console.log("Result from internal handler: ", result);
@@ -92,9 +96,12 @@ export async function buyData(
       message: result.message, // [cite: 179]
       transactionId: result.transactionId, // [cite: 180]
     };
-  } catch (error) {
+  } catch (error: any) {
     console.log("Error from internal handler: ", error);
-    return { success: false, error: error };
+    return {
+      success: false,
+      error: error?.response?.data?.message || error?.message || "An error occurred"
+    };
   }
 }
 
@@ -127,21 +134,25 @@ export async function buyAirtime(
   phoneNumber: string,
 ): Promise<VtuResponse> {
   try {
-    const response = await authorizedFetch("/api/v1/vtu/airtime", {
+    const response = await api.post("vtu/airtime", {
       // [cite: 194]
-      method: "POST",
-      body: JSON.stringify({ network, amount, phoneNumber }), // [cite: 196]
+      network,
+      amount,
+      phoneNumber,
     });
 
-    const result = await response.json();
+    const result = await response.data;
     return {
-      success: response.ok,
+      success: true,
       message: result.message,
       transactionId: result.transactionId, // [cite: 204]
-      error: !response.ok ? result.message : undefined,
+      error: result.message,
     };
-  } catch (error) {
-    return { success: false, error: "Transaction failed due to network error" };
+  } catch (error: any) {
+    return {
+      success: false,
+      error: error?.response?.data?.message || error?.message || "An error occurred"
+    };
   }
 }
 

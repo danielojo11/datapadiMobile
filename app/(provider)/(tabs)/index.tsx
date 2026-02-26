@@ -106,7 +106,7 @@ export default function Index() {
         onClose={() => setElectricityModalVisibility(false)}
       />
 
-      <ScrollView style={{ backgroundColor: "#F3F4F6" }}>
+      <ScrollView style={{ backgroundColor: "#F3F4F6" }} showsVerticalScrollIndicator={false}>
         <BalanceCard user_name={user_name} tier={user_tier} />
 
         <WalletCard
@@ -168,17 +168,40 @@ export default function Index() {
         </View>
 
         {dashboardData?.recentTransactions.length > 0 ? (
-          <FlatList
-            data={dashboardData?.recentTransactions}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <RecentActivityItem
-                amount={item.amount.toString()}
-                subtitle={item.createdAt}
-                title={item.metadata}
-              />
-            )}
-          />
+          // <FlatList
+          //   data={dashboardData?.recentTransactions}
+          //   keyExtractor={(item) => item.id}
+          //   renderItem={({ item }) => (
+          //     <RecentActivityItem
+          //       amount={item.amount.toString()}
+          //       subtitle={item.createdAt}
+          //       title={item.metadata}
+          //     />
+          //   )}
+
+
+          // />
+          <View style={{
+            backgroundColor: "#fff",
+            borderRadius: 24,
+            overflow: "hidden",
+            borderColor: "#F3F4F6",
+            borderWidth: 1,
+            marginBottom: 20
+          }}>
+            {/* {
+              dashboardData?.recentTransactions.map((item: any) => (
+                <RecentActivityItem
+                  amount={item.amount.toString()}
+                  subtitle={item.createdAt}
+                  title={item.metadata || item.metada}
+                  type={item.type}
+                  key={item.id}
+                />
+              ))
+            } */}
+          </View>
+
         ) : (
           <View
             style={{

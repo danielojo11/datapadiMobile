@@ -22,6 +22,7 @@ export interface DashboardData {
 export async function getDashboardData() {
   try {
     const response = await api.get("user/dashboard");
+    console.log("dashboard data", response.data.data)
 
     return {
       success: true,

@@ -41,23 +41,24 @@ export interface ElectricityPaymentResponse {
  */
 export async function getDiscos() {
   try {
-    const response = await authorizedFetch("/api/v1/electricity/disco");
-    const result = await response.json();
+    const response = await api.get("electricity/disco");
+    const result = await response.data;
+    console.log("disco", result)
 
-    if (!response.ok) {
-      return {
-        success: false,
-        error: result.message || "Failed to fetch electricity providers.",
-      };
-    }
+    // if (!response.ok) {
+    //   return {
+    //     success: false,
+    //     error: result.message || "Failed to fetch electricity providers.",
+    //   };
+    // }
 
     return {
       success: true,
       data: result.data,
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Disco Fetch Error:", error);
-    return { success: false, error: "Network connection failed" };
+    return { success: false, error: error.message };
   }
 }
 
@@ -80,26 +81,20 @@ export async function verifyMeter(
       meterType,
     });
 
-    const response = await authorizedFetch(
-      `/api/v1/electricity/verify?${query.toString()}`,
+    const response = await api.get(
+      `electricity/verify?${query.toString()}`,
     );
-    const result = await response.json();
+    console.log("meter verification", response)
+    const result = await response.data;
 
-    if (!response.ok) {
-      return {
-        success: false,
-        error:
-          result.message || "Invalid meter number or mismatching provider.",
-      };
-    }
+
 
     return {
       success: true,
       data: result.data,
     };
   } catch (error) {
-    console.error("Meter Verification Error:", error);
-    return { success: false, error: "Network connection failed" };
+    return { success: false, error: "Meter Verification Failed" };
   }
 }
 
@@ -119,16 +114,13 @@ export async function payElectricity(
       };
     }
 
-    const response = await authorizedFetch("/api/v1/electricity/pay", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
+    const response = await api.post("electricity/pay", payload);
 
-    const result = await response.json();
+    const result = await response.data;
 
-    if (!response.ok) {
-      return { success: false, error: result.message || "Payment failed" };
-    }
+    // if (!response.ok) {
+    //   return { success: false, error: result.message || "Payment failed" };
+    // }
 
     return {
       success: true,

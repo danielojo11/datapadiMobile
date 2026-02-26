@@ -17,25 +17,25 @@ export async function getTransactionHistory(
         : {}),
     });
 
-    const response = await authorizedFetch(
-      `/api/v1/user/transactions?${query}`,
+    const response = await api.get(
+      `user/transactions?${query}`,
     ); //
-    const result = await response.json();
+    const result = response.data;
 
-    if (!response.ok) {
-      return {
-        success: false,
-        error: result.message || "Failed to fetch history",
-      };
-    }
+    // if (!response.ok) {
+    //   return {
+    //     success: false,
+    //     error: result.message || "Failed to fetch history",
+    //   };
+    // }
 
     return {
       success: true,
       data: result.data,
       pagination: result.pagination, // [cite: 23, 29, 113]
     };
-  } catch (error) {
-    return { success: false, error: "Network connection failed" };
+  } catch (error: any) {
+    return { success: false, error: error.message };
   }
 }
 

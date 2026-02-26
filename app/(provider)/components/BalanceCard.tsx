@@ -22,7 +22,7 @@ const BalanceCard = ({
       >
         <View>
           <Text style={{ fontSize: 24, fontWeight: "bold" }}>
-            Welcme, {user_name}
+            Welcome, {user_name}
           </Text>
           <View
             style={{

@@ -351,7 +351,7 @@ const styles = StyleSheet.create({
     width: 96,
     height: 96,
     borderRadius: 48,
-    backgroundColor: "#2563EB", // Approximate linear gradient
+    backgroundColor: "#1A1A1A", // Approximate linear gradient
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#000",

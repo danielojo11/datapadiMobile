@@ -7,8 +7,11 @@ import {
   TouchableOpacity,
   Modal,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { verifyBVN } from "@/app/utils/payment";
+import { useRouter } from "expo-router";
 
 const IdentityVerification = ({
   visible,
@@ -18,6 +21,30 @@ const IdentityVerification = ({
   onClose: () => void;
 }) => {
   const [bvn, setBvn] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleVerifyBVN = async () => {
+    try {
+      setLoading(true);
+      const result = await verifyBVN(bvn);
+      console.log("BVN Verification Result: ", result)
+      setLoading(false);
+      if (!result.success) {
+
+        setError(result.error);
+      } else {
+        onClose();
+        // router.push("/(provider)/(tabs)/profile")
+      }
+    } catch (error) {
+      setError("Failed to verify BVN");
+      // router.push("/(provider)/(tabs)/profile")
+    } finally {
+      setLoading(false);
+    }
+
+  };
 
   const formatBVN = (value: string) => {
     const cleaned = value.replace(/\D/g, "");
@@ -67,8 +94,15 @@ const IdentityVerification = ({
               </Text>
             </View>
 
+            {error && (
+              <View style={styles.errorBox}>
+                <Ionicons name="alert-circle-outline" size={18} color="#E53935" />
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+            )}
+
             {/* Name Fields */}
-            <View style={styles.row}>
+            {/* <View style={styles.row}>
               <View style={styles.inputHalf}>
                 <Text style={styles.label}>First Name</Text>
                 <View style={styles.inputWrapper}>
@@ -84,7 +118,7 @@ const IdentityVerification = ({
                   <TextInput style={styles.input} placeholder="Last name" />
                 </View>
               </View>
-            </View>
+            </View> */}
 
             {/* BVN */}
             <Text style={styles.label}>BVN</Text>
@@ -118,17 +152,34 @@ const IdentityVerification = ({
                 </Text>
               </View>
             </View>
-            <TouchableOpacity
-              activeOpacity={0.85}
-              style={[
-                styles.primaryButton,
-                bvn.replace(/\s/g, "").length !== 11 &&
+            {loading ? (
+              <TouchableOpacity
+                activeOpacity={0.85}
+                style={[
+                  styles.primaryButton,
+                  bvn.replace(/\s/g, "").length !== 11 &&
                   styles.primaryButtonDisabled,
-              ]}
-              disabled={bvn.replace(/\s/g, "").length !== 11}
-            >
-              <Text style={styles.primaryButtonText}>Verify Identity Now</Text>
-            </TouchableOpacity>
+                ]}
+                disabled={bvn.replace(/\s/g, "").length !== 11}
+                onPress={handleVerifyBVN}
+              >
+                <ActivityIndicator color="#fff" />
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                activeOpacity={0.85}
+                style={[
+                  styles.primaryButton,
+                  bvn.replace(/\s/g, "").length !== 11 &&
+                  styles.primaryButtonDisabled,
+                ]}
+                disabled={bvn.replace(/\s/g, "").length !== 11}
+                onPress={handleVerifyBVN}
+              >
+                <Text style={styles.primaryButtonText}>Verify Identity Now</Text>
+              </TouchableOpacity>
+            )}
+
 
             <TouchableOpacity onPress={onClose} style={styles.laterWrapper}>
               <Text style={styles.laterText}>I’ll do this later</Text>
@@ -147,6 +198,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.45)",
     justifyContent: "flex-end",
+    minHeight: "100%",
   },
   container: {
     backgroundColor: "#fff",
@@ -262,6 +314,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#EEF4FF",
     padding: 15,
     borderRadius: 14,
+    marginBottom: 100
   },
   infoTitle: {
     fontSize: 13,

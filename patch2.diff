@@ -1,0 +1,118 @@
+--- app/(provider)/(tabs)/print.tsx
++++ app/(provider)/(tabs)/print.tsx
+@@ -291,15 +291,7 @@
+             style={{
+               flexDirection: "row",
+               justifyContent: "space-between",
+               alignItems: "center",
+-              paddingTop: 15,
+-              borderTopWidth: 1,
+-              borderTopColor: '#f3f4f6',
+             }}
+           >
+-            <Text style={styles.quantity}>Quantity: {item.quantity}</Text>
+-            <View style={{ flexDirection: "row", gap: 8 }}>
+-                {selectMode ? (
+-                  <TouchableOpacity onPress={() => toggleSelectBatch(item.id)}>
+-                    <Text style={styles.selectButtonActive}>
+-                      {isSelected ? 'Deselect' : 'Select'}
+-                    </Text>
+-                  </TouchableOpacity>
+-                ) : (
+-                  <View style={styles.actions}>
+-                    <TouchableOpacity
+-                      style={styles.actionButton}
+-                      onPress={() => setPrintVisible(true)}
+-                    >
+-                      <Text
+-                        style={{
+-                          color: "#3b82f6",
+-                          fontWeight: "bold",
+-                        }}
+-                      >
+-                        <Ionicons
+-                          name="print-outline"
+-                          size={18}
+-                          style={{ marginBottom: 5 }}
+-                        />
+-                        View/Print
+-                      </Text>
+-                    </TouchableOpacity>
+-                    <Ionicons
+-                      name="download-outline"
+-                      size={16}
+-                      color="#9ca3af"
+-                      style={{
+-                        paddingVertical: 6,
+-                        paddingHorizontal: 8,
+-                        backgroundColor: '#f9fafb',
+-                        borderRadius: 8,
+-                      }}
+-                    />
+-                  </View>
+-                )}
+-            </View>
++            <View
++              style={{
++                flex: 1,
++                flexDirection: "row",
++                justifyContent: "space-between",
++                alignItems: "center",
++                paddingTop: 15,
++                borderTopWidth: 1,
++                borderTopColor: '#f3f4f6',
++              }}
++            >
++              <Text style={styles.quantity}>Quantity: {item.quantity}</Text>
++              <View
++                style={{
++                  flexDirection: "row",
++                  justifyContent: "space-between",
++                  gap: 8,
++                }}
++              >
++                {selectMode ? (
++                  <TouchableOpacity onPress={() => toggleSelectBatch(item.id)}>
++                    <Text style={styles.selectButtonActive}>
++                      {isSelected ? 'Deselect' : 'Select'}
++                    </Text>
++                  </TouchableOpacity>
++                ) : (
++                  <View style={styles.actions}>
++                    <TouchableOpacity
++                      style={styles.actionButton}
++                      onPress={() => setPrintVisible(true)}
++                    >
++                      <Text
++                        style={{
++                          color: "rgb(29 78 216)",
++                          fontWeight: "bold",
++                          verticalAlign: "middle",
++                          marginBottom: 10,
++                        }}
++                      >
++                        {" "}
++                        <Ionicons
++                          name="print-outline"
++                          size={18}
++                          style={{ marginBottom: 5 }}
++                        />{" "}
++                        View/Print
++                      </Text>
++                    </TouchableOpacity>
++                    <Ionicons
++                      name="download-outline"
++                      size={16}
++                      color="#9ca3af"
++                      style={{
++                        paddingVertical: 6,
++                        paddingHorizontal: 8,
++                        backgroundColor: '#f9fafb',
++                        borderRadius: 8,
++                      }}
++                    />
++                  </View>
++                )}
++              </View>
++            </View>
+           </View>

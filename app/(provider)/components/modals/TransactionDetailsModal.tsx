@@ -85,7 +85,7 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
 
                             <View style={styles.detailRow}>
                                 <Text style={styles.detailLabel}>Reference</Text>
-                                <Text style={styles.detailValue}>{transaction.reference || transaction.id || 'N/A'}</Text>
+                                <Text style={styles.detailValue}>{transaction.reference || transaction.id || 'No Reference'}</Text>
                             </View>
 
                             {transaction.metadata?.planName && (

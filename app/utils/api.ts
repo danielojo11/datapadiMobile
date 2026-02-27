@@ -1,121 +1,126 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
+import axios, { AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from "axios";
 
 const api = axios.create({
   baseURL: "https://dataappback.onrender.com/api/v1/",
 });
 
-// Flag to indicate if a refresh process is ongoing
+// Types for the queue
+interface FailedRequest {
+  resolve: (token: string) => void;
+  reject: (error: any) => void;
+}
+
 let isRefreshing = false;
-// Queue to hold pending requests while the token is being refreshed
-let failedQueue: Array<{ resolve: (value?: any) => void; reject: (reason?: any) => void }> = [];
+let failedQueue: FailedRequest[] = [];
 
 const processQueue = (error: any, token: string | null = null) => {
   failedQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);
     } else {
-      prom.resolve(token);
+      prom.resolve(token!);
     }
   });
   failedQueue = [];
 };
 
-api.interceptors.request.use(async (config) => {
-  const login_obj = await AsyncStorage.getItem("login_obj");
-  const accessTokenAlt = await AsyncStorage.getItem("accessToken");
+/**
+ * Helper to get tokens from storage without repeating logic
+ */
+const getStoredTokens = async () => {
+  const accessToken = await AsyncStorage.getItem("accessToken");
+  const refreshToken = await AsyncStorage.getItem("refreshToken");
+  const loginObjStr = await AsyncStorage.getItem("login_obj");
 
-  let accessToken = accessTokenAlt;
+  if (accessToken && refreshToken) return { accessToken, refreshToken };
 
-  if (!accessToken && login_obj) {
-    const parsed = JSON.parse(login_obj);
-    accessToken = parsed.data?.accessToken || parsed.accessToken;
+  if (loginObjStr) {
+    const parsed = JSON.parse(loginObjStr);
+    return {
+      accessToken: accessToken || parsed.data?.accessToken || parsed.accessToken,
+      refreshToken: refreshToken || parsed.data?.refreshToken || parsed.refreshToken,
+    };
   }
+  return { accessToken: null, refreshToken: null };
+};
 
+// --- Request Interceptor ---
+api.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
+  const { accessToken } = await getStoredTokens();
   if (accessToken) {
     config.headers.Authorization = `Bearer ${accessToken}`;
   }
-
   return config;
 });
 
+// --- Response Interceptor ---
 api.interceptors.response.use(
-  (response) => response,
+  (response: AxiosResponse) => response,
   async (error) => {
     const originalRequest = error.config;
 
+    // Handle 401 Unauthorized errors
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
-        return new Promise(function (resolve, reject) {
+        return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
           .then((token) => {
-            originalRequest.headers.Authorization = "Bearer " + token;
+            originalRequest.headers.Authorization = `Bearer ${token}`;
             return api(originalRequest);
           })
-          .catch((err) => {
-            return Promise.reject(err);
-          });
+          .catch((err) => Promise.reject(err));
       }
 
       originalRequest._retry = true;
       isRefreshing = true;
 
       try {
-        const login_obj = await AsyncStorage.getItem("login_obj");
-        let refreshToken = await AsyncStorage.getItem("refreshToken");
-
-        if (!refreshToken && login_obj) {
-          const parsed = JSON.parse(login_obj);
-          refreshToken = parsed.data?.refreshToken || parsed.refreshToken;
-        }
+        const { refreshToken } = await getStoredTokens();
 
         if (!refreshToken) {
-          return Promise.reject(error);
+          throw new Error("No refresh token available");
         }
 
-        // We use the same structure defined in auth/refresh.ts
-        const res = await axios.post(
-          "https://dataappback.onrender.com/api/v1/auth/refresh/",
-          JSON.stringify(refreshToken),
-          {
-            headers: { "Content-Type": "application/json" }
-          }
-        );
+        // Hit the refresh endpoint
+        // Note: Sending as { refreshToken } object to match common API patterns
+        const res = await axios.post(`${api.defaults.baseURL}auth/refresh/`, {
+          refreshToken: refreshToken
+        });
 
         const newAccessToken = res.data.accessToken || res.data.access;
         const newRefreshToken = res.data.refreshToken || res.data.refresh || refreshToken;
 
-        if (login_obj) {
-          const parsed = JSON.parse(login_obj);
-          await AsyncStorage.setItem(
-            "login_obj",
-            JSON.stringify({
-              ...parsed,
-              data: {
-                ...parsed.data,
-                accessToken: newAccessToken,
-                refreshToken: newRefreshToken,
-              },
-            }),
-          );
+        // Update Storage
+        const loginObjStr = await AsyncStorage.getItem("login_obj");
+        if (loginObjStr) {
+          const parsed = JSON.parse(loginObjStr);
+          await AsyncStorage.setItem("login_obj", JSON.stringify({
+            ...parsed,
+            data: { ...parsed.data, accessToken: newAccessToken, refreshToken: newRefreshToken }
+          }));
         }
 
-        await AsyncStorage.setItem("accessToken", newAccessToken);
-        await AsyncStorage.setItem("refreshToken", newRefreshToken);
-
-        api.defaults.headers.common["Authorization"] = `Bearer ${newAccessToken}`;
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        await AsyncStorage.multiSet([
+          ["accessToken", newAccessToken],
+          ["refreshToken", newRefreshToken],
+          ["isAuthenticated", "true"]
+        ]);
 
         processQueue(null, newAccessToken);
+
+        // Retry original request
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         return api(originalRequest);
+
       } catch (refreshError) {
         processQueue(refreshError, null);
-        await AsyncStorage.removeItem("login_obj");
-        await AsyncStorage.removeItem("accessToken");
-        await AsyncStorage.removeItem("refreshToken");
-        // Also remove global authenticated state if available
-        await AsyncStorage.setItem("isAuthenticated", JSON.stringify(false));
+
+        // Clear auth data on failure
+        await AsyncStorage.multiRemove(["login_obj", "accessToken", "refreshToken"]);
+        await AsyncStorage.setItem("isAuthenticated", "false");
+
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
@@ -123,7 +128,7 @@ api.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  },
+  }
 );
 
 export default api;

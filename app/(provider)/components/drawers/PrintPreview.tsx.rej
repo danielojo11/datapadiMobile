@@ -1,0 +1,11 @@
+--- app/(provider)/components/drawers/PrintPreview.tsx
++++ app/(provider)/components/drawers/PrintPreview.tsx
+@@ -19,7 +19,7 @@
+   if (!batches || batches.length === 0) return null;
+ 
+   const allPins = batches.flatMap(batch => 
+-    batch.pins.map(pin => ({
++    batch.pins.map((pin: any) => ({
+       ...pin,
+       networkId: batch.networkId,
+       amount: batch.amount,

@@ -17,7 +17,17 @@ const _layout = () => {
           options={{
             title: "Home",
             tabBarIcon: ({ color }) => (
-              <Ionicons size={24} name="home" color={color} />
+              <Ionicons size={24} name="home-outline" color={color} />
+            ),
+          }}
+        />
+
+        <Tabs.Screen
+          name="flight"
+          options={{
+            title: "Flight",
+            tabBarIcon: ({ color }) => (
+              <Ionicons size={24} name="airplane-outline" color={color} />
             ),
           }}
         />

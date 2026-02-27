@@ -10,6 +10,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { registerUser } from "./utils/auth/register";
@@ -28,6 +29,7 @@ const CreateAccountScreen = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const initialLoginUser = async () => {
     try {
@@ -43,6 +45,7 @@ const CreateAccountScreen = () => {
 
   const handleSignUp = async () => {
     setIsLoading(true);
+    setError("");
     try {
       const response = await registerUser({
         userName: username.toString(),
@@ -51,14 +54,19 @@ const CreateAccountScreen = () => {
         password: password.toString(),
       });
 
-      if (response.success) {
-        const details = await initialLoginUser();
+      setIsLoading(false);
+
+      if (response && response.success) {
+        router.push("/login");
+        console.log("Signup success:", response);
+      } else {
+        setError(response?.error || 'Registration failed. Please try again.');
+        console.log("Signup error:", response);
       }
+    } catch (err: any) {
       setIsLoading(false);
-      console.log(response);
-    } catch (error) {
-      setIsLoading(false);
-      console.log(error);
+      setError(err?.message || "An unexpected error occurred");
+      console.log(err);
     }
   };
 
@@ -79,6 +87,13 @@ const CreateAccountScreen = () => {
             <Text style={styles.title}>Create Account</Text>
             <Text style={styles.subtitle}>Join DataPadi today</Text>
           </View>
+
+          {error ? (
+            <View style={styles.errorBox}>
+              <Ionicons name="alert-circle-outline" size={18} color="#E53935" />
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          ) : null}
 
           {/* Username Input */}
           <View style={styles.inputGroup}>
@@ -198,8 +213,13 @@ const CreateAccountScreen = () => {
             style={styles.signUpButton}
             activeOpacity={0.8}
             onPress={() => handleSignUp()}
+            disabled={isLoading}
           >
-            <Text style={styles.signUpButtonText}>Sign Up</Text>
+            {isLoading ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={styles.signUpButtonText}>Sign Up</Text>
+            )}
           </TouchableOpacity>
 
           {/* Footer Login Link */}
@@ -241,6 +261,23 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 14,
     color: "#6B7280",
+  },
+  errorBox: {
+    flexDirection: "row",
+    backgroundColor: "#FEF2F2",
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 20,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#FEE2E2",
+  },
+  errorText: {
+    color: "#DC2626",
+    fontSize: 13,
+    fontWeight: "600",
+    flex: 1,
+    marginLeft: 10,
   },
   inputGroup: {
     marginBottom: 20,

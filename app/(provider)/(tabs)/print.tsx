@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -9,11 +9,12 @@ import {
   ScrollView,
   FlatList,
   VirtualizedList,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import PrintPreview from "../components/drawers/PrintPreview";
-import CardPreviewModal from "../components/drawers/CardPreview";
 import BottomBar from "../components/BottomBar";
+import { getPrintInventory, printRechargePins } from "@/app/utils/vtu";
 
 type Item = any | never | undefined | null;
 
@@ -98,18 +99,21 @@ export default function print() {
 
 const NewPrint = () => {
   const [selectedNetwork, setSelectedNetwork] = useState<null | any>(null);
-  const [selectedDenomination, setSelectedDenomination] = useState(null);
+  const [selectedDenomination, setSelectedDenomination] = useState<any>(null);
   const [quantity, setQuantity] = useState("");
   const [totalCost, setTotalCost] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<any>();
+  const [success, setSuccess] = useState(false);
 
   const networks = [
-    { id: "mtn", label: "MTN", color: "#FFD700" },
-    { id: "airtel", label: "Airtel", color: "#FF0000" },
-    { id: "glo", label: "Glo", color: "#00FF00" },
-    { id: "9mobile", label: "9mobile", color: "#004d00" },
+    { id: "MTN", label: "MTN", color: "#FFD700" },
+    { id: "AIRTEL", label: "AIRTEL", color: "#FF0000" },
+    { id: "GLO", label: "GLO", color: "#00FF00" },
+    { id: "9MOBILE", label: "9MOBILE", color: "#004d00" },
   ];
 
-  const denominations = [100, 200, 500, 1000];
+  const denominations = [100, 200, 500];
 
   const handleQuantityChange = (text: any) => {
     const qty = parseInt(text) || 0;
@@ -127,9 +131,36 @@ const NewPrint = () => {
       setTotalCost(parseInt(quantity) * value);
     }
   };
+
+  const handlePinGeneration = async () => {
+    try {
+      setLoading(true);
+      if (!selectedDenomination) {
+        throw new Error("Please select a denomination");
+      }
+      const response = await printRechargePins(selectedNetwork, selectedDenomination.toString(), Number(quantity));
+      setError(response.error)
+    } catch (error: any) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+      setQuantity("");
+      setSelectedDenomination(null);
+      setSelectedNetwork(null);
+      setTotalCost(0);
+      setSuccess(true);
+    }
+
+  }
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Recharge Printing</Text>
+      {error && (
+        <View style={styles.errorBox}>
+          <Ionicons name="alert-circle-outline" size={18} color="#E53935" />
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      )}
 
       {/* 1. Select Network */}
       <Text style={styles.sectionTitle}>1. Select Network</Text>
@@ -199,12 +230,25 @@ const NewPrint = () => {
         >
           <Text style={styles.generateButtonText}>Generate PINs</Text>
         </TouchableOpacity>
-      ) : (
-        <TouchableOpacity
-          style={{ ...styles.generateButton, backgroundColor: "#00f" }}
-        >
-          <Text style={styles.generateButtonText}>Generate PINs</Text>
-        </TouchableOpacity>
+      ) : (<>
+        {
+          loading ? (<TouchableOpacity
+            style={{ ...styles.generateButton, backgroundColor: "#00f" }}
+            disabled
+          >
+            <ActivityIndicator color="#fff" />
+          </TouchableOpacity>) : (
+            <TouchableOpacity
+              style={{ ...styles.generateButton, backgroundColor: "#00f" }}
+              onPress={handlePinGeneration}
+            >
+              <Text style={styles.generateButtonText}>Generate PINs</Text>
+            </TouchableOpacity>
+          )
+        }
+
+
+      </>
       )}
     </ScrollView>
   );
@@ -220,26 +264,52 @@ const PinInven = ({
   const [search, setSearch] = useState("");
   const [selectedBatches, setSelectedBatches] = useState<string[]>([]);
   const [printModalVisibility, setPrintModalVisibility] = useState(false);
-  const [printVisible, setPrintVisible] = useState(false);
+  const [printVisible, setPrintVisible] = useState<string | false>(false);
+  const [batchesData, setBatchesData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const batchesData = [
-    {
-      id: "1",
-      operator: "MTN",
-      amount: 100,
-      quantity: 5,
-      date: "10/24/2023, 2:30:00 PM",
-      status: "READY",
-    },
-    {
-      id: "2",
-      operator: "AIRTEL",
-      amount: 200,
-      quantity: 3,
-      date: "10/23/2023, 9:15:00 AM",
-      status: "READY",
-    },
-  ];
+
+
+  useEffect(() => {
+    const getInven = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await getPrintInventory();
+        if (response && response.success) {
+          setBatchesData(response.data || []);
+        } else {
+          setError(response?.error || "Failed to load print inventory.");
+        }
+      } catch (err: any) {
+        console.log(err);
+        setError(err.message || "An unexpected error occurred while loading inventory.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    getInven();
+  }, []);
+
+  // const batchesData = [
+  //   {
+  //     id: "1",
+  //     operator: "MTN",
+  //     amount: 100,
+  //     quantity: 5,
+  //     date: "10/24/2023, 2:30:00 PM",
+  //     status: "READY",
+  //   },
+  //   {
+  //     id: "2",
+  //     operator: "AIRTEL",
+  //     amount: 200,
+  //     quantity: 3,
+  //     date: "10/23/2023, 9:15:00 AM",
+  //     status: "READY",
+  //   },
+  // ];
 
   const toggleSelectBatch = (id: any) => {
     if (selectedBatches.includes(id)) {
@@ -250,7 +320,7 @@ const PinInven = ({
   };
 
   const filteredBatches = batchesData.filter((batch) =>
-    batch.operator.toLowerCase().includes(search.toLowerCase()),
+    (batch.metadata?.network || "").toLowerCase().includes(search.toLowerCase()),
   );
 
   const renderBatch = ({ item }: RenderBatchProps) => {
@@ -259,8 +329,19 @@ const PinInven = ({
     return (
       <>
         <PrintPreview
-          visible={printVisible}
+          visible={printVisible === item.id}
           onClose={() => setPrintVisible(false)}
+          batches={[{
+            id: item.id,
+            networkId: item.metadata?.network,
+            amount: item.metadata?.faceValue,
+            pins: (item.printedPins || []).map((p: any) => ({
+              ...p,
+              pin: p.pinCode || p.pin, // Fallback to pin if pinCode doesn't exist
+              serial: p.serialNumber || p.serial
+            })),
+            serialNumber: item.serialNumber,
+          }]}
         />
         <TouchableOpacity
           style={[
@@ -275,18 +356,23 @@ const PinInven = ({
                 styles.operatorIcon,
                 {
                   backgroundColor:
-                    item.operator === "MTN" ? "#FFD700" : "#FF7F7F",
+                    item.metadata?.network === "MTN" ? "#FFD700" :
+                      item.metadata?.network === "AIRTEL" ? "#FF0000" :
+                        item.metadata?.network === "GLO" ? "#00FF00" :
+                          item.metadata?.network === "9MOBILE" ? "#004d00" : "#FF7F7F",
                 },
               ]}
             >
-              <Text style={styles.operatorInitial}>{item.operator[0]}</Text>
+              <Text style={styles.operatorInitial}>{item.metadata?.network?.[0]}</Text>
             </View>
             <Text style={styles.batchTitle}>
               <Text>
-                {item.operator} ₦{item.amount} PINs
+                {item.metadata?.network} ₦{item.metadata?.faceValue} PINs
               </Text>
               <View>
-                <Text style={styles.date}>{item.date}</Text>
+                <Text style={styles.date}>
+                  {item.createdAt ? new Date(item.createdAt).toLocaleString() : ""}
+                </Text>
               </View>
             </Text>
             <View>
@@ -310,7 +396,7 @@ const PinInven = ({
                 paddingTop: 15,
               }}
             >
-              <Text style={styles.quantity}>Quantity: {item.quantity}</Text>
+              <Text style={styles.quantity}>Quantity: {item.metadata?.quantity}</Text>
               <View
                 style={{
                   flexDirection: "row",
@@ -325,7 +411,7 @@ const PinInven = ({
                   <View style={styles.actions}>
                     <TouchableOpacity
                       style={styles.actionButton}
-                      onPress={() => setPrintVisible(true)}
+                      onPress={() => setPrintVisible(item.id)}
                     >
                       <Text
                         style={{
@@ -337,14 +423,14 @@ const PinInven = ({
                       >
                         {" "}
                         <Ionicons
-                          name="print-outline"
+                          name="download-outline"
                           size={18}
                           style={{ marginBottom: 5 }}
                         />{" "}
-                        View/Print
+                        Download
                       </Text>
                     </TouchableOpacity>
-                    <Ionicons
+                    {/* <Ionicons
                       name="download-outline"
                       size={16}
                       style={{
@@ -353,7 +439,7 @@ const PinInven = ({
                         flexDirection: "row-reverse",
                         paddingVertical: 6,
                       }}
-                    />
+                    /> */}
                   </View>
                 )}
               </View>
@@ -374,29 +460,19 @@ const PinInven = ({
 
   return (
     <>
-      <CardPreviewModal
+      <PrintPreview
         visible={printModalVisibility}
         onClose={() => setPrintModalVisibility(false)}
-        network="MTN"
-        planName="N100"
-        amount="100"
-        vouchers={[
-          {
-            id: "1",
-            serialNumber: "829384719238",
-            pin: "1234567890123456",
-          },
-          {
-            id: "2",
-            serialNumber: "829384719239",
-            pin: "9876543210987654",
-          },
-          {
-            id: "3",
-            serialNumber: "829384719240",
-            pin: "4567890123456789",
-          },
-        ]}
+        batches={batchesData.filter(b => selectedBatches.includes(b.id)).map(b => ({
+          id: b.id,
+          networkId: b.metadata?.network,
+          amount: b.metadata?.faceValue,
+          pins: (b.printedPins || []).map((p: any) => ({
+            ...p,
+            pin: p.pinCode || p.pin,
+            serial: p.serialNumber || p.serial
+          }))
+        }))}
       />
       <View style={styles.container}>
         <TextInput
@@ -406,12 +482,35 @@ const PinInven = ({
           onChangeText={setSearch}
         />
 
-        <FlatList
-          data={filteredBatches}
-          keyExtractor={(item) => item.id}
-          renderItem={renderBatch}
-          contentContainerStyle={{ paddingBottom: 100 }}
-        />
+        {error && (
+          <View style={styles.errorBox}>
+            <Ionicons name="alert-circle-outline" size={18} color="#E53935" />
+            <Text style={styles.errorText}>{error}</Text>
+          </View>
+        )}
+
+        {loading ? (
+          <View style={{ flex: 1, justifyContent: "center", alignItems: "center", marginTop: 40 }}>
+            <ActivityIndicator size="large" color="#1D4ED8" />
+            <Text style={{ marginTop: 12, color: "#6B7280" }}>Loading inventory...</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={filteredBatches}
+            keyExtractor={(item) => item.id}
+            renderItem={renderBatch}
+            contentContainerStyle={{ paddingBottom: 100 }}
+            ListEmptyComponent={
+              !error ? (
+                <View style={{ padding: 40, alignItems: "center" }}>
+                  <Ionicons name="documents-outline" size={48} color="#D1D5DB" />
+                  <Text style={{ marginTop: 12, color: "#6B7280", fontSize: 16, fontWeight: "500" }}>No print batches found</Text>
+                  <Text style={{ marginTop: 4, color: "#9CA3AF", fontSize: 13, textAlign: "center" }}>Your generated PIN batches will appear here.</Text>
+                </View>
+              ) : null
+            }
+          />
+        )}
 
         {selectMode && selectedBatches.length > 0 && (
           <BottomBar
@@ -625,5 +724,22 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 2,
     verticalAlign: "middle",
+  },
+  errorBox: {
+    flexDirection: "row",
+    backgroundColor: "#FEF2F2",
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 16,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#FEE2E2",
+  },
+  errorText: {
+    color: "#DC2626",
+    fontSize: 13,
+    fontWeight: "600",
+    flex: 1,
+    marginLeft: 10,
   },
 });

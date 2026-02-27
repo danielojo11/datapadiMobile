@@ -1,0 +1,47 @@
+--- app/(provider)/components/drawers/PinBatchModal.tsx
++++ app/(provider)/components/drawers/PinBatchModal.tsx
+@@ -9,7 +9,8 @@
+ } from 'react-native';
+ import { Ionicons } from "@expo/vector-icons";
+-import { PrintBatch } from '../../../types';
+ 
++// Mock type since types file doesnt exist or is mismatched
++type PrintBatch = any;
++
+ interface PinBatchModalProps {
+   visible: boolean;
+--- app/(provider)/components/drawers/PrintPreview.tsx
++++ app/(provider)/components/drawers/PrintPreview.tsx
+@@ -9,7 +9,9 @@
+   SafeAreaView,
+ } from "react-native";
+-import { PrintBatch } from "../../../types";
+ 
++// Mock type since types file doesnt exist or is mismatched
++type PrintBatch = any;
++
+ interface PrintPreviewModalProps {
+   visible: boolean;
+--- app/(provider)/(tabs)/print.tsx
++++ app/(provider)/(tabs)/print.tsx
+@@ -262,9 +262,9 @@
+     return (
+       <>
+-        <PrintPreview
+-          visible={printVisible}
+-          onClose={() => setPrintVisible(false)}
+-        />
+         <TouchableOpacity
+           style={[
+             styles.batchCard,
+@@ -370,5 +370,10 @@
+   return (
+     <>
++        <PrintPreview
++          visible={printVisible}
++          batches={getSelectedBatchesData()}
++          onClose={() => setPrintVisible(false)}
++        />
++
+       <PinBatchModal
+         visible={!!selectedBatch}

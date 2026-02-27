@@ -185,35 +185,36 @@ export async function printRechargePins(
   quantity: number,
 ) {
   try {
-    const response = await authorizedFetch("/api/v1/vtu/print", {
-      method: "POST",
-      body: JSON.stringify({ network, value, quantity }), //
+    const response = await api.post("vtu/print", {
+      network,
+      value,
+      quantity,
     });
 
-    const result = await response.json();
+    const result = response.data;
     return {
-      success: response.ok,
+      success: result.data.success,
       message: result.message,
-      error: !response.ok ? result.message : undefined,
     };
-  } catch (error) {
-    return { success: false, error: "Failed to connect to printer service" };
+  } catch (error: any) {
+    return { success: false, error: error?.response?.data?.message || error?.message || "An error occurred" };
   }
 }
 
 export async function getPrintInventory() {
   try {
-    const response = await authorizedFetch("/api/v1/vtu/pins?limit=50"); // [cite: 117]
-    const result = await response.json();
+    const response = await api.get("vtu/pins?limit=50"); // [cite: 117]
+    const result = await response.data;
 
-    if (!response.ok) return { success: false, error: result.message };
+    // if (!response.ok) return { success: false, error: result.message };
 
     return {
       success: true,
       data: result.data, // [cite: 121]
+      error: result.message,
     };
-  } catch (error) {
-    return { success: false, error: "Could not load inventory" };
+  } catch (error: any) {
+    return { success: false, error: error?.response?.data?.message || error?.message || "An error occurred" };
   }
 }
 /**

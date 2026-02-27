@@ -23,17 +23,17 @@ export async function registerUser(formData: {
 
     console.log(response);
 
-    const data = await response.data;
+    const data = response.data;
 
     // Handle standard Data Padi errors (400, 409)
 
     // Handle success (201)
     return { success: true, message: data.message };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Registration error:", error);
     return {
       success: false,
-      error: "Failed to connect to the server. Please try again later.",
+      error: error.response.data.message || "Failed to connect to the server. Please try again later.",
     };
   }
 }

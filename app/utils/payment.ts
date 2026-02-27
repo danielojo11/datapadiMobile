@@ -28,21 +28,22 @@ export async function initializeGatewayFunding(amount: number) {
  */
 export async function verifyBVN(
   bvn: string,
-  firstName: string,
-  lastName: string,
+  // firstName: string,
+  // lastName: string,
 ) {
   try {
-    const response = await api.post("/payment/kyc/create", {
+    const response = await api.post("payment/kyc/create", {
       bvn,
     });
 
     const result = response.data;
-    // return {
-    //   success: response.ok,
-    //   data: result.data,
-    //   error: result.message || "Verification failed",
-    // };
-  } catch (error) {
-    return { success: false, error: "Network connection failed" };
+    console.log("BVN Verification Result from handler: ", result)
+    return {
+      success: response.status,
+      data: result.data,
+      successMessage: result.message || "Verification failed",
+    };
+  } catch (error: any) {
+    return { success: false, error: error.message };
   }
 }

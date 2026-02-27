@@ -41,7 +41,7 @@ const History: React.FC = () => {
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [page, setPage] = useState(1);
-  const [pagination, setPagination] = useState<any>(true);
+  const [pagination, setPagination] = useState<any>(null);
 
   // 1. Added Cable and Electricity to the UI filters
   const filters = ['All', 'Data', 'Airtime', 'Pins', 'Funding', 'Cable', 'Electricity'];

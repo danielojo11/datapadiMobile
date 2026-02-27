@@ -18,6 +18,7 @@ const LoginScreen: React.FC = () => {
   const [password, setPassword] = useState("");
   const [secure, setSecure] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const authState = useContext(AuthContext);
   const router = useRouter();
@@ -53,7 +54,14 @@ const LoginScreen: React.FC = () => {
       <Text style={styles.title}>Welcome Back</Text>
       <Text style={styles.subtitle}>Sign in to continue to DataPadi</Text>
 
-      <View style={{ marginTop: 30 }}>
+      {error ? (
+        <View style={styles.errorBox}>
+          <Ionicons name="alert-circle-outline" size={18} color="#E53935" />
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      ) : null}
+
+      <View style={{ marginTop: error ? 10 : 30 }}>
         <AuthInput
           label="Email Address"
           placeholder="you@example.com"
@@ -137,6 +145,23 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     marginTop: 24,
     color: "#111827",
+  },
+  errorBox: {
+    flexDirection: "row",
+    backgroundColor: "#FEF2F2",
+    padding: 14,
+    borderRadius: 12,
+    marginTop: 20,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#FEE2E2",
+  },
+  errorText: {
+    color: "#DC2626",
+    fontSize: 13,
+    fontWeight: "600",
+    flex: 1,
+    marginLeft: 10,
   },
 
   subtitle: {

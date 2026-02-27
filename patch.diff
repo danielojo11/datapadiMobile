@@ -1,0 +1,190 @@
+--- app/(provider)/components/drawers/PrintPreview.tsx
++++ app/(provider)/components/drawers/PrintPreview.tsx
+@@ -10,131 +10,105 @@
+   SafeAreaView,
+ } from "react-native";
++import { PrintBatch } from "../../../types";
+ 
+-const PrintPreview = ({ visible, onClose }) => {
+-  // Dummy data for the preview grid
+-  const vouchers = [
+-    {
+-      id: "1",
+-      network: "MTN",
+-      pin: "1234 5678 9012...",
+-      price: "₦100",
+-      ussd: "*555*#",
+-    },
+-    {
+-      id: "2",
+-      network: "MTN",
+-      pin: "9876 5432 1098...",
+-      price: "₦100",
+-      ussd: "*555*#",
+-    },
+-    {
+-      id: "3",
+-      network: "MTN",
+-      pin: "4567 8901 2345...",
+-      price: "₦100",
+-      ussd: "*555*#",
+-    },
+-    {
+-      id: "4",
+-      network: "MTN",
+-      pin: "2345 6789 0123...",
+-      price: "₦100",
+-      ussd: "*555*#",
+-    },
+-    {
+-      id: "5",
+-      network: "MTN",
+-      pin: "6789 0123 4567...",
+-      price: "₦100",
+-      ussd: "*555*#",
+-    },
+-    {
+-      id: "6",
+-      network: "AIRTEL",
+-      pin: "1111 2222 3333...",
+-      price: "₦200",
+-      ussd: "*126*#",
+-    },
+-  ];
++interface PrintPreviewModalProps {
++  visible: boolean;
++  onClose: () => void;
++  batches: PrintBatch[];
++}
++
++const PrintPreview: React.FC<PrintPreviewModalProps> = ({ visible, onClose, batches }) => {
++  if (!batches || batches.length === 0) return null;
++
++  const allPins = batches.flatMap(batch => 
++    batch.pins.map(pin => ({
++      ...pin,
++      networkId: batch.networkId,
++      amount: batch.amount,
++      batchId: batch.id
++    }))
++  );
++
++  const handlePrint = () => {
++    // Implementation for printing in React Native goes here
++    // This might involve generating a PDF or using a printing library like expo-print
++    console.log("Printing not implemented yet");
++  };
++
++  const getUSSD = (networkId: string) => {
++    switch(networkId) {
++      case 'MTN': return '*555*PIN#';
++      case 'AIRTEL': return '*126*PIN#';
++      case 'GLO': return '*123*PIN#';
++      case '9MOBILE': return '*222*PIN#';
++      default: return '*XXX*PIN#';
++    }
++  };
++
++  const formatPin = (pin: string) => {
++    return pin.replace(/\s/g, '').replace(/(.{4})/g, '$1 ').trim();
++  };
++
++  const totalValue = allPins.reduce((sum, item) => sum + item.amount, 0);
++  const CURRENCY = "₦";
+ 
+   return (
+     <Modal
+@@ -87,24 +61,24 @@
+               </View>
+               <View>
+                 <Text style={styles.bannerTitle}>Batch Printing Ready</Text>
+                 <Text style={styles.bannerSubtitle}>
+-                  2 Batches • 8 Total Vouchers
++                  {batches.length} Batches • {allPins.length} Total Vouchers
+                 </Text>
+               </View>
+             </View>
+ 
+             {/* Stats Row */}
+             <View style={styles.statsRow}>
+               <View style={styles.statBox}>
+                 <Text style={styles.statLabel}>TOTAL PINS</Text>
+-                <Text style={styles.statValueDark}>8</Text>
++                <Text style={styles.statValueDark}>{allPins.length}</Text>
+               </View>
+               <View style={styles.statBox}>
+                 <Text style={styles.statLabel}>TOTAL VALUE</Text>
+-                <Text style={styles.statValueBlue}>₦1,100</Text>
++                <Text style={styles.statValueBlue}>{CURRENCY}{totalValue.toLocaleString()}</Text>
+               </View>
+             </View>
+ 
+             {/* Layout Preview Area */}
+             <View style={styles.previewContainer}>
+               <Text style={styles.previewHeader}>LIVE A4 LAYOUT PREVIEW</Text>
+ 
+               <View style={styles.grid}>
+-                {vouchers.map((v) => (
+-                  <View key={v.id} style={styles.voucherCard}>
++                {allPins.slice(0, 6).map((pin, i) => (
++                  <View key={i} style={styles.voucherCard}>
+                     <View style={styles.voucherTop}>
+                       <Text style={styles.brandText}>DATAPADI</Text>
+                       <View
+                         style={[
+                           styles.networkBadge,
+-                          v.network === "AIRTEL" && { backgroundColor: "#333" },
++                          pin.networkId === "AIRTEL" && { backgroundColor: "#333" },
+                         ]}
+                       >
+-                        <Text style={styles.networkText}>{v.network}</Text>
++                        <Text style={styles.networkText}>{pin.networkId}</Text>
+                       </View>
+                     </View>
+ 
+                     <View style={styles.pinContainer}>
+                       <Text style={styles.pinLabel}>VOUCHER PIN</Text>
+-                      <Text style={styles.pinText}>{v.pin}</Text>
++                      <Text style={styles.pinText}>{formatPin(pin.pin).substring(0, 14)}...</Text>
+                     </View>
+ 
+                     <View style={styles.voucherBottom}>
+-                      <Text style={styles.metaText}>{v.price}</Text>
+-                      <Text style={styles.metaText}>{v.ussd}</Text>
++                      <Text style={styles.metaText}>{CURRENCY}{pin.amount}</Text>
++                      <Text style={styles.metaText}>{getUSSD(pin.networkId).substring(0, 5)}#</Text>
+                     </View>
+                   </View>
+                 ))}
+               </View>
+ 
+-              <View style={styles.morePill}>
+-                <Text style={styles.morePillText}>
+-                  + 2 more vouchers in this run
+-                </Text>
+-              </View>
++              {allPins.length > 6 && (
++                 <View style={styles.morePill}>
++                   <Text style={styles.morePillText}>
++                     + {allPins.length - 6} more vouchers in this run
++                   </Text>
++                 </View>
++              )}
+             </View>
+           </ScrollView>
+ 
+           {/* Sticky Bottom Button */}
+           <View style={styles.footer}>
+-            <TouchableOpacity style={styles.printButton}>
++            <TouchableOpacity style={styles.printButton} onPress={handlePrint}>
+               <Text style={styles.printButtonText}>
+                 <Ionicons
+                   name="print-outline"
+                   size={24}
+                   style={{ verticalAlign: "middle" }}
+                 />{" "}
+-                Print 8 Vouchers
++                Print {allPins.length} Vouchers
+               </Text>
+             </TouchableOpacity>
+           </View>

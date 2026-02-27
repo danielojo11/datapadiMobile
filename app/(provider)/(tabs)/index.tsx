@@ -6,8 +6,8 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
-import { useContext, useEffect, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useContext, useEffect, useState } from "react";
 import BuyData from "../components/drawers/BuyData";
 import BuyAirtime from "../components/drawers/BuyAirtime";
 import BalanceCard from "../components/BalanceCard";
@@ -15,6 +15,7 @@ import WalletCard from "../components/WalletCard";
 import QuickActionButton from "../components/QuickActionButton";
 import RecentActivityItem from "../components/RecentActivityItem";
 import BuyElectricityModal from "../components/drawers/Electricity";
+import CableTV from "../components/drawers/CableTV";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getDashboardData, DashboardData } from "@/app/utils/dashboard";
 import { AuthContext } from "@/app/context/AppContext";
@@ -26,6 +27,7 @@ interface StoredUser {
   isKycVerified: boolean;
 }
 
+
 export default function Index() {
   const router = useRouter();
   const authState = useContext(AuthContext);
@@ -34,47 +36,55 @@ export default function Index() {
   const [airtimeModalVisisbility, setAirtimeModalVisibility] = useState(false);
   const [electricityModalVisisbility, setElectricityModalVisibility] =
     useState(false);
+  const [cableModalVisisbility, setCableModalVisibility] = useState(false);
 
   const [loadedUser, setLoadedUser] = useState<StoredUser | null>(null);
   const [dashboardData, setDashboardData] = useState<
     DashboardData | null | any
   >(null);
 
-  useEffect(() => {
-    const loadAll = async () => {
-      try {
-        const login_obj = await AsyncStorage.getItem("login_obj");
+  const loadAll = async () => {
+    try {
+      const login_obj = await AsyncStorage.getItem("login_obj");
 
-        if (!login_obj) {
-          await authState.logout();
-          return;
-        }
-
-        const parsed = JSON.parse(login_obj);
-        const user = parsed?.data?.user;
-
-        if (!user) {
-          console.log("Invalid credential structure:", parsed);
-          await authState.logout();
-          return;
-        }
-
-        setLoadedUser(user);
-
-        const dashResponse = await getDashboardData();
-
-        if (dashResponse?.success) {
-          console.log(dashResponse.data);
-          setDashboardData(dashResponse.data);
-        } else {
-          console.log("Dashboard fetch failed");
-        }
-      } catch (error) {
-        console.log("Index screen error:", error);
+      if (!login_obj) {
+        await authState.logout();
+        return;
       }
-    };
 
-    loadAll();
+      const parsed = JSON.parse(login_obj);
+      const user = parsed?.data?.user;
+
+      if (!user) {
+        console.log("Invalid credential structure:", parsed);
+        await authState.logout();
+        return;
+      }
+
+      setLoadedUser(user);
+
+      const dashResponse = await getDashboardData();
+
+      if (dashResponse?.success) {
+        console.log("dashboard data", dashResponse.data);
+        setDashboardData(dashResponse.data);
+      } else {
+        console.log("Dashboard fetch failed");
+      }
+    } catch (error) {
+      console.log("Index screen error:", error);
+    }
+  };
+  useFocusEffect(
+    useCallback(() => {
+      loadAll();
+    }, [])
+  )
+
+  useEffect(() => {
+
+
+
   }, []);
 
   // Safe derived values
@@ -105,6 +115,10 @@ export default function Index() {
         isOpen={electricityModalVisisbility}
         onClose={() => setElectricityModalVisibility(false)}
       />
+      <CableTV
+        isOpen={cableModalVisisbility}
+        onClose={() => setCableModalVisibility(false)}
+      />
 
       <ScrollView style={{ backgroundColor: "#F3F4F6" }} showsVerticalScrollIndicator={false}>
         <BalanceCard user_name={user_name} tier={user_tier} />
@@ -112,7 +126,7 @@ export default function Index() {
         <WalletCard
           balance={walletBalance}
           todaySpent={todaySpent}
-          onFundWallet={() => console.log("Wallet Funded")}
+          onFundWallet={() => router.push("/profile")}
         />
 
         <View
@@ -138,7 +152,7 @@ export default function Index() {
             iconName="tv-outline"
             iconColor="#8B5CF6"
             label="Cable TV"
-            onPress={() => console.log("Pressed")}
+            onPress={() => setCableModalVisibility(true)}
           />
           <QuickActionButton
             iconName="flash-outline"
@@ -189,17 +203,17 @@ export default function Index() {
             borderWidth: 1,
             marginBottom: 20
           }}>
-            {/* {
+            {
               dashboardData?.recentTransactions.map((item: any) => (
                 <RecentActivityItem
                   amount={item.amount.toString()}
                   subtitle={item.createdAt}
-                  title={item.metadata || item.metada}
+                  title={item.metadat}
                   type={item.type}
                   key={item.id}
                 />
               ))
-            } */}
+            }
           </View>
 
         ) : (

@@ -14,15 +14,15 @@ SplashScreen.preventAutoHideAsync();
 type AuthState = {
   isAuthenticated: boolean;
   isReady: boolean;
-  login: () => Promise<void>;
+  login: (credentials?: any) => Promise<any>;
   logout: () => Promise<void>;
 };
 
 export const AuthContext = createContext<AuthState>({
   isAuthenticated: false,
   isReady: false,
-  login: async () => {},
-  logout: async () => {},
+  login: async () => { return { success: false } },
+  logout: async () => { },
 });
 
 export const AuthProvider = ({ children }: PropsWithChildren) => {
@@ -47,33 +47,48 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
    * Pulls credentials from AsyncStorage
    * Assumes credentials were previously stored under key "credentials"
    */
-  const login = async () => {
+  const login = async (credentials?: any) => {
     try {
-      const storedCredentials = await AsyncStorage.getItem("credentials");
+      let emailArg = credentials?.email;
+      let passwordArg = credentials?.password;
 
-      if (!storedCredentials) {
-        throw new Error("No stored credentials found");
+      // Fallback to async storage if no credentials passed strictly (legacy support)
+      if (!emailArg || !passwordArg) {
+        const storedCredentials = await AsyncStorage.getItem("credentials");
+        if (storedCredentials) {
+          const { email, password } = JSON.parse(storedCredentials);
+          emailArg = email;
+          passwordArg = password;
+        } else {
+          return { success: false, error: "No credentials provided" };
+        }
       }
 
-      const { email, password } = JSON.parse(storedCredentials);
-
       const response = await loginUser({
-        email,
-        password,
+        email: emailArg,
+        password: passwordArg,
       });
+      console.log("Login response:", response);
 
-      // Store login response
-      await AsyncStorage.setItem("login_obj", JSON.stringify(response));
+      if (response && response.data.status === "OK") {
+        // Store login response
+        await AsyncStorage.setItem("login_obj", JSON.stringify(response));
 
-      // Persist auth state
-      await storeAuthState(true);
+        // Persist auth state
+        await storeAuthState(true);
 
-      setIsAuthenticated(true);
-      await AsyncStorage.removeItem("credentials");
+        setIsAuthenticated(true);
+        await AsyncStorage.removeItem("credentials");
 
-      router.replace("/");
-    } catch (error) {
+        router.replace("/");
+        return response;
+      }
+
+      return response;
+
+    } catch (error: any) {
       console.log("Login failed:", error);
+      return { success: false, error: error.message || "An unexpected error occurred" };
     }
   };
 

@@ -1,0 +1,103 @@
+--- app/(provider)/(tabs)/print.tsx
++++ app/(provider)/(tabs)/print.tsx
+@@ -14,2 +14,3 @@
+ import CardPreviewModal from "../components/drawers/CardPreview";
++import PinBatchModal from "../components/drawers/PinBatchModal";
+ import BottomBar from "../components/BottomBar";
+@@ -201,30 +202,30 @@
+   const [search, setSearch] = useState("");
+   const [selectedBatches, setSelectedBatches] = useState<string[]>([]);
+-  const [printModalVisibility, setPrintModalVisibility] = useState(false);
++  const [selectedBatch, setSelectedBatch] = useState<any>(null);
+   const [printVisible, setPrintVisible] = useState(false);
+ 
+   const batchesData = [
+     {
+       id: "1",
+       operator: "MTN",
+       amount: 100,
+       quantity: 5,
+       date: "10/24/2023, 2:30:00 PM",
+       status: "READY",
++      pins: [{ pin: "1234 5678 9012 3456", serial: "M0938482819" }]
+     },
+     {
+       id: "2",
+       operator: "AIRTEL",
+       amount: 200,
+       quantity: 3,
+       date: "10/23/2023, 9:15:00 AM",
+       status: "READY",
++      pins: [{ pin: "9876 5432 1098 7654", serial: "A0938482820" }]
+     },
+   ];
+ 
++  // MOCK Map for the new components
++  const mappedBatches = batchesData.map(b => ({
++     id: b.id,
++     networkId: b.operator,
++     amount: b.amount,
++     quantity: b.quantity,
++     date: b.date,
++     status: b.status,
++     pins: b.pins || []
++  }));
++
+   const toggleSelectBatch = (id: any) => {
+     if (selectedBatches.includes(id)) {
+@@ -237,2 +253,6 @@
+ 
++  const getSelectedBatchesData = () => {
++    return mappedBatches.filter(b => selectedBatches.includes(b.id));
++  };
++
+   const filteredBatches = batchesData.filter((batch) =>
+@@ -244,4 +264,5 @@
+       <>
+         <PrintPreview
+           visible={printVisible}
++          batches={getSelectedBatchesData()}
+           onClose={() => setPrintVisible(false)}
+@@ -312,3 +333,5 @@
+                     <TouchableOpacity
+                       style={styles.actionButton}
+-                      onPress={() => setPrintVisible(true)}
++                      onPress={() => setSelectedBatch(
++                        mappedBatches.find(b => b.id === item.id) || null
++                      )}
+                     >
+@@ -351,21 +374,6 @@
+     <>
+-      <CardPreviewModal
+-        visible={printModalVisibility}
+-        onClose={() => setPrintModalVisibility(false)}
+-        network="MTN"
+-        planName="N100"
+-        amount="100"
+-        vouchers={[
+-          {
+-            id: "1",
+-            serialNumber: "829384719238",
+-            pin: "1234567890123456",
+-          },
+-          {
+-            id: "2",
+-            serialNumber: "829384719239",
+-            pin: "9876543210987654",
+-          },
+-          {
+-            id: "3",
+-            serialNumber: "829384719240",
+-            pin: "4567890123456789",
+-          },
+-        ]}
++      <PinBatchModal
++        visible={!!selectedBatch}
++        onClose={() => setSelectedBatch(null)}
++        batch={selectedBatch}
+       />
+@@ -382,3 +390,3 @@
+             selectedNumber={selectedBatches.length}
+-            onClick={() => setPrintModalVisibility(true)}
++            onClick={() => setPrintVisible(true)}
+           />

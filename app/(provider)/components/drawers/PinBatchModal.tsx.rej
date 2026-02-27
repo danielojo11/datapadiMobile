@@ -1,0 +1,11 @@
+--- app/(provider)/components/drawers/PinBatchModal.tsx
++++ app/(provider)/components/drawers/PinBatchModal.tsx
+@@ -112,7 +112,7 @@
+ 
+             {/* Vouchers List */}
+             <View style={styles.vouchersList}>
+-              {batch.pins.map((pin, idx) => (
++              {batch.pins.map((pin: any, idx: number) => (
+                 <TouchableOpacity
+                   key={idx}
+                   activeOpacity={0.7}

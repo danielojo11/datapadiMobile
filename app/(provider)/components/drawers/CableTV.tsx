@@ -10,6 +10,7 @@ import {
     ActivityIndicator,
     KeyboardAvoidingView,
     Platform,
+    DeviceEventEmitter,
 } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import {
@@ -178,6 +179,7 @@ const CableTV: React.FC<BuyCableModalProps> = ({ isOpen, onClose }) => {
         setIsProcessing(false);
 
         if (res.success) {
+            DeviceEventEmitter.emit('refreshData');
             setStep('SUCCESS');
         } else {
             setErrorMessage(res.error || 'Transaction failed. Please try again.');
@@ -204,7 +206,7 @@ const CableTV: React.FC<BuyCableModalProps> = ({ isOpen, onClose }) => {
         >
             <View style={styles.overlay}>
                 <KeyboardAvoidingView
-                    behavior={Platform.OS === "ios" ? "padding" : "height"}
+                    behavior={Platform.OS === "ios" ? "padding" : undefined}
                     style={styles.drawerContainer}
                 >
                     <View style={styles.handle} />

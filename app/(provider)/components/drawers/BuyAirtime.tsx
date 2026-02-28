@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  DeviceEventEmitter,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { buyAirtime } from "@/app/utils/vtu";
@@ -82,6 +83,7 @@ const BuyAirtime: React.FC<BuyAirtimeProps> = ({ visible, onClose }) => {
       );
 
       if (result && result.success) {
+        DeviceEventEmitter.emit('refreshData');
         setStep('SUCCESS');
       } else {
         setErrorMessage(result?.message || result?.error || 'Transaction failed. Please try again.');
@@ -111,7 +113,7 @@ const BuyAirtime: React.FC<BuyAirtimeProps> = ({ visible, onClose }) => {
     >
       <View style={styles.overlay}>
         <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
           style={styles.drawerContainer}
         >
           <View style={styles.handle} />

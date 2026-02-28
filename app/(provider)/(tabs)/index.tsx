@@ -4,6 +4,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  DeviceEventEmitter,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect, useRouter } from "expo-router";
@@ -78,13 +79,19 @@ export default function Index() {
   useFocusEffect(
     useCallback(() => {
       loadAll();
+      return undefined;
     }, [])
-  )
+  );
 
   useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener('refreshData', () => {
+      console.log("refreshData event received, reloading dashboard data...");
+      loadAll();
+    });
 
-
-
+    return () => {
+      subscription.remove();
+    };
   }, []);
 
   // Safe derived values

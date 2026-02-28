@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  DeviceEventEmitter,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { buyData, getDataPlans } from "@/app/utils/vtu";
@@ -158,6 +159,7 @@ const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
       console.log('Buy Data Result:', result);
 
       if (result.success) {
+        DeviceEventEmitter.emit('refreshData');
         setStep('SUCCESS');
       } else {
         setErrorMessage(result.message || result.error || 'Transaction failed. Please try again.');
@@ -187,7 +189,7 @@ const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
     >
       <View style={styles.overlay}>
         <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
           style={styles.drawerContainer}
         >
           <View style={styles.handle} />

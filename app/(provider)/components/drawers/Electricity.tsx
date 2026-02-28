@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  DeviceEventEmitter,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import {
@@ -156,6 +157,7 @@ const BuyElectricityModal: React.FC<BuyElectricityModalProps> = ({ isOpen, onClo
         if (res.token) {
           setGeneratedToken(res.token);
         }
+        DeviceEventEmitter.emit('refreshData');
         setStep('SUCCESS');
       } else {
         setErrorMessage(res.error || 'Transaction failed. Please try again.');
@@ -191,7 +193,7 @@ const BuyElectricityModal: React.FC<BuyElectricityModalProps> = ({ isOpen, onClo
     >
       <View style={styles.overlay}>
         <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
           style={styles.drawerContainer}
         >
           <View style={styles.handle} />

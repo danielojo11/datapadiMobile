@@ -4,7 +4,7 @@
     "slug": "datapadi",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/Datapadi-bg-white.webp",
+    "icon": "./assets/images/Datapadi-bg-white.png",
     "scheme": "datapadi",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -15,9 +15,9 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/Datapadi-bg-white.webp",
-        "backgroundImage": "./assets/images/Datapadi-bg-white.webp",
-        "monochromeImage": "./assets/images/Datapadi-bg-white.webp"
+        "foregroundImage": "./assets/images/Datapadi-bg-white.png",
+        "backgroundImage": "./assets/images/Datapadi-bg-white.png",
+        "monochromeImage": "./assets/images/Datapadi-bg-white.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -25,14 +25,14 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/Datapadi-bg-white.webp"
+      "favicon": "./assets/images/Datapadi-bg-white.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/Datapadi-bg-white.webp",
+          "image": "./assets/images/Datapadi-bg-white.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",

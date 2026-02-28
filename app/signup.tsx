@@ -85,7 +85,7 @@ const CreateAccountScreen = () => {
           {/* Header Section */}
           <View style={styles.header}>
             <Text style={styles.title}>Create Account</Text>
-            <Text style={styles.subtitle}>Join DataPadi today</Text>
+            <Text style={styles.subtitle}>Join MUFTI PAY today</Text>
           </View>
 
           {error ? (

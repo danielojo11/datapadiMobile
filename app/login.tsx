@@ -52,7 +52,7 @@ const LoginScreen: React.FC = () => {
       </View>
 
       <Text style={styles.title}>Welcome Back</Text>
-      <Text style={styles.subtitle}>Sign in to continue to DataPadi</Text>
+      <Text style={styles.subtitle}>Sign in to continue to MUFTI PAY</Text>
 
       {error ? (
         <View style={styles.errorBox}>

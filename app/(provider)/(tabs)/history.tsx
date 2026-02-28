@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, Feather } from '@expo/vector-icons';
@@ -42,6 +43,7 @@ const History: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState<any>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   // 1. Added Cable and Electricity to the UI filters
   const filters = ['All', 'Data', 'Airtime', 'Pins', 'Funding', 'Cable', 'Electricity'];
@@ -81,6 +83,12 @@ const History: React.FC = () => {
     }
     setIsLoading(false);
   };
+
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await fetchHistory();
+    setRefreshing(false);
+  }, [filter]);
 
   const handleTransactionClick = (tx: Transaction) => {
     setSelectedTransaction(tx);
@@ -186,7 +194,13 @@ const History: React.FC = () => {
         ) : (
           <View style={styles.listContainer}>
             {transactions.length > 0 ? (
-              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.scrollContent}
+                refreshControl={
+                  <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                }
+              >
                 {transactions.map((tx, index) => {
                   const config = getTransactionConfig(tx.type);
                   const isFunding = tx.type === TransactionType.WALLET_FUNDING;

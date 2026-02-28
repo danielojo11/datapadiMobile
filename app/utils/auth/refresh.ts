@@ -3,7 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 /**
  * Server Action for user authentication
- * Based on DataPadi API Documentation Section 2.2
+ * Based on MUFTI PAY API Documentation Section 2.2
  */
 export async function refreshUser(refreshToken: string) {
   // const BACKEND_URL = process.env.BACKEND_URL;

@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   DeviceEventEmitter,
+  RefreshControl,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import {
@@ -46,6 +47,7 @@ const BuyElectricityModal: React.FC<BuyElectricityModalProps> = ({ isOpen, onClo
   const [isValidated, setIsValidated] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
 
   const selectedProvider = discos.find(p => p.id === providerId);
 
@@ -72,6 +74,12 @@ const BuyElectricityModal: React.FC<BuyElectricityModalProps> = ({ isOpen, onClo
       setIsLoadingDiscos(false);
     }
   };
+
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await fetchDiscos();
+    setRefreshing(false);
+  }, []);
 
   const resetState = () => {
     setStep('PROVIDER');
@@ -212,7 +220,13 @@ const BuyElectricityModal: React.FC<BuyElectricityModalProps> = ({ isOpen, onClo
                     <Text style={styles.loadingText}>Loading providers...</Text>
                   </View>
                 ) : (
-                  <ScrollView style={styles.flex1} showsVerticalScrollIndicator={false}>
+                  <ScrollView
+                    style={styles.flex1}
+                    showsVerticalScrollIndicator={false}
+                    refreshControl={
+                      <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                    }
+                  >
                     {discos.map((provider) => (
                       <TouchableOpacity
                         key={provider.id}

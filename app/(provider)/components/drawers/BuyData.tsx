@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   DeviceEventEmitter,
+  RefreshControl,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { buyData, getDataPlans } from "@/app/utils/vtu";
@@ -50,6 +51,7 @@ const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<any>();
   const [searchQuery, setSearchQuery] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     if (visible && !apiPlans) {
@@ -74,6 +76,12 @@ const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
       setIsLoadingPlans(false);
     }
   };
+
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await fetchPlans();
+    setRefreshing(false);
+  }, []);
 
   const reset = () => {
     setStep('NETWORK');
@@ -252,7 +260,13 @@ const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
 
                 <Text style={styles.sectionLabel}>AVAILABLE PLANS</Text>
 
-                <ScrollView style={styles.flex1} showsVerticalScrollIndicator={false}>
+                <ScrollView
+                  style={styles.flex1}
+                  showsVerticalScrollIndicator={false}
+                  refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                  }
+                >
                   {filteredPlans.length > 0 ? (
                     filteredPlans.map((plan, index) => (
                       <TouchableOpacity

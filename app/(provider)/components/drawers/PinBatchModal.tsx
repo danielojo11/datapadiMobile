@@ -152,7 +152,7 @@ const PinBatchModal: React.FC<PinBatchModalProps> = ({ visible, onClose, batch }
                 </head>
                 <body>
                     <div class="print-header-main">
-                        <h1 style="font-size: 22px; font-weight: 900; margin: 0; text-transform: uppercase; letter-spacing: 2px;">DATAPADI</h1>
+                        <h1 style="font-size: 22px; font-weight: 900; margin: 0; text-transform: uppercase; letter-spacing: 2px;">MUFTI PAY</h1>
                         <p style="font-size: 11px; margin: 4px 0; font-weight: bold; color: #666;">Automated Recharge Voucher System</p>
                         <p style="font-size: 9px; margin: 0;">Batch ID: ${batch.id} • Date: ${new Date().toLocaleDateString()}</p>
                     </div>

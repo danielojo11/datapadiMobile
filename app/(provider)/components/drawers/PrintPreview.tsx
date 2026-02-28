@@ -121,7 +121,7 @@ const PrintPreview: React.FC<PrintPreviewModalProps> = ({ visible, onClose, batc
                     {allPins.slice(0, 6).map((pin, i) => (
                       <View key={i} style={styles.voucherCard}>
                         <View style={styles.voucherTop}>
-                          <Text style={styles.brandText}>DATAPADI</Text>
+                          <Text style={styles.brandText}>MUFTI PAY</Text>
                           <View
                             style={[
                               styles.networkBadge,

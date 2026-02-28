@@ -7,7 +7,8 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   TextInput,
-  Alert
+  Alert,
+  RefreshControl
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -41,6 +42,7 @@ export default function ProfileScreen() {
 
   const [profileData, setProfileData] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const [warningModalVisisbility, setWarningModalVisibility] = useState(false);
   const [webViewVisible, setWebViewVisible] = useState(false);
@@ -52,23 +54,29 @@ export default function ProfileScreen() {
   const [error, setError] = useState("");
 
 
-  useEffect(() => {
-    const loadProfile = async () => {
-      try {
-        const response = await getProfileData();
-        if (!response) {
-          console.log("Profile fetch failed");
-          return;
-        }
-        setProfileData(response.data);
-      } catch (error) {
-        console.log("Profile screen error:", error);
-      } finally {
-        setLoading(false);
+  const loadProfile = async () => {
+    try {
+      const response = await getProfileData();
+      if (!response) {
+        console.log("Profile fetch failed");
+        return;
       }
-    };
+      setProfileData(response.data);
+    } catch (error) {
+      console.log("Profile screen error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     loadProfile();
+  }, []);
+
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await loadProfile();
+    setRefreshing(false);
   }, []);
 
   const handleCopyAccount = async () => {
@@ -156,6 +164,9 @@ export default function ProfileScreen() {
         style={styles.container}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       >
         {/* 1. Profile Header */}
         <View style={styles.headerSection}>

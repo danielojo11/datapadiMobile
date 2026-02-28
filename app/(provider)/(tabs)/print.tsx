@@ -10,6 +10,7 @@ import {
   FlatList,
   VirtualizedList,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import PrintPreview from "../components/drawers/PrintPreview";
@@ -268,28 +269,36 @@ const PinInven = ({
   const [batchesData, setBatchesData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
 
+
+  const getInven = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await getPrintInventory();
+      if (response && response.success) {
+        setBatchesData(response.data || []);
+      } else {
+        setError(response?.error || "Failed to load print inventory.");
+      }
+    } catch (err: any) {
+      console.log(err);
+      setError(err.message || "An unexpected error occurred while loading inventory.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const getInven = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await getPrintInventory();
-        if (response && response.success) {
-          setBatchesData(response.data || []);
-        } else {
-          setError(response?.error || "Failed to load print inventory.");
-        }
-      } catch (err: any) {
-        console.log(err);
-        setError(err.message || "An unexpected error occurred while loading inventory.");
-      } finally {
-        setLoading(false);
-      }
-    };
     getInven();
+  }, []);
+
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await getInven();
+    setRefreshing(false);
   }, []);
 
   // const batchesData = [
@@ -500,6 +509,9 @@ const PinInven = ({
             keyExtractor={(item) => item.id}
             renderItem={renderBatch}
             contentContainerStyle={{ paddingBottom: 100 }}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
             ListEmptyComponent={
               !error ? (
                 <View style={{ padding: 40, alignItems: "center" }}>

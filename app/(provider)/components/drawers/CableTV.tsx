@@ -11,6 +11,7 @@ import {
     KeyboardAvoidingView,
     Platform,
     DeviceEventEmitter,
+    RefreshControl,
 } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import {
@@ -59,6 +60,7 @@ const CableTV: React.FC<BuyCableModalProps> = ({ isOpen, onClose }) => {
     const [isValidated, setIsValidated] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
+    const [refreshing, setRefreshing] = useState(false);
 
     const selectedProvider = CABLE_PROVIDERS.find(p => p.id === providerId);
 
@@ -80,6 +82,12 @@ const CableTV: React.FC<BuyCableModalProps> = ({ isOpen, onClose }) => {
         }
         setIsLoadingPackages(false);
     };
+
+    const onRefresh = React.useCallback(async () => {
+        setRefreshing(true);
+        await fetchPackages();
+        setRefreshing(false);
+    }, []);
 
     const resetState = () => {
         setStep('PROVIDER');
@@ -230,7 +238,13 @@ const CableTV: React.FC<BuyCableModalProps> = ({ isOpen, onClose }) => {
                                         <Text style={[styles.loadingText, { color: '#9333EA' }]}>Loading packages...</Text>
                                     </View>
                                 ) : (
-                                    <ScrollView style={styles.flex1} showsVerticalScrollIndicator={false}>
+                                    <ScrollView
+                                        style={styles.flex1}
+                                        showsVerticalScrollIndicator={false}
+                                        refreshControl={
+                                            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                                        }
+                                    >
                                         {CABLE_PROVIDERS.map((provider) => (
                                             <TouchableOpacity
                                                 key={provider.id}

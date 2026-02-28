@@ -25,7 +25,7 @@ const VoucherCard: React.FC<Props> = ({
     <View style={styles.card}>
       {/* Top Row */}
       <View style={styles.topRow}>
-        <Text style={styles.voucherLabel}>DATAPADI VOUCHER</Text>
+        <Text style={styles.voucherLabel}>MUFTI PAY VOUCHER</Text>
 
         <View style={styles.snBadge}>
           <Text style={styles.snText}>SN: {serialNumber}</Text>

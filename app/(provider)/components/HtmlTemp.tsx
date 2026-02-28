@@ -177,7 +177,7 @@ export const HtmlTemp = ({ batches, pins, currency = '₦' }: TemplateParams) =>
     return `
               <div class="card">
                 <div class="card-header">
-                  <span>DATAPADI</span>
+                  <span>MUFTI PAY</span>
                   <span class="amount">${currency}${amt}</span>
                 </div>
 

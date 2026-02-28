@@ -31,7 +31,7 @@ const generatePDF = async ({ pins, batches }: { pins?: any[], batches?: any[] })
             return;
         }
 
-        const fileName = `DataPadi_Vouchers_${Date.now()}.pdf`;
+        const fileName = `MUFTI_PAY_Vouchers_${Date.now()}.pdf`;
 
         // Read the generated PDF as base64
         const base64 = await FileSystem.readAsStringAsync(uri, {

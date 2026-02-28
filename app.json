@@ -1,11 +1,11 @@
 {
   "expo": {
     "name": "MUFTI PAY",
-    "slug": "mufti_pay",
+    "slug": "datapadi",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/Datapadi-bg-white.png",
-    "scheme": "mufti_pay",
+    "icon": "./assets/images/Datapadi-bg-white.webp",
+    "scheme": "datapadi",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -15,9 +15,9 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/Datapadi-bg-white.png",
-        "backgroundImage": "./assets/images/Datapadi-bg-white.png",
-        "monochromeImage": "./assets/images/Datapadi-bg-white.png"
+        "foregroundImage": "./assets/images/Datapadi-bg-white.webp",
+        "backgroundImage": "./assets/images/Datapadi-bg-white.webp",
+        "monochromeImage": "./assets/images/Datapadi-bg-white.webp"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -25,14 +25,14 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/Datapadi-bg-white.png"
+      "favicon": "./assets/images/Datapadi-bg-white.webp"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/Datapadi-bg-transparent.png",
+          "image": "./assets/images/Datapadi-bg-white.webp",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",

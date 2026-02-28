@@ -152,7 +152,7 @@ export default function ProfileScreen() {
     <SafeAreaView style={styles.safeArea}>
       <ActionRequired
         visible={warningModalVisisbility}
-        onClose={() => setWarningModalVisibility(false)}
+        onClose={() => { setWarningModalVisibility(false); onRefresh() }}
       />
       <WebScreen
         url={webViewUrl}

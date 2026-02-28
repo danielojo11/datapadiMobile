@@ -6,6 +6,7 @@ import {
   View,
   DeviceEventEmitter,
   RefreshControl,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect, useRouter } from "expo-router";
@@ -45,6 +46,7 @@ export default function Index() {
     DashboardData | null | any
   >(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadingRecentTransactions, setLoadingRecentTransactions] = useState(false)
 
   const loadAll = async () => {
     try {
@@ -65,17 +67,19 @@ export default function Index() {
       }
 
       setLoadedUser(user);
-
+      setLoadingRecentTransactions(true)
       const dashResponse = await getDashboardData();
 
       if (dashResponse?.success) {
         console.log("dashboard data", dashResponse.data);
-        setDashboardData(dashResponse.data);
+        setDashboardData(dashResponse.data.data);
       } else {
         console.log("Dashboard fetch failed");
       }
     } catch (error) {
       console.log("Index screen error:", error);
+    } finally {
+      setLoadingRecentTransactions(false)
     }
   };
 
@@ -204,39 +208,39 @@ export default function Index() {
         </View>
 
         {dashboardData?.recentTransactions.length > 0 ? (
-          // <FlatList
-          //   data={dashboardData?.recentTransactions}
-          //   keyExtractor={(item) => item.id}
-          //   renderItem={({ item }) => (
-          //     <RecentActivityItem
-          //       amount={item.amount.toString()}
-          //       subtitle={item.createdAt}
-          //       title={item.metadata}
-          //     />
-          //   )}
-
-
-          // />
-          <View style={{
-            backgroundColor: "#fff",
-            borderRadius: 24,
-            overflow: "hidden",
-            borderColor: "#F3F4F6",
-            borderWidth: 1,
-            marginBottom: 20
-          }}>
+          <View>
             {
-              dashboardData?.recentTransactions.map((item: any) => (
-                <RecentActivityItem
-                  amount={item.amount.toString()}
-                  subtitle={item.createdAt}
-                  title={item.metadat}
-                  type={item.type}
-                  key={item.id}
-                />
-              ))
+              loadingRecentTransactions ? (
+                <View>
+                  <ActivityIndicator color={'grey'} size={24} style={{ marginTop: 20 }} />
+                </View>
+              ) : (
+                <View style={{
+                  backgroundColor: "#fff",
+                  borderRadius: 24,
+                  overflow: "hidden",
+                  borderColor: "#F3F4F6",
+                  borderWidth: 1,
+                  marginBottom: 20
+                }}>
+
+                  {
+                    dashboardData?.recentTransactions.map((item: any) => (
+                      <RecentActivityItem
+                        amount={item.amount.toString()}
+                        subtitle={item.createdAt}
+                        title={item.metadat}
+                        type={item.type}
+                        key={item.id}
+                      />
+                    ))
+                  }
+                </View>
+              )
             }
+
           </View>
+
 
         ) : (
           <View

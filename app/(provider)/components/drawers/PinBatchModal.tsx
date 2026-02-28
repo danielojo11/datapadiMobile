@@ -161,7 +161,7 @@ const PinBatchModal: React.FC<PinBatchModalProps> = ({ visible, onClose, batch }
                         ${batch.pins?.map((pin: any, idx: number) => `
                         <div class="print-card">
                             <div class="card-header">
-                                <span class="card-brand">DATAPADI</span>
+                                <span class="card-brand">mUFTI PAY</span>
                                 <span class="card-amount">${CURRENCY}${batch.amount}</span>
                             </div>
                             
@@ -178,7 +178,7 @@ const PinBatchModal: React.FC<PinBatchModalProps> = ({ visible, onClose, batch }
                                 </div>
                                 <div class="footer-row" style="opacity: 0.6;">
                                     <span>Valid for 12 months</span>
-                                    <span>Powered by DataPadi</span>
+                                    <span>Powered by MUFTI PAY</span>
                                 </div>
                             </div>
                         </div>`).join('') || ''}
@@ -267,7 +267,7 @@ const PinBatchModal: React.FC<PinBatchModalProps> = ({ visible, onClose, batch }
                                     style={styles.voucherItem}
                                 >
                                     <View style={styles.voucherItemHeader}>
-                                        <Text style={styles.voucherItemBrand}>DataPadi Voucher</Text>
+                                        <Text style={styles.voucherItemBrand}>MUFTI PAY Voucher</Text>
                                         <View style={styles.serialBadge}>
                                             <Text style={styles.serialText}>SN: {pin.serial}</Text>
                                         </View>

@@ -22,14 +22,13 @@ export interface DashboardData {
 export async function getDashboardData() {
   try {
     const response = await api.get("user/dashboard");
-    console.log("dashboard data", response.data.data)
+    console.log("dashboard data", response.data)
 
     return {
       success: true,
-      data: response.data.data,
+      data: response.data,
     };
   } catch (error) {
-    console.error(error);
-    return { success: false };
+    return { error: error, success: false };
   }
 }

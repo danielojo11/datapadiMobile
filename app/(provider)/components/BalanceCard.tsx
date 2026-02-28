@@ -11,7 +11,6 @@ const BalanceCard = ({
   const firstName = user_name ? user_name.split(" ")[0] : "User";
   const initial = firstName ? firstName.charAt(0).toUpperCase() : "U";
 
-  // Format tier string to be uppercase with spaces (e.g. from "smart_user" to "SMART USER")
   const formattedTier = tier ? tier.replace(/_/g, " ").toUpperCase() : "USER";
 
   return (

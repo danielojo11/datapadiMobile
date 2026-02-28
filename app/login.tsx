@@ -47,9 +47,9 @@ const LoginScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.logo}>
+      {/* <View style={styles.logo}>
         <Text style={styles.logoText}>DP</Text>
-      </View>
+      </View> */}
 
       <Text style={styles.title}>Welcome Back</Text>
       <Text style={styles.subtitle}>Sign in to continue to MUFTI PAY</Text>
@@ -122,6 +122,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#FFFFFF",
     paddingHorizontal: 24,
+    marginTop: 48
   },
 
   logo: {

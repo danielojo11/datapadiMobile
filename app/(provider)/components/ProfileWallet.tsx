@@ -27,7 +27,7 @@ export default function ProfileWallet() {
         <View style={styles.accountRow}>
           <View>
             <Text style={styles.accountNumber}>{accountNumber}</Text>
-            <Text style={styles.bankText}>Wema Bank • DataPadi - Yadak</Text>
+            <Text style={styles.bankText}>Wema Bank • MUFTI PAY - Yadak</Text>
           </View>
 
           <TouchableOpacity

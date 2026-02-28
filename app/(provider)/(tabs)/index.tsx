@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   View,
   DeviceEventEmitter,
+  RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect, useRouter } from "expo-router";
@@ -43,6 +44,7 @@ export default function Index() {
   const [dashboardData, setDashboardData] = useState<
     DashboardData | null | any
   >(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const loadAll = async () => {
     try {
@@ -76,6 +78,13 @@ export default function Index() {
       console.log("Index screen error:", error);
     }
   };
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadAll();
+    setRefreshing(false);
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
       loadAll();
@@ -127,7 +136,13 @@ export default function Index() {
         onClose={() => setCableModalVisibility(false)}
       />
 
-      <ScrollView style={{ backgroundColor: "#F3F4F6" }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={{ backgroundColor: "#F3F4F6" }}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         <BalanceCard user_name={user_name} tier={user_tier} />
 
         <WalletCard

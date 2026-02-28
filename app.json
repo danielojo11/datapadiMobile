@@ -51,6 +51,12 @@
         "projectId": "7530dd1b-0816-4d51-99dd-2cfbc4281475"
       }
     },
-    "owner": "daniel_ojo"
+    "owner": "daniel_ojo",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/7530dd1b-0816-4d51-99dd-2cfbc4281475"
+    }
   }
 }

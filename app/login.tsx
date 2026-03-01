@@ -82,7 +82,7 @@ const LoginScreen: React.FC = () => {
           onRightIconPress={() => setSecure(!secure)}
         />
 
-        <TouchableOpacity style={styles.forgot}>
+        <TouchableOpacity style={styles.forgot} onPress={() => router.push("/forgot" as any)}>
           <Text style={styles.forgotText}>Forgot Password?</Text>
         </TouchableOpacity>
 

@@ -50,3 +50,40 @@ export async function getProfileData() {
     return { success: false, error: "Network connection failed" };
   }
 }
+
+
+export async function generateOTP(email: string) {
+  try {
+    const response = await api.post("/auth/forgot-password", email);
+    const result = response.data;
+
+    return { success: true, data: result.data };
+  } catch (error) {
+    console.error("OTP Generation Error:", error);
+    return { success: false, error: "Network connection failed" };
+  }
+}
+
+export async function verifyOTP(email: string, otp: string) {
+  try {
+    const response = await api.post("/auth/verify-otp", { email, otp });
+    const result = response.data;
+
+    return { success: true, data: result.data };
+  } catch (error) {
+    console.error("OTP Verification Error:", error);
+    return { success: false, error: "Network connection failed" };
+  }
+}
+
+export async function resetPassword(email: string, password: string) {
+  try {
+    const response = await api.post("/auth/reset-password", { email, password });
+    const result = response.data;
+
+    return { success: true, data: result.data };
+  } catch (error) {
+    console.error("Password Reset Error:", error);
+    return { success: false, error: "Network connection failed" };
+  }
+}

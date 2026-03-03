@@ -17,6 +17,7 @@ const forgot: React.FC = () => {
     const [email, setEmail] = useState("");
     const [otp, setOtp] = useState("");
     const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
     const [secure, setSecure] = useState(true);
 
     const [loading, setLoading] = useState(false);
@@ -35,7 +36,7 @@ const forgot: React.FC = () => {
         try {
             const response = await generateOTP({ email });
             console.log("Generate OTP: ", response);
-            if (!response.success) {
+            if (response.status !== "OK") {
                 setError(response.message);
                 return;
             }
@@ -68,6 +69,10 @@ const forgot: React.FC = () => {
     const handleResetPassword = async () => {
         if (!password) {
             setError("Password is required");
+            return;
+        }
+        if (password !== confirmPassword) {
+            setError("Passwords do not match");
             return;
         }
         setLoading(true);
@@ -131,16 +136,30 @@ const forgot: React.FC = () => {
                 )}
 
                 {step === 3 && (
-                    <AuthInput
-                        label="New Password"
-                        placeholder="••••••••"
-                        value={password}
-                        onChangeText={setPassword}
-                        icon="lock-closed-outline"
-                        secureTextEntry={secure}
-                        rightIcon={secure ? "eye-off-outline" : "eye-outline"}
-                        onRightIconPress={() => setSecure(!secure)}
-                    />
+                    <>
+                        <AuthInput
+                            label="New Password"
+                            placeholder="••••••••"
+                            value={password}
+                            onChangeText={setPassword}
+                            icon="lock-closed-outline"
+                            secureTextEntry={secure}
+                            rightIcon={secure ? "eye-off-outline" : "eye-outline"}
+                            onRightIconPress={() => setSecure(!secure)}
+                        />
+
+                        <AuthInput
+                            label="Confirm Password"
+                            placeholder="••••••••"
+                            value={confirmPassword}
+                            onChangeText={setConfirmPassword}
+                            icon="lock-closed-outline"
+                            secureTextEntry={secure}
+                            rightIcon={secure ? "eye-off-outline" : "eye-outline"}
+                            onRightIconPress={() => setSecure(!secure)}
+                        />
+                    </>
+
                 )}
 
                 <TouchableOpacity

@@ -22,6 +22,7 @@ export enum TransactionType {
   WALLET_FUNDING = 'WALLET_FUNDING',
   CABLE_TV = 'CABLE_TV',
   ELECTRICITY = 'ELECTRICITY',
+  EDUCATION = 'EDUCATION',
 }
 
 export type Transaction = {
@@ -45,8 +46,8 @@ const History: React.FC = () => {
   const [pagination, setPagination] = useState<any>(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  // 1. Added Cable and Electricity to the UI filters
-  const filters = ['All', 'Data', 'Airtime', 'Pins', 'Funding', 'Cable', 'Electricity'];
+  // 1. Added Cable, Electricity, and Education to the UI filters
+  const filters = ['All', 'Data', 'Airtime', 'Pins', 'Funding', 'Cable', 'Electricity', 'Education'];
 
   useEffect(() => {
     fetchHistory();
@@ -65,6 +66,7 @@ const History: React.FC = () => {
       'Funding': TransactionType.WALLET_FUNDING,
       'Cable': TransactionType.CABLE_TV,
       'Electricity': TransactionType.ELECTRICITY,
+      'Education': TransactionType.EDUCATION,
     };
 
     const apiType = filterToApiMap[filter] || filter;
@@ -110,6 +112,8 @@ const History: React.FC = () => {
         return { icon: <Ionicons name="card-outline" size={20} color="#4F46E5" />, bg: '#EEF2FF' };
       case TransactionType.RECHARGE_PIN:
         return { icon: <Ionicons name="print-outline" size={20} color="#0891B2" />, bg: '#ECFEFF' };
+      case TransactionType.EDUCATION:
+        return { icon: <Ionicons name="school-outline" size={20} color="#10B981" />, bg: '#D1FAE5' };
       default:
         return { icon: <Ionicons name="receipt-outline" size={20} color="#4B5563" />, bg: '#F3F4F6' };
     }
@@ -212,8 +216,15 @@ const History: React.FC = () => {
                     minute: '2-digit',
                   });
 
-                  // Safely fall back to type if metadata is not available
-                  const title = tx.metadata?.planName || tx.metadata?.network || tx.type.replace('_', ' ');
+                  const title = (() => {
+                    if (tx.type === TransactionType.EDUCATION) {
+                      if (tx.metadata?.examType === 'utme-mock') return 'JAMB UTME (With Mock)';
+                      if (tx.metadata?.examType === 'utme-no-mock') return 'JAMB UTME (No Mock)';
+                    }
+                    return tx.metadata?.planName || tx.metadata?.network || tx.metadata?.provider || tx.type.replace('_', ' ');
+                  })();
+                  const token = tx.metadata?.token || tx.metadata?.token;
+
 
                   return (
                     <TouchableOpacity

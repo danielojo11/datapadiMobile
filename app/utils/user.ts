@@ -21,6 +21,7 @@ export async function getTransactionHistory(
       `user/transactions?${query}`,
     ); //
     const result = response.data;
+    console.log("Transactions", result.data);
 
     // if (!response.ok) {
     //   return {

@@ -247,3 +247,57 @@ export async function getPrintOrderPins(reference: string) {
     return { success: false, error: "Network connection failed" };
   }
 }
+
+// --- 4. EDUCATION ROUTES ---
+
+/**
+ * Verify JAMB Profile ID
+ */
+export async function verifyJambProfile(profileId: string) {
+  try {
+    const response = await api.get(`education/verify-jamb?profileId=${profileId}`);
+    const result = await response.data;
+
+    return {
+      success: true,
+      data: result.data
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      error: error?.response?.data?.message || error?.message || "Failed to verify JAMB profile."
+    };
+  }
+}
+
+/**
+ * Buy Education PIN (WAEC / JAMB)
+ */
+export async function buyEducationPin(provider: string, examType: string, phoneNo: string, profileId?: string) {
+  try {
+    const payload: any = {
+      provider,
+      examType,
+      phoneNo
+    };
+
+    if (profileId) {
+      payload.profileId = profileId;
+    }
+
+    const response = await api.post("education/purchase/", payload);
+    const result = await response.data;
+
+    return {
+      success: true,
+      message: result.message,
+      status: result.status || 'OK',
+      data: result.data
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      error: error?.response?.data?.message || error?.message || "Transaction failed. Please try again."
+    };
+  }
+}

@@ -19,6 +19,7 @@ import QuickActionButton from "../components/QuickActionButton";
 import RecentActivityItem from "../components/RecentActivityItem";
 import BuyElectricityModal from "../components/drawers/Electricity";
 import CableTV from "../components/drawers/CableTV";
+import BuyEducationModal from "../components/drawers/Education";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getDashboardData, DashboardData } from "@/app/utils/dashboard";
 import { AuthContext } from "@/app/context/AppContext";
@@ -40,6 +41,7 @@ export default function Index() {
   const [electricityModalVisisbility, setElectricityModalVisibility] =
     useState(false);
   const [cableModalVisisbility, setCableModalVisibility] = useState(false);
+  const [educationModalVisibility, setEducationModalVisibility] = useState(false);
 
   const [loadedUser, setLoadedUser] = useState<StoredUser | null>(null);
   const [dashboardData, setDashboardData] = useState<
@@ -139,6 +141,10 @@ export default function Index() {
         isOpen={cableModalVisisbility}
         onClose={() => setCableModalVisibility(false)}
       />
+      <BuyEducationModal
+        isOpen={educationModalVisibility}
+        onClose={() => setEducationModalVisibility(false)}
+      />
 
       <ScrollView
         style={{ backgroundColor: "#F3F4F6" }}
@@ -185,6 +191,12 @@ export default function Index() {
             iconColor="#F59E0B"
             label="Electricity"
             onPress={() => setElectricityModalVisibility(true)}
+          />
+          <QuickActionButton
+            iconName="school-outline"
+            iconColor="#4F46E5"
+            label="Education"
+            onPress={() => setEducationModalVisibility(true)}
           />
         </View>
 

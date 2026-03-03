@@ -11,15 +11,15 @@ interface WebScreenProps {
 }
 
 export default function WebScreen({ url, visible, onClose }: WebScreenProps) {
-    if (!url) return null;
+    if (!url || !visible) return null;
 
     return (
-        <SafeAreaView style={styles.container}>
-            <Modal
-                visible={visible}
-                animationType="slide"
-                onRequestClose={onClose}
-            >
+        <Modal
+            visible={visible}
+            animationType="slide"
+            onRequestClose={onClose}
+        >
+            <SafeAreaView style={styles.container}>
                 <View style={styles.header}>
                     <TouchableOpacity onPress={onClose} style={styles.closeButton}>
                         <Ionicons name="close" size={24} color="#000" />
@@ -31,8 +31,8 @@ export default function WebScreen({ url, visible, onClose }: WebScreenProps) {
                     source={{ uri: url }}
                     style={styles.webview}
                 />
-            </Modal>
-        </SafeAreaView>
+            </SafeAreaView>
+        </Modal>
     );
 }
 

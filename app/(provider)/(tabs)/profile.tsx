@@ -149,133 +149,134 @@ export default function ProfileScreen() {
   const firstLetter = profileData.fullName?.charAt(0)?.toUpperCase() || "?";
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ActionRequired
-        visible={warningModalVisisbility}
-        onClose={() => { setWarningModalVisibility(false); onRefresh() }}
-      />
-      <WebScreen
-        url={webViewUrl}
-        visible={webViewVisible}
-        onClose={() => setWebViewVisible(false)}
-      />
+    <>
+      <SafeAreaView style={styles.safeArea}>
+        <WebScreen
+          url={webViewUrl}
+          visible={webViewVisible}
+          onClose={() => setWebViewVisible(false)}
+        />
+        <ActionRequired
+          visible={warningModalVisisbility}
+          onClose={() => { setWarningModalVisibility(false); onRefresh() }}
+        />
 
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      >
-        {/* 1. Profile Header */}
-        <View style={styles.headerSection}>
-          <View style={styles.avatarContainer}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{firstLetter}</Text>
-            </View>
-            {profileData.isKycVerified && (
-              <View style={styles.verifiedBadgeContainer}>
-                <Ionicons name="checkmark-circle" size={24} color="#3B82F6" />
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        >
+          {/* 1. Profile Header */}
+          <View style={styles.headerSection}>
+            <View style={styles.avatarContainer}>
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>{firstLetter}</Text>
               </View>
-            )}
-          </View>
-
-          <Text style={styles.fullName}>{profileData.fullName}</Text>
-          <Text style={styles.emailText}>{profileData.email}</Text>
-
-          <TouchableOpacity
-            disabled={profileData.isKycVerified}
-            onPress={() => !profileData.isKycVerified && setWarningModalVisibility(true)}
-            style={[
-              styles.kycButton,
-              profileData.isKycVerified ? styles.kycVerified : styles.kycPending,
-            ]}
-          >
-            {profileData.isKycVerified ? (
-              <>
-                <Ionicons name="checkmark-circle" size={14} color="#10B981" />
-                <Text style={styles.kycVerifiedText}>KYC Verified</Text>
-              </>
-            ) : (
-              <>
-                <Ionicons name="alert-circle" size={14} color="#F97316" />
-                <Text style={styles.kycPendingText}>Action Required: Verify Identity</Text>
-              </>
-            )}
-          </TouchableOpacity>
-        </View>
-
-        {/* 2. Wallet Funding Section */}
-        <View style={styles.walletCard}>
-          <View style={styles.walletHeader}>
-            <Ionicons name="wallet-outline" size={18} color="#DBEAFE" />
-            <Text style={styles.walletHeaderText}>ADD MONEY</Text>
-          </View>
-
-          {profileData.isKycVerified && profileData.kycData?.virtualAccountNumber ? (
-            <View>
-              <Text style={styles.bankTransferLabel}>BANK TRANSFER DETAILS</Text>
-              <View style={styles.bankTransferBox}>
-                <View>
-                  <Text style={styles.accountNumberText}>{profileData.kycData.virtualAccountNumber}</Text>
-                  <Text style={styles.bankNameText}>
-                    {profileData.kycData.bankName} • DATA PADI {profileData.fullName}
-                  </Text>
+              {profileData.isKycVerified && (
+                <View style={styles.verifiedBadgeContainer}>
+                  <Ionicons name="checkmark-circle" size={24} color="#3B82F6" />
                 </View>
-                <TouchableOpacity onPress={handleCopyAccount} style={styles.copyBtn}>
-                  {copied ? (
-                    <Ionicons name="checkmark-circle" size={20} color="#86EFAC" />
+              )}
+            </View>
+
+            <Text style={styles.fullName}>{profileData.fullName}</Text>
+            <Text style={styles.emailText}>{profileData.email}</Text>
+
+            <TouchableOpacity
+              disabled={profileData.isKycVerified}
+              onPress={() => !profileData.isKycVerified && setWarningModalVisibility(true)}
+              style={[
+                styles.kycButton,
+                profileData.isKycVerified ? styles.kycVerified : styles.kycPending,
+              ]}
+            >
+              {profileData.isKycVerified ? (
+                <>
+                  <Ionicons name="checkmark-circle" size={14} color="#10B981" />
+                  <Text style={styles.kycVerifiedText}>KYC Verified</Text>
+                </>
+              ) : (
+                <>
+                  <Ionicons name="alert-circle" size={14} color="#F97316" />
+                  <Text style={styles.kycPendingText}>Action Required: Click to Verify Identity</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          {/* 2. Wallet Funding Section */}
+          <View style={styles.walletCard}>
+            <View style={styles.walletHeader}>
+              <Ionicons name="wallet-outline" size={18} color="#DBEAFE" />
+              <Text style={styles.walletHeaderText}>ADD MONEY</Text>
+            </View>
+
+            {profileData.isKycVerified && profileData.kycData?.virtualAccountNumber ? (
+              <View>
+                <Text style={styles.bankTransferLabel}>BANK TRANSFER DETAILS</Text>
+                <View style={styles.bankTransferBox}>
+                  <View>
+                    <Text style={styles.accountNumberText}>{profileData.kycData.virtualAccountNumber}</Text>
+                    <Text style={styles.bankNameText}>
+                      {profileData.kycData.bankName} • DATA PADI {profileData.fullName}
+                    </Text>
+                  </View>
+                  <TouchableOpacity onPress={handleCopyAccount} style={styles.copyBtn}>
+                    {copied ? (
+                      <Ionicons name="checkmark-circle" size={20} color="#86EFAC" />
+                    ) : (
+                      <Ionicons name="copy-outline" size={20} color="#FFFFFF" />
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ) : (
+              <View>
+                <Text style={styles.fundSubtitle}>Fund via Card or USSD instantly.</Text>
+
+                {!!error && (
+                  <View style={styles.errorBox}>
+                    <Ionicons name="alert-circle" size={14} color="#FCA5A5" />
+                    <Text style={styles.errorText}>{error}</Text>
+                  </View>
+                )}
+
+                <View style={styles.amountInputContainer}>
+                  <Text style={styles.currencySymbol}>{CURRENCY}</Text>
+                  <TextInput
+                    style={styles.amountInput}
+                    value={fundingAmount}
+                    onChangeText={setFundingAmount}
+                    placeholder="Min 100"
+                    placeholderTextColor="rgba(147, 197, 253, 0.5)"
+                    keyboardType="numeric"
+                  />
+                </View>
+
+                <TouchableOpacity
+                  style={[styles.fundButton, isFunding && styles.fundButtonDisabled]}
+                  disabled={isFunding}
+                  onPress={handleFundWithCard}
+                  activeOpacity={0.8}
+                >
+                  {isFunding ? (
+                    <Text style={styles.fundButtonText}>Processing...</Text>
                   ) : (
-                    <Ionicons name="copy-outline" size={20} color="#FFFFFF" />
+                    <>
+                      <Ionicons name="open-outline" size={18} color="#1D4ED8" />
+                      <Text style={styles.fundButtonText}>Pay with Flutterwave</Text>
+                    </>
                   )}
                 </TouchableOpacity>
               </View>
-            </View>
-          ) : (
-            <View>
-              <Text style={styles.fundSubtitle}>Fund via Card or USSD instantly.</Text>
+            )}
+          </View>
 
-              {!!error && (
-                <View style={styles.errorBox}>
-                  <Ionicons name="alert-circle" size={14} color="#FCA5A5" />
-                  <Text style={styles.errorText}>{error}</Text>
-                </View>
-              )}
-
-              <View style={styles.amountInputContainer}>
-                <Text style={styles.currencySymbol}>{CURRENCY}</Text>
-                <TextInput
-                  style={styles.amountInput}
-                  value={fundingAmount}
-                  onChangeText={setFundingAmount}
-                  placeholder="Min 100"
-                  placeholderTextColor="rgba(147, 197, 253, 0.5)"
-                  keyboardType="numeric"
-                />
-              </View>
-
-              <TouchableOpacity
-                style={[styles.fundButton, isFunding && styles.fundButtonDisabled]}
-                disabled={isFunding}
-                onPress={handleFundWithCard}
-                activeOpacity={0.8}
-              >
-                {isFunding ? (
-                  <Text style={styles.fundButtonText}>Processing...</Text>
-                ) : (
-                  <>
-                    <Ionicons name="open-outline" size={18} color="#1D4ED8" />
-                    <Text style={styles.fundButtonText}>Pay with Flutterwave</Text>
-                  </>
-                )}
-              </TouchableOpacity>
-            </View>
-          )}
-        </View>
-
-        {/* 3. Settings & Links Menu */}
-        <Text style={styles.sectionTitle}>PREFERENCES</Text>
+          {/* 3. Settings & Links Menu */}
+          {/* <Text style={styles.sectionTitle}>PREFERENCES</Text>
         <View style={styles.settingsGroup}>
           <TouchableOpacity style={styles.settingsItem}>
             <View style={styles.settingsItemLeft}>
@@ -310,16 +311,18 @@ export default function ProfileScreen() {
             </View>
             <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
           </TouchableOpacity>
-        </View>
+        </View> */}
 
-        {/* 4. Logout Button */}
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.8}>
-          <Ionicons name="log-out-outline" size={18} color="#DC2626" />
-          <Text style={styles.logoutText}>Log Out</Text>
-        </TouchableOpacity>
+          {/* 4. Logout Button */}
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.8}>
+            <Ionicons name="log-out-outline" size={18} color="#DC2626" />
+            <Text style={styles.logoutText}>Log Out</Text>
+          </TouchableOpacity>
 
-      </ScrollView>
-    </SafeAreaView>
+        </ScrollView>
+      </SafeAreaView>
+    </>
+
   );
 }
 
@@ -423,6 +426,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 1,
+    borderRadius: 9,
+    paddingVertical: 20
+
   },
   kycVerifiedText: {
     color: "#047857",

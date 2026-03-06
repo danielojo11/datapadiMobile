@@ -27,7 +27,7 @@ const _layout = () => {
           options={{
             title: "Flight",
             tabBarIcon: ({ color }) => (
-              <Ionicons size={24} name="airplane-outline" color={color} />
+              <Ionicons size={24} name="airplane-outline" color={color} style={{ transform: [{ rotate: '-45deg' }] }} />
             ),
           }}
         />

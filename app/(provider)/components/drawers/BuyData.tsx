@@ -15,8 +15,9 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { buyData, getDataPlans } from "@/app/utils/vtu";
+import TransactionPinInput from '../TransactionPinInput';
 
-type Step = 'NETWORK' | 'PLAN' | 'PHONE' | 'CONFIRM' | 'SUCCESS';
+type Step = 'NETWORK' | 'PLAN' | 'PHONE' | 'CONFIRM' | 'PIN' | 'SUCCESS';
 type NetworkId = 'MTN' | 'AIRTEL' | 'GLO' | '9MOBILE';
 
 interface UIPlan {
@@ -52,6 +53,8 @@ const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
   const [errorMessage, setErrorMessage] = useState<any>();
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [transactionPin, setTransactionPin] = useState('');
+  const [pinError, setPinError] = useState(false);
 
   useEffect(() => {
     if (visible && !apiPlans) {
@@ -91,6 +94,9 @@ const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
     setIsPurchasing(false);
     setSearchQuery('');
     setErrorMessage('');
+    setErrorMessage('');
+    setTransactionPin('');
+    setPinError(false);
   };
 
   const handleClose = () => {
@@ -150,11 +156,14 @@ const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
     p.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handlePurchase = async () => {
+  const handlePurchase = async (pin?: string) => {
     if (!selectedNetwork || !selectedPlan || !phoneNumber) return;
 
     setIsPurchasing(true);
     setErrorMessage('');
+    setPinError(false);
+
+    const pinToUse = pin || transactionPin;
 
     try {
       const networkLabel = networks.find(n => n.id === selectedNetwork)?.label || selectedNetwork;
@@ -162,7 +171,8 @@ const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
       const result = await buyData(
         networkLabel,
         selectedPlan.id,
-        phoneNumber
+        phoneNumber,
+        pinToUse
       );
       console.log('Buy Data Result:', result);
 
@@ -171,9 +181,11 @@ const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
         setStep('SUCCESS');
       } else {
         setErrorMessage(result.message || result.error || 'Transaction failed. Please try again.');
+        setPinError(true);
       }
     } catch (error: any) {
       setErrorMessage(error?.message || 'An unexpected error occurred.');
+      setPinError(true);
     } finally {
       setIsPurchasing(false);
     }
@@ -367,19 +379,41 @@ const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
 
                 <View style={styles.bottomAnchored}>
                   <TouchableOpacity
-                    style={[styles.primaryBtn, isPurchasing && styles.disabledBtn]}
-                    onPress={handlePurchase}
-                    disabled={isPurchasing}
+                    style={styles.primaryBtn}
+                    onPress={() => setStep('PIN')}
                   >
-                    {isPurchasing ? (
-                      <View style={styles.processingRow}>
-                        <ActivityIndicator size="small" color="#FFF" />
-                        <Text style={[styles.btnText, { marginLeft: 8 }]}>Processing...</Text>
-                      </View>
-                    ) : (
-                      <Text style={styles.btnText}>Confirm Purchase</Text>
-                    )}
+                    <Text style={styles.btnText}>Proceed to Enter PIN</Text>
                   </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
+            {step === 'PIN' && (
+              <View style={styles.stepContainer}>
+                <TouchableOpacity onPress={() => { setStep('CONFIRM'); setPinError(false); setErrorMessage(''); }} style={styles.backButton}>
+                  <Ionicons name="arrow-back" size={16} color="#003366" />
+                  <Text style={styles.backButtonText}>Back</Text>
+                </TouchableOpacity>
+
+                <View style={[styles.inputGroup, { marginTop: 20 }]}>
+                  <Text style={[styles.inputLabel, { textAlign: 'center', marginBottom: 20 }]}>Enter Transaction PIN</Text>
+
+                  <TransactionPinInput
+                    onComplete={(pin) => {
+                      setTransactionPin(pin);
+                      handlePurchase(pin);
+                    }}
+                    error={pinError}
+                    clearError={() => setPinError(false)}
+                    isLoading={isPurchasing}
+                  />
+
+                  {isPurchasing && (
+                    <View style={[styles.processingRow, { marginTop: 30 }]}>
+                      <ActivityIndicator size="small" color="#003366" />
+                      <Text style={{ marginLeft: 8, color: '#003366', fontWeight: '600' }}>Processing Payment...</Text>
+                    </View>
+                  )}
                 </View>
               </View>
             )}
@@ -630,6 +664,9 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#003366",
     fontSize: 15,
+  },
+  inputGroup: {
+    marginBottom: 4,
   },
   inputLabel: {
     fontWeight: "600",

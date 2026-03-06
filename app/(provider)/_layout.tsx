@@ -21,6 +21,20 @@ const _layout = () => {
           animation: "simple_push",
         }}
       />
+      <Stack.Screen
+        name="flight-history"
+        options={{
+          headerShown: false,
+          presentation: "card",
+        }}
+      />
+      <Stack.Screen
+        name="flight-details"
+        options={{
+          headerShown: false,
+          presentation: "card",
+        }}
+      />
     </Stack>
   );
 };

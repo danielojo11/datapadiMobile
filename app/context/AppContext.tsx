@@ -70,9 +70,9 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
       });
       console.log("Login response:", response);
 
-      if (response && response.data.status === "OK") {
+      if (response && response.success) {
         // Store login response
-        await AsyncStorage.setItem("login_obj", JSON.stringify(response));
+        await AsyncStorage.setItem("login_obj", JSON.stringify(response.data));
 
         // Persist auth state
         await storeAuthState(true);

@@ -14,9 +14,10 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { verifyJambProfile, buyEducationPin } from "../../../utils/vtu";
+import TransactionPinInput from '../TransactionPinInput';
 
 type Provider = 'WAEC' | 'JAMB' | 'JAMB_MOCK';
-type Step = 'PROVIDER' | 'DETAILS' | 'CONFIRM' | 'SUCCESS';
+type Step = 'PROVIDER' | 'DETAILS' | 'CONFIRM' | 'PIN' | 'SUCCESS';
 
 interface BuyEducationModalProps {
     isOpen: boolean;
@@ -43,6 +44,8 @@ const BuyEducationModal: React.FC<BuyEducationModalProps> = ({ isOpen, onClose }
     const [isPurchasing, setIsPurchasing] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [transactionData, setTransactionData] = useState<any>(null);
+    const [transactionPin, setTransactionPin] = useState('');
+    const [pinError, setPinError] = useState(false);
 
     const resetState = () => {
         setStep('PROVIDER');
@@ -54,6 +57,8 @@ const BuyEducationModal: React.FC<BuyEducationModalProps> = ({ isOpen, onClose }
         setIsVerifying(false);
         setErrorMessage('');
         setTransactionData(null);
+        setTransactionPin('');
+        setPinError(false);
     };
 
     const handleClose = () => {
@@ -112,21 +117,25 @@ const BuyEducationModal: React.FC<BuyEducationModalProps> = ({ isOpen, onClose }
         setStep('CONFIRM');
     };
 
-    const handlePurchase = async () => {
+    const handlePurchase = async (pin?: string) => {
         if (!provider) return;
 
         setIsPurchasing(true);
         setErrorMessage('');
+        setPinError(false);
 
         const product = EDUCATION_PRODUCTS[provider];
         const isJambProvider = provider === 'JAMB' || provider === 'JAMB_MOCK';
         const backendProvider = isJambProvider ? 'JAMB' : 'WAEC';
+
+        const pinToUse = pin || transactionPin;
 
         try {
             const result = await buyEducationPin(
                 backendProvider,
                 product.examType,
                 phoneNo,
+                pinToUse,
                 isJambProvider ? profileId : undefined
             );
 
@@ -140,9 +149,11 @@ const BuyEducationModal: React.FC<BuyEducationModalProps> = ({ isOpen, onClose }
                 setStep('SUCCESS');
             } else {
                 setErrorMessage(result.error || 'Transaction failed. Please try again.');
+                setPinError(true);
             }
         } catch (error: any) {
             setErrorMessage(error?.message || 'An unexpected error occurred.');
+            setPinError(true);
         } finally {
             setIsPurchasing(false);
         }
@@ -328,19 +339,41 @@ const BuyEducationModal: React.FC<BuyEducationModalProps> = ({ isOpen, onClose }
 
                                 <View style={styles.bottomAnchored}>
                                     <TouchableOpacity
-                                        style={[styles.primaryBtn, isPurchasing && styles.disabledBtn]}
-                                        onPress={handlePurchase}
-                                        disabled={isPurchasing}
+                                        style={styles.primaryBtn}
+                                        onPress={() => setStep('PIN')}
                                     >
-                                        {isPurchasing ? (
-                                            <View style={styles.processingRow}>
-                                                <ActivityIndicator size="small" color="#FFF" />
-                                                <Text style={[styles.btnText, { marginLeft: 8 }]}>Processing...</Text>
-                                            </View>
-                                        ) : (
-                                            <Text style={styles.btnText}>Confirm Purchase</Text>
-                                        )}
+                                        <Text style={styles.btnText}>Proceed to Enter PIN</Text>
                                     </TouchableOpacity>
+                                </View>
+                            </View>
+                        )}
+
+                        {step === 'PIN' && (
+                            <View style={styles.stepContainer}>
+                                <TouchableOpacity onPress={() => { setStep('CONFIRM'); setPinError(false); setErrorMessage(''); }} style={styles.backButton}>
+                                    <Ionicons name="arrow-back" size={16} color="#4F46E5" />
+                                    <Text style={styles.backButtonText}>Back</Text>
+                                </TouchableOpacity>
+
+                                <View style={[styles.inputGroup, { marginTop: 20 }]}>
+                                    <Text style={[styles.inputLabel, { textAlign: 'center', marginBottom: 20 }]}>Enter Transaction PIN</Text>
+
+                                    <TransactionPinInput
+                                        onComplete={(pin) => {
+                                            setTransactionPin(pin);
+                                            handlePurchase(pin);
+                                        }}
+                                        error={pinError}
+                                        clearError={() => setPinError(false)}
+                                        isLoading={isPurchasing}
+                                    />
+
+                                    {isPurchasing && (
+                                        <View style={[styles.processingRow, { marginTop: 30, justifyContent: 'center' }]}>
+                                            <ActivityIndicator size="small" color="#4F46E5" />
+                                            <Text style={{ marginLeft: 8, color: '#4F46E5', fontWeight: '600' }}>Processing Purchase...</Text>
+                                        </View>
+                                    )}
                                 </View>
                             </View>
                         )}

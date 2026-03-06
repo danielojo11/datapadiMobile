@@ -18,11 +18,13 @@ import { loginUser } from "./utils/auth/login";
 
 const CreateAccountScreen = () => {
   // Form state
+  const [step, setStep] = useState(1);
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [transactionPin, setTransactionPin] = useState("");
 
   // Password visibility toggles
   const [showPassword, setShowPassword] = useState(false);
@@ -43,7 +45,24 @@ const CreateAccountScreen = () => {
     }
   };
 
+  const handleNextStep = () => {
+    if (!username || !email || !phone || !password || !confirmPassword) {
+      setError("Please fill in all fields.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+    setError("");
+    setStep(2);
+  };
+
   const handleSignUp = async () => {
+    if (transactionPin.length !== 4) {
+      setError("Transaction PIN must be 4 digits.");
+      return;
+    }
     setIsLoading(true);
     setError("");
     try {
@@ -52,6 +71,7 @@ const CreateAccountScreen = () => {
         email: email.toString(),
         phoneNumber: phone.toString(),
         password: password.toString(),
+        transactionPin: transactionPin.toString(),
       });
 
       setIsLoading(false);
@@ -84,8 +104,8 @@ const CreateAccountScreen = () => {
         >
           {/* Header Section */}
           <View style={styles.header}>
-            <Text style={styles.title}>Create Account</Text>
-            <Text style={styles.subtitle}>Join MUFTI PAY today</Text>
+            <Text style={styles.title}>{step === 1 ? "Create Account" : "Create PIN"}</Text>
+            <Text style={styles.subtitle}>{step === 1 ? "Join MUFTI PAY today" : "Create your four digit pin"}</Text>
           </View>
 
           {error ? (
@@ -95,140 +115,184 @@ const CreateAccountScreen = () => {
             </View>
           ) : null}
 
-          {/* Username Input */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Username</Text>
-            <View style={styles.inputContainer}>
-              <Text style={styles.leftIcon}>
-                <Ionicons size={18} name="person-outline" />
-              </Text>
-              <TextInput
-                style={styles.input}
-                placeholder="johndoe"
-                placeholderTextColor="#9CA3AF"
-                value={username}
-                onChangeText={setUsername}
-                autoCapitalize="none"
-              />
-            </View>
-          </View>
-
-          {/* Email Input */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email Address</Text>
-            <View style={styles.inputContainer}>
-              <Text style={styles.leftIcon}>
-                <Ionicons size={18} name="mail-outline" />
-              </Text>
-              <TextInput
-                style={styles.input}
-                placeholder="you@example.com"
-                placeholderTextColor="#9CA3AF"
-                keyboardType="email-address"
-                value={email}
-                onChangeText={setEmail}
-                autoCapitalize="none"
-              />
-            </View>
-          </View>
-
-          {/* Phone Number Input */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Phone Number</Text>
-            <View style={styles.inputContainer}>
-              <Text style={styles.leftIcon}>
-                <Ionicons size={18} name="call-outline" />
-              </Text>
-              <TextInput
-                style={styles.input}
-                placeholder="08012345678"
-                placeholderTextColor="#9CA3AF"
-                keyboardType="numeric"
-                value={phone}
-                onChangeText={setPhone}
-              />
-            </View>
-          </View>
-
-          {/* Password Input */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Password</Text>
-            <View style={styles.inputContainer}>
-              <Text style={styles.leftIcon}>
-                <Ionicons size={18} name="lock-closed-outline" />
-              </Text>
-              <TextInput
-                style={styles.input}
-                placeholder="••••••••"
-                placeholderTextColor="#9CA3AF"
-                secureTextEntry={!showPassword}
-                value={password}
-                onChangeText={setPassword}
-              />
-              <TouchableOpacity
-                onPress={() => setShowPassword(!showPassword)}
-                style={styles.rightIcon}
-              >
-                <Text style={styles.eyeIcon}>
-                  <Ionicons
-                    size={18}
-                    name={showPassword ? "eye-outline" : "eye-off-outline"}
+          {step === 1 ? (
+            <>
+              {/* Username Input */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Username</Text>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.leftIcon}>
+                    <Ionicons size={18} name="person-outline" />
+                  </Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="johndoe"
+                    placeholderTextColor="#9CA3AF"
+                    value={username}
+                    onChangeText={setUsername}
+                    autoCapitalize="none"
                   />
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+                </View>
+              </View>
 
-          {/* Confirm Password Input */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Confirm Password</Text>
-            <View style={styles.inputContainer}>
-              <Text style={styles.leftIcon}>
-                <Ionicons size={18} name="lock-closed-outline" />
-              </Text>
-              <TextInput
-                style={styles.input}
-                placeholder="••••••••"
-                placeholderTextColor="#9CA3AF"
-                secureTextEntry={!showConfirmPassword}
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-              />
-              <TouchableOpacity
-                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                style={styles.rightIcon}
-              >
-                <Text style={styles.eyeIcon}>
-                  <Ionicons
-                    size={18}
-                    name={showPassword ? "eye-outline" : "eye-off-outline"}
+              {/* Email Input */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Email Address</Text>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.leftIcon}>
+                    <Ionicons size={18} name="mail-outline" />
+                  </Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="you@example.com"
+                    placeholderTextColor="#9CA3AF"
+                    keyboardType="email-address"
+                    value={email}
+                    onChangeText={setEmail}
+                    autoCapitalize="none"
                   />
-                </Text>
+                </View>
+              </View>
+
+              {/* Phone Number Input */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Phone Number</Text>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.leftIcon}>
+                    <Ionicons size={18} name="call-outline" />
+                  </Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="08012345678"
+                    placeholderTextColor="#9CA3AF"
+                    keyboardType="numeric"
+                    value={phone}
+                    onChangeText={setPhone}
+                  />
+                </View>
+              </View>
+
+              {/* Password Input */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Password</Text>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.leftIcon}>
+                    <Ionicons size={18} name="lock-closed-outline" />
+                  </Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="••••••••"
+                    placeholderTextColor="#9CA3AF"
+                    secureTextEntry={!showPassword}
+                    value={password}
+                    onChangeText={setPassword}
+                  />
+                  <TouchableOpacity
+                    onPress={() => setShowPassword(!showPassword)}
+                    style={styles.rightIcon}
+                  >
+                    <Text style={styles.eyeIcon}>
+                      <Ionicons
+                        size={18}
+                        name={showPassword ? "eye-outline" : "eye-off-outline"}
+                      />
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Confirm Password Input */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Confirm Password</Text>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.leftIcon}>
+                    <Ionicons size={18} name="lock-closed-outline" />
+                  </Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="••••••••"
+                    placeholderTextColor="#9CA3AF"
+                    secureTextEntry={!showConfirmPassword}
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                  />
+                  <TouchableOpacity
+                    onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                    style={styles.rightIcon}
+                  >
+                    <Text style={styles.eyeIcon}>
+                      <Ionicons
+                        size={18}
+                        name={showPassword ? "eye-outline" : "eye-off-outline"}
+                      />
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Next Step Button */}
+              <TouchableOpacity
+                style={styles.signUpButton}
+                activeOpacity={0.8}
+                onPress={handleNextStep}
+              >
+                <Text style={styles.signUpButtonText}>Next</Text>
               </TouchableOpacity>
-            </View>
-          </View>
 
-          {/* Sign Up Button */}
-          <TouchableOpacity
-            style={styles.signUpButton}
-            activeOpacity={0.8}
-            onPress={() => handleSignUp()}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <Text style={styles.signUpButtonText}>Sign Up</Text>
-            )}
-          </TouchableOpacity>
+              {/* Footer Login Link */}
+              <View style={styles.footer}>
+                <Text style={styles.footerText}>Already have an account? </Text>
+                <TouchableOpacity onPress={() => router.push("/login")}>
+                  <Text style={styles.loginLink}>Log in</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          ) : (
+            <>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Transaction PIN</Text>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.leftIcon}>
+                    <Ionicons size={18} name="keypad-outline" />
+                  </Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="••••"
+                    placeholderTextColor="#9CA3AF"
+                    keyboardType="number-pad"
+                    secureTextEntry
+                    maxLength={4}
+                    value={transactionPin}
+                    onChangeText={(text) => setTransactionPin(text.replace(/[^0-9]/g, ''))}
+                  />
+                </View>
+                <Text style={{ marginTop: 8, fontSize: 12, color: "#6B7280" }}>
+                  <Ionicons name="information-circle-outline" size={12} /> You will use this PIN to confirm airtime, data, and bill payments.
+                </Text>
+              </View>
 
-          {/* Footer Login Link */}
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>Already have an account? </Text>
-            <TouchableOpacity onPress={() => router.push("/login")}>
-              <Text style={styles.loginLink}>Log in</Text>
-            </TouchableOpacity>
-          </View>
+              <TouchableOpacity
+                style={styles.signUpButton}
+                activeOpacity={0.8}
+                onPress={handleSignUp}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.signUpButtonText}>Create Account</Text>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.signUpButton, { backgroundColor: 'transparent', borderWidth: 1, borderColor: '#D1D5DB', marginTop: -10 }]}
+                activeOpacity={0.8}
+                onPress={() => setStep(1)}
+              >
+                <Text style={[styles.signUpButtonText, { color: '#374151' }]}>Back</Text>
+              </TouchableOpacity>
+            </>
+          )}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

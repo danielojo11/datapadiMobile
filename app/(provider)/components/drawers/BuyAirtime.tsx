@@ -14,8 +14,9 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { buyAirtime } from "@/app/utils/vtu";
+import TransactionPinInput from '../TransactionPinInput';
 
-type Step = 'NETWORK' | 'DETAILS' | 'CONFIRM' | 'SUCCESS';
+type Step = 'NETWORK' | 'DETAILS' | 'CONFIRM' | 'PIN' | 'SUCCESS';
 type NetworkId = 'MTN' | 'AIRTEL' | 'GLO' | '9MOBILE';
 
 type BuyAirtimeProps = {
@@ -40,6 +41,8 @@ const BuyAirtime: React.FC<BuyAirtimeProps> = ({ visible, onClose }) => {
   const [amount, setAmount] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [transactionPin, setTransactionPin] = useState('');
+  const [pinError, setPinError] = useState(false);
 
   useEffect(() => {
     if (!visible) {
@@ -54,6 +57,9 @@ const BuyAirtime: React.FC<BuyAirtimeProps> = ({ visible, onClose }) => {
     setAmount('');
     setIsLoading(false);
     setErrorMessage('');
+    setErrorMessage('');
+    setTransactionPin('');
+    setPinError(false);
   };
 
   const handleClose = () => {
@@ -67,11 +73,14 @@ const BuyAirtime: React.FC<BuyAirtimeProps> = ({ visible, onClose }) => {
     setStep('DETAILS');
   };
 
-  const handlePurchase = async () => {
+  const handlePurchase = async (pin?: string) => {
     if (!selectedNetwork || !amount || !phoneNumber) return;
 
     setIsLoading(true);
     setErrorMessage('');
+    setPinError(false);
+
+    const pinToUse = pin || transactionPin;
 
     try {
       const networkLabel = networks.find(n => n.id === selectedNetwork)?.label || selectedNetwork;
@@ -79,7 +88,8 @@ const BuyAirtime: React.FC<BuyAirtimeProps> = ({ visible, onClose }) => {
       const result = await buyAirtime(
         networkLabel,
         Number(amount),
-        phoneNumber
+        phoneNumber,
+        pinToUse
       );
 
       if (result && result.success) {
@@ -87,9 +97,11 @@ const BuyAirtime: React.FC<BuyAirtimeProps> = ({ visible, onClose }) => {
         setStep('SUCCESS');
       } else {
         setErrorMessage(result?.message || result?.error || 'Transaction failed. Please try again.');
+        setPinError(true);
       }
     } catch (error: any) {
       setErrorMessage(error?.message || 'A network error occurred. Please check your connection.');
+      setPinError(true);
     } finally {
       setIsLoading(false);
     }
@@ -270,19 +282,41 @@ const BuyAirtime: React.FC<BuyAirtimeProps> = ({ visible, onClose }) => {
 
                 <View style={styles.bottomAnchored}>
                   <TouchableOpacity
-                    style={[styles.primaryBtn, isLoading && styles.disabledBtn]}
-                    onPress={handlePurchase}
-                    disabled={isLoading}
+                    style={styles.primaryBtn}
+                    onPress={() => setStep('PIN')}
                   >
-                    {isLoading ? (
-                      <View style={styles.processingRow}>
-                        <ActivityIndicator size="small" color="#FFF" />
-                        <Text style={[styles.btnText, { marginLeft: 8 }]}>Processing Payment...</Text>
-                      </View>
-                    ) : (
-                      <Text style={styles.btnText}>Confirm & Pay</Text>
-                    )}
+                    <Text style={styles.btnText}>Proceed to Enter PIN</Text>
                   </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
+            {step === 'PIN' && (
+              <View style={styles.stepContainer}>
+                <TouchableOpacity onPress={() => { setStep('CONFIRM'); setPinError(false); setErrorMessage(''); }} style={styles.backButton}>
+                  <Ionicons name="arrow-back" size={16} color="#003366" />
+                  <Text style={styles.backButtonText}>Back</Text>
+                </TouchableOpacity>
+
+                <View style={[styles.inputGroup, { marginTop: 20 }]}>
+                  <Text style={[styles.inputLabel, { textAlign: 'center', marginBottom: 20 }]}>Enter Transaction PIN</Text>
+
+                  <TransactionPinInput
+                    onComplete={(pin) => {
+                      setTransactionPin(pin);
+                      handlePurchase(pin);
+                    }}
+                    error={pinError}
+                    clearError={() => setPinError(false)}
+                    isLoading={isLoading}
+                  />
+
+                  {isLoading && (
+                    <View style={[styles.processingRow, { marginTop: 30 }]}>
+                      <ActivityIndicator size="small" color="#003366" />
+                      <Text style={{ marginLeft: 8, color: '#003366', fontWeight: '600' }}>Processing Payment...</Text>
+                    </View>
+                  )}
                 </View>
               </View>
             )}

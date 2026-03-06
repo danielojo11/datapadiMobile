@@ -17,11 +17,15 @@ export async function loginUser(formData: { email: string; password: string }) {
     AsyncStorage.setItem("refreshToken", data.refreshToken);
 
     return {
+      success: true,
       data,
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Login error:", error);
 
-    return { success: false, error: "Failed to connect to the server" };
+    return {
+      success: false,
+      error: error?.response?.data?.message || "Failed to connect to the server"
+    };
   }
 }

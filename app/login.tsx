@@ -37,9 +37,13 @@ const LoginScreen: React.FC = () => {
         }),
       );
 
-      await authState.login();
-    } catch (error) {
+      const response = await authState.login();
+      if (response && response.success === false) {
+        setError(response.error || "Login failed");
+      }
+    } catch (error: any) {
       console.log("Login error:", error);
+      setError(error?.message || "An unexpected error occurred");
     } finally {
       setLoading(false);
     }

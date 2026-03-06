@@ -77,12 +77,14 @@ export async function buyData(
   network: string,
   planId: string,
   phoneNumber: string,
+  transactionPin: string,
 ) {
   try {
     const response = await api.post("vtu/data", {
       network,
       planId,
       phoneNumber,
+      transactionPin,
     });
 
     console.log("Network: ", network);
@@ -132,6 +134,7 @@ export async function buyAirtime(
   network: string,
   amount: number,
   phoneNumber: string,
+  transactionPin: string,
 ): Promise<VtuResponse> {
   try {
     const response = await api.post("vtu/airtime", {
@@ -139,6 +142,7 @@ export async function buyAirtime(
       network,
       amount,
       phoneNumber,
+      transactionPin,
     });
 
     const result = await response.data;
@@ -273,12 +277,13 @@ export async function verifyJambProfile(profileId: string) {
 /**
  * Buy Education PIN (WAEC / JAMB)
  */
-export async function buyEducationPin(provider: string, examType: string, phoneNo: string, profileId?: string) {
+export async function buyEducationPin(provider: string, examType: string, phoneNo: string, transactionPin: string, profileId?: string) {
   try {
     const payload: any = {
       provider,
       examType,
-      phoneNo
+      phoneNo,
+      transactionPin
     };
 
     if (profileId) {

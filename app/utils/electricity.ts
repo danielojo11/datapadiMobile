@@ -23,6 +23,7 @@ export interface ElectricityPaymentPayload {
   meterType: "01" | "02"; // "01" = Prepaid | "02" = Postpaid
   amount: number;
   phoneNo: string;
+  transactionPin: string;
 }
 
 export interface ElectricityPaymentResponse {

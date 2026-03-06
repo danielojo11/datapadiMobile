@@ -60,7 +60,7 @@ export default function Index() {
       }
 
       const parsed = JSON.parse(login_obj);
-      const user = parsed?.data?.user;
+      const user = parsed?.user;
 
       if (!user) {
         console.log("Invalid credential structure:", parsed);

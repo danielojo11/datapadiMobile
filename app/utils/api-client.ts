@@ -20,7 +20,7 @@ export async function authorizedFetch(
 
   let response = await fetch(`${BACKEND_URL}${endpoint}`, {
     ...options,
-    headers: getHeaders(accessToken),
+    headers: getHeaders(accessToken || undefined),
   });
 
   // Handle unauthorized (expired accessToken)

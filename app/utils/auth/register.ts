@@ -6,6 +6,7 @@ export async function registerUser(formData: {
   email: string;
   phoneNumber: string;
   password: string;
+  transactionPin: string;
 }) {
   // Grab the base URL from your .env file
   const BACKEND_URL = process.env.BACKEND_URL;

@@ -21,13 +21,14 @@ import {
     CablePackagesResponse,
     CablePackage,
 } from "../../../utils/cable";
+import TransactionPinInput from '../TransactionPinInput';
 
 interface BuyCableModalProps {
     isOpen: boolean;
     onClose: () => void;
 }
 
-type Step = 'PROVIDER' | 'DETAILS' | 'CONFIRM' | 'SUCCESS';
+type Step = 'PROVIDER' | 'DETAILS' | 'CONFIRM' | 'PIN' | 'SUCCESS';
 
 interface UIPlan {
     id: string;
@@ -61,6 +62,8 @@ const CableTV: React.FC<BuyCableModalProps> = ({ isOpen, onClose }) => {
     const [isProcessing, setIsProcessing] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [refreshing, setRefreshing] = useState(false);
+    const [transactionPin, setTransactionPin] = useState('');
+    const [pinError, setPinError] = useState(false);
 
     const selectedProvider = CABLE_PROVIDERS.find(p => p.id === providerId);
 
@@ -101,6 +104,8 @@ const CableTV: React.FC<BuyCableModalProps> = ({ isOpen, onClose }) => {
         setIsValidating(false);
         setIsProcessing(false);
         setErrorMessage('');
+        setTransactionPin('');
+        setPinError(false);
     };
 
     const handleClose = () => {
@@ -166,7 +171,7 @@ const CableTV: React.FC<BuyCableModalProps> = ({ isOpen, onClose }) => {
         p.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    const handlePurchase = async () => {
+    const handlePurchase = async (pin?: string) => {
         if (!selectedPlan) return;
 
         if (!phoneNumber || phoneNumber.length < 10) {
@@ -176,12 +181,16 @@ const CableTV: React.FC<BuyCableModalProps> = ({ isOpen, onClose }) => {
 
         setIsProcessing(true);
         setErrorMessage('');
+        setPinError(false);
+
+        const pinToUse = pin || transactionPin;
 
         const res = await payCableSubscription({
             cableTV: providerId,
             packageCode: selectedPlan.id,
             smartCardNo: smartCardNumber,
-            phoneNo: phoneNumber
+            phoneNo: phoneNumber,
+            transactionPin: pinToUse
         });
 
         setIsProcessing(false);
@@ -191,6 +200,7 @@ const CableTV: React.FC<BuyCableModalProps> = ({ isOpen, onClose }) => {
             setStep('SUCCESS');
         } else {
             setErrorMessage(res.error || 'Transaction failed. Please try again.');
+            setPinError(true);
         }
     };
 
@@ -423,19 +433,41 @@ const CableTV: React.FC<BuyCableModalProps> = ({ isOpen, onClose }) => {
 
                                 <View style={styles.bottomAnchored}>
                                     <TouchableOpacity
-                                        style={[styles.primaryBtn, isProcessing && styles.disabledBtn]}
-                                        onPress={handlePurchase}
-                                        disabled={isProcessing}
+                                        style={styles.primaryBtn}
+                                        onPress={() => setStep('PIN')}
                                     >
-                                        {isProcessing ? (
-                                            <View style={styles.processingRow}>
-                                                <ActivityIndicator size="small" color="#FFF" />
-                                                <Text style={[styles.btnText, { marginLeft: 8 }]}>Processing Payment...</Text>
-                                            </View>
-                                        ) : (
-                                            <Text style={styles.btnText}>Confirm & Pay</Text>
-                                        )}
+                                        <Text style={styles.btnText}>Proceed to Enter PIN</Text>
                                     </TouchableOpacity>
+                                </View>
+                            </View>
+                        )}
+
+                        {step === 'PIN' && (
+                            <View style={styles.stepContainer}>
+                                <TouchableOpacity onPress={() => { setStep('CONFIRM'); setPinError(false); setErrorMessage(''); }} style={styles.backButton}>
+                                    <Ionicons name="arrow-back" size={16} color="#9333EA" />
+                                    <Text style={[styles.backButtonText, { color: '#9333EA' }]}>Back</Text>
+                                </TouchableOpacity>
+
+                                <View style={[styles.inputGroup, { marginTop: 20 }]}>
+                                    <Text style={[styles.inputLabel, { textAlign: 'center', marginBottom: 20 }]}>Enter Transaction PIN</Text>
+
+                                    <TransactionPinInput
+                                        onComplete={(pin) => {
+                                            setTransactionPin(pin);
+                                            handlePurchase(pin);
+                                        }}
+                                        error={pinError}
+                                        clearError={() => setPinError(false)}
+                                        isLoading={isProcessing}
+                                    />
+
+                                    {isProcessing && (
+                                        <View style={[styles.processingRow, { marginTop: 30 }]}>
+                                            <ActivityIndicator size="small" color="#9333EA" />
+                                            <Text style={{ marginLeft: 8, color: '#9333EA', fontWeight: '600' }}>Processing Payment...</Text>
+                                        </View>
+                                    )}
                                 </View>
                             </View>
                         )}
@@ -583,6 +615,9 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: "600",
         marginLeft: 6,
+    },
+    inputGroup: {
+        marginBottom: 4,
     },
     inputLabel: {
         fontWeight: "600",

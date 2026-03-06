@@ -20,8 +20,9 @@ import {
   payElectricity,
   DiscoProvider,
 } from "../../../utils/electricity";
+import TransactionPinInput from '../TransactionPinInput';
 
-type Step = 'PROVIDER' | 'DETAILS' | 'CONFIRM' | 'SUCCESS';
+type Step = 'PROVIDER' | 'DETAILS' | 'CONFIRM' | 'PIN' | 'SUCCESS';
 
 interface BuyElectricityModalProps {
   isOpen: boolean;
@@ -48,6 +49,8 @@ const BuyElectricityModal: React.FC<BuyElectricityModalProps> = ({ isOpen, onClo
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [transactionPin, setTransactionPin] = useState('');
+  const [pinError, setPinError] = useState(false);
 
   const selectedProvider = discos.find(p => p.id === providerId);
 
@@ -94,6 +97,9 @@ const BuyElectricityModal: React.FC<BuyElectricityModalProps> = ({ isOpen, onClo
     setIsValidating(false);
     setIsProcessing(false);
     setErrorMessage('');
+    setErrorMessage('');
+    setTransactionPin('');
+    setPinError(false);
   };
 
   const handleClose = () => {
@@ -134,7 +140,7 @@ const BuyElectricityModal: React.FC<BuyElectricityModalProps> = ({ isOpen, onClo
     }
   };
 
-  const handlePurchase = async () => {
+  const handlePurchase = async (pin?: string) => {
     const purchaseAmount = parseFloat(amount);
 
     if (!phoneNumber || phoneNumber.length < 10) {
@@ -145,12 +151,9 @@ const BuyElectricityModal: React.FC<BuyElectricityModalProps> = ({ isOpen, onClo
 
     setIsProcessing(true);
     setErrorMessage('');
+    setPinError(false);
 
-    console.log("providerId", providerId)
-    console.log("meterNumber", meterNumber)
-    console.log("meterType", meterType)
-    console.log("amount", amount)
-    console.log("phoneNumber", phoneNumber)
+    const pinToUse = pin || transactionPin;
 
     try {
       const res = await payElectricity({
@@ -158,7 +161,8 @@ const BuyElectricityModal: React.FC<BuyElectricityModalProps> = ({ isOpen, onClo
         meterNo: meterNumber,
         meterType: meterType === 'PREPAID' ? '01' : '02',
         amount: purchaseAmount,
-        phoneNo: phoneNumber
+        phoneNo: phoneNumber,
+        transactionPin: pinToUse
       });
 
       if (res.success) {
@@ -169,9 +173,11 @@ const BuyElectricityModal: React.FC<BuyElectricityModalProps> = ({ isOpen, onClo
         setStep('SUCCESS');
       } else {
         setErrorMessage(res.error || 'Transaction failed. Please try again.');
+        setPinError(true);
       }
     } catch (error: any) {
       setErrorMessage(error?.message || 'An unexpected error occurred.');
+      setPinError(true);
     } finally {
       setIsProcessing(false);
     }
@@ -419,19 +425,41 @@ const BuyElectricityModal: React.FC<BuyElectricityModalProps> = ({ isOpen, onClo
 
                 <View style={styles.bottomAnchored}>
                   <TouchableOpacity
-                    style={[styles.primaryBtn, isProcessing && styles.disabledBtn]}
-                    onPress={handlePurchase}
-                    disabled={isProcessing}
+                    style={styles.primaryBtn}
+                    onPress={() => setStep('PIN')}
                   >
-                    {isProcessing ? (
-                      <View style={styles.processingRow}>
-                        <ActivityIndicator size="small" color="#FFF" />
-                        <Text style={[styles.btnText, { marginLeft: 8 }]}>Processing Payment...</Text>
-                      </View>
-                    ) : (
-                      <Text style={styles.btnText}>Confirm & Pay</Text>
-                    )}
+                    <Text style={styles.btnText}>Proceed to Enter PIN</Text>
                   </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
+            {step === 'PIN' && (
+              <View style={styles.stepContainer}>
+                <TouchableOpacity onPress={() => { setStep('CONFIRM'); setPinError(false); setErrorMessage(''); }} style={styles.backButton}>
+                  <Ionicons name="arrow-back" size={16} color="#003366" />
+                  <Text style={styles.backButtonText}>Back</Text>
+                </TouchableOpacity>
+
+                <View style={[styles.inputGroup, { marginTop: 20 }]}>
+                  <Text style={[styles.inputLabel, { textAlign: 'center', marginBottom: 20 }]}>Enter Transaction PIN</Text>
+
+                  <TransactionPinInput
+                    onComplete={(pin) => {
+                      setTransactionPin(pin);
+                      handlePurchase(pin);
+                    }}
+                    error={pinError}
+                    clearError={() => setPinError(false)}
+                    isLoading={isProcessing}
+                  />
+
+                  {isProcessing && (
+                    <View style={[styles.processingRow, { marginTop: 30 }]}>
+                      <ActivityIndicator size="small" color="#003366" />
+                      <Text style={{ marginLeft: 8, color: '#003366', fontWeight: '600' }}>Processing Payment...</Text>
+                    </View>
+                  )}
                 </View>
               </View>
             )}
@@ -597,6 +625,9 @@ const styles = StyleSheet.create({
   },
   toggleTextActive: {
     color: "#B45309",
+  },
+  inputGroup: {
+    marginBottom: 4,
   },
   inputLabel: {
     fontWeight: "600",

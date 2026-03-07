@@ -21,6 +21,7 @@ import { initializeGatewayFunding } from "@/app/utils/payment";
 import { AuthContext } from "@/app/context/AppContext";
 import ActionRequired from "../components/drawers/ActionRequired";
 import WebScreen from "../components/WebViewer";
+import ResetPinModal from "../components/drawers/ResetPinModal";
 
 const CURRENCY = "₦";
 
@@ -53,6 +54,7 @@ export default function ProfileScreen() {
   const [isFunding, setIsFunding] = useState(false);
   const [error, setError] = useState("");
 
+  const [resetPinModalVisible, setResetPinModalVisible] = useState(false);
 
   const loadProfile = async () => {
     try {
@@ -159,6 +161,10 @@ export default function ProfileScreen() {
         <ActionRequired
           visible={warningModalVisisbility}
           onClose={() => { setWarningModalVisibility(false); onRefresh() }}
+        />
+        <ResetPinModal
+          visible={resetPinModalVisible}
+          onClose={() => setResetPinModalVisible(false)}
         />
 
         <ScrollView
@@ -267,7 +273,7 @@ export default function ProfileScreen() {
                   ) : (
                     <>
                       <Ionicons name="open-outline" size={18} color="#1D4ED8" />
-                      <Text style={styles.fundButtonText}>Pay with Flutterwave</Text>
+                      <Text style={styles.fundButtonText}>Fund Account</Text>
                     </>
                   )}
                 </TouchableOpacity>
@@ -276,42 +282,42 @@ export default function ProfileScreen() {
           </View>
 
           {/* 3. Settings & Links Menu */}
-          {/* <Text style={styles.sectionTitle}>PREFERENCES</Text>
-        <View style={styles.settingsGroup}>
-          <TouchableOpacity style={styles.settingsItem}>
-            <View style={styles.settingsItemLeft}>
-              <View style={styles.settingsIconBox}>
-                <Ionicons name="shield-outline" size={18} color="#475569" />
+          <Text style={styles.sectionTitle}>SETTINGS</Text>
+          <View style={styles.settingsGroup}>
+            <TouchableOpacity style={styles.settingsItem} onPress={() => setResetPinModalVisible(true)}>
+              <View style={styles.settingsItemLeft}>
+                <View style={styles.settingsIconBox}>
+                  <Ionicons name="lock-open-outline" size={18} color="#475569" />
+                </View>
+                <Text style={styles.settingsItemText}>Reset PIN</Text>
               </View>
-              <Text style={styles.settingsItemText}>Security & Passwords</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
-          </TouchableOpacity>
+              <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
+            </TouchableOpacity>
 
-          <View style={styles.divider} />
+            <View style={styles.divider} />
 
-          <TouchableOpacity style={styles.settingsItem}>
-            <View style={styles.settingsItemLeft}>
-              <View style={styles.settingsIconBox}>
-                <Ionicons name="notifications-outline" size={18} color="#475569" />
+            {/* <TouchableOpacity style={styles.settingsItem}>
+              <View style={styles.settingsItemLeft}>
+                <View style={styles.settingsIconBox}>
+                  <Ionicons name="notifications-outline" size={18} color="#475569" />
+                </View>
+                <Text style={styles.settingsItemText}>Notifications</Text>
               </View>
-              <Text style={styles.settingsItemText}>Notifications</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
-          </TouchableOpacity>
+              <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
+            </TouchableOpacity> */}
 
-          <View style={styles.divider} />
+            <View style={styles.divider} />
 
-          <TouchableOpacity style={styles.settingsItem}>
-            <View style={styles.settingsItemLeft}>
-              <View style={styles.settingsIconBox}>
-                <Ionicons name="help-circle-outline" size={18} color="#475569" />
+            <TouchableOpacity style={styles.settingsItem} onPress={() => router.push("/(provider)/help-support")}>
+              <View style={styles.settingsItemLeft}>
+                <View style={styles.settingsIconBox}>
+                  <Ionicons name="help-circle-outline" size={18} color="#475569" />
+                </View>
+                <Text style={styles.settingsItemText}>Help & Support</Text>
               </View>
-              <Text style={styles.settingsItemText}>Help & Support</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
-          </TouchableOpacity>
-        </View> */}
+              <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
+            </TouchableOpacity>
+          </View>
 
           {/* 4. Logout Button */}
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} activeOpacity={0.8}>

@@ -23,7 +23,6 @@ export interface CablePaymentPayload {
     cableTV: string;
     packageCode: string;
     smartCardNo: string;
-    phoneNo: string;
     transactionPin: string;
 }
 
@@ -73,10 +72,12 @@ export async function verifySmartCard(
         );
         console.log("smartcard verification", response);
         const result = await response.data;
+        console.log("Cable TV handler", result)
 
         return {
             success: true,
             customerName: result.data?.customer_name || result.customerName || result.data?.customerName,
+            dueDate: result.data?.dueDate || result.dueDate || result.data?.dueDate,
         };
     } catch (error: any) {
         console.error("Smartcard Verification Error:", error);

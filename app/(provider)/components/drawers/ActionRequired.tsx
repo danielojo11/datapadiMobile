@@ -22,28 +22,28 @@ const IdentityVerification = ({
 }) => {
   const [bvn, setBvn] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | boolean>(false);
+  const router = useRouter();
 
   const handleVerifyBVN = async () => {
     try {
       setLoading(true);
+      setError(false);
       const result = await verifyBVN(bvn);
       console.log("BVN Verification Result: ", result)
       setLoading(false);
       if (!result.success) {
-
-        setError(result.error);
+        setError(true);
       } else {
         onClose();
-        // router.push("/(provider)/(tabs)/profile")
+        router.push("/(provider)/(tabs)/profile")
       }
-    } catch (error) {
-      setError("Failed to verify BVN");
+    } catch (err: any) {
+      setError(err?.message || true);
       // router.push("/(provider)/(tabs)/profile")
     } finally {
       setLoading(false);
     }
-
   };
 
   const formatBVN = (value: string) => {
@@ -82,22 +82,19 @@ const IdentityVerification = ({
             </Text>
 
             {/* Error Banner */}
-            <View style={styles.errorBox}>
-              <Ionicons
-                name="alert-circle-outline"
-                size={18}
-                color="#E53935"
-                style={{ marginRight: 8 }}
-              />
-              <Text style={styles.errorText}>
-                Failed to create dedicated account. Please check your BVN.
-              </Text>
-            </View>
+
 
             {error && (
               <View style={styles.errorBox}>
-                <Ionicons name="alert-circle-outline" size={18} color="#E53935" />
-                <Text style={styles.errorText}>{error}</Text>
+                <Ionicons
+                  name="alert-circle-outline"
+                  size={18}
+                  color="#E53935"
+                  style={{ marginRight: 8 }}
+                />
+                <Text style={styles.errorText}>
+                  {typeof error === "string" ? error : "Failed to create dedicated account. Please check your BVN."}
+                </Text>
               </View>
             )}
 

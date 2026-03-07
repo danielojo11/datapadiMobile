@@ -18,6 +18,7 @@ const FlightDetails = () => {
     const params = useLocalSearchParams();
     const [flight, setFlight] = useState<FlightRequestItem | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
 
     useEffect(() => {
         if (params.flightData) {
@@ -52,16 +53,17 @@ const FlightDetails = () => {
                     onPress: async () => {
                         if (!flight?.id) return;
                         setIsSubmitting(true);
+                        setErrorMessage('');
                         try {
                             const res = await cancelFlightRequest(flight.id);
                             if (res.success) {
                                 Alert.alert('Success', 'Flight request cancelled successfully.');
                                 setFlight((prev) => prev ? { ...prev, status: 'CANCELLED' } : null);
                             } else {
-                                Alert.alert('Error', res.error || 'Failed to cancel request.');
+                                setErrorMessage(res.error || 'Failed to cancel request.');
                             }
                         } catch (error) {
-                            Alert.alert('Error', 'An error occurred.');
+                            setErrorMessage('An error occurred.');
                         } finally {
                             setIsSubmitting(false);
                         }
@@ -151,6 +153,12 @@ const FlightDetails = () => {
 
             {/* Bottom Section */}
             <View style={styles.bottomSection}>
+                {errorMessage ? (
+                    <View style={styles.errorBox}>
+                        <Ionicons name="alert-circle-outline" size={18} color="#E53935" />
+                        <Text style={styles.errorText}>{errorMessage}</Text>
+                    </View>
+                ) : null}
                 <View style={styles.loadingCircleContainer}>
                     <View style={styles.loadingCircle}>
                         {
@@ -381,7 +389,22 @@ const styles = StyleSheet.create({
         color: '#64748B',
         textAlign: 'center',
         lineHeight: 22,
-    }
+    },
+    errorBox: {
+        backgroundColor: "#FEE2E2",
+        borderRadius: 12,
+        padding: 12,
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 16,
+        width: '100%',
+    },
+    errorText: {
+        color: "#B91C1C",
+        fontSize: 14,
+        marginLeft: 8,
+        flex: 1,
+    },
 });
 
 export default FlightDetails;

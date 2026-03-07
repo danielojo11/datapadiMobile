@@ -35,6 +35,13 @@ const _layout = () => {
           presentation: "card",
         }}
       />
+      <Stack.Screen
+        name="help-support"
+        options={{
+          headerShown: false,
+          presentation: "card",
+        }}
+      />
     </Stack>
   );
 };

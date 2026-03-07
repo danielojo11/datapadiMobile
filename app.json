@@ -41,6 +41,15 @@
           }
         }
       ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableProguardInReleaseBuilds": true,
+            "enableR8": true
+          }
+        }
+      ],
       "@react-native-community/datetimepicker"
     ],
     "experiments": {

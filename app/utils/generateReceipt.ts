@@ -25,16 +25,52 @@ const generateReceipt = async (transaction: any) => {
         </div>
     `;
 
-    const token = transaction.token || transaction.metadata?.token || transaction.pin || transaction.metadata?.pin;
-    if (transaction.type === 'ELECTRICITY' && token) {
-        detailsHtml += `
-            <div class="row">
-                <span class="label">Token</span>
-                <span class="value" style="color: #059669; font-size: 18px; font-weight: bold; letter-spacing: 2px;">
-                    ${token}
-                </span>
-            </div>
-        `;
+    if (transaction.type === 'ELECTRICITY') {
+        const token = transaction.token || transaction.metadata?.token || transaction.pin || transaction.metadata?.pin;
+        const units = transaction.units || transaction.metadata?.units;
+        const meterNumber = transaction.meterNumber || transaction.metadata?.meterNumber || transaction.metadata?.meterNo;
+
+        if (token || units || meterNumber) {
+            detailsHtml += `
+                <div style="margin-top: 16px; margin-bottom: 16px; padding: 20px; background-color: #F8FAFC; border: 1px solid #F1F5F9; border-radius: 16px;">
+                    <div style="font-size: 12px; color: #94A3B8; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 16px;">
+                        DETAILS
+                    </div>
+            `;
+
+            if (token) {
+                detailsHtml += `
+                    <div class="row" style="padding: 8px 0; border-bottom: none;">
+                        <span class="label" style="color: #64748B;">Token</span>
+                        <span class="value" style="font-family: 'Courier New', Courier, monospace; font-size: 16px; font-weight: 800; color: #0F172A; letter-spacing: 0.5px;">
+                            ${token}
+                        </span>
+                    </div>
+                `;
+            }
+            if (units) {
+                detailsHtml += `
+                    <div class="row" style="padding: 8px 0; border-bottom: none;">
+                        <span class="label" style="color: #64748B;">Units</span>
+                        <span class="value" style="font-family: 'Courier New', Courier, monospace; font-size: 15px; font-weight: 800; color: #0F172A;">
+                            ${units}
+                        </span>
+                    </div>
+                `;
+            }
+            if (meterNumber) {
+                detailsHtml += `
+                    <div class="row" style="padding: 8px 0; border-bottom: none;">
+                        <span class="label" style="color: #64748B;">Meter No</span>
+                        <span class="value" style="font-family: 'Courier New', Courier, monospace; font-size: 15px; font-weight: 800; color: #0F172A;">
+                            ${meterNumber}
+                        </span>
+                    </div>
+                `;
+            }
+
+            detailsHtml += `</div>`;
+        }
     }
 
     if (transaction.metadata?.planName) {

@@ -40,7 +40,6 @@ const CABLE_PROVIDERS = [
     { id: 'dstv', name: 'DStv', themeBg: '#E0E7FF', themeText: '#2563EB' },
     { id: 'gotv', name: 'GOtv', themeBg: '#DCFCE7', themeText: '#16A34A' },
     { id: 'startimes', name: 'StarTimes', themeBg: '#FFEDD5', themeText: '#EA580C' },
-    { id: 'showmax', name: 'Showmax', themeBg: '#F3E8FF', themeText: '#9333EA' }
 ];
 
 const CURRENCY = "₦";
@@ -51,11 +50,11 @@ const CableTV: React.FC<BuyCableModalProps> = ({ isOpen, onClose }) => {
 
     const [providerId, setProviderId] = useState('');
     const [smartCardNumber, setSmartCardNumber] = useState('');
-    const [phoneNumber, setPhoneNumber] = useState('');
     const [selectedPlan, setSelectedPlan] = useState<UIPlan | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
 
     const [customerName, setCustomerName] = useState('');
+    const [dueDate, setDueDate] = useState('');
     const [isLoadingPackages, setIsLoadingPackages] = useState(false);
     const [isValidating, setIsValidating] = useState(false);
     const [isValidated, setIsValidated] = useState(false);
@@ -96,10 +95,10 @@ const CableTV: React.FC<BuyCableModalProps> = ({ isOpen, onClose }) => {
         setStep('PROVIDER');
         setProviderId('');
         setSmartCardNumber('');
-        setPhoneNumber('');
         setSelectedPlan(null);
         setSearchQuery('');
         setCustomerName('');
+        setDueDate('')
         setIsValidated(false);
         setIsValidating(false);
         setIsProcessing(false);
@@ -129,12 +128,13 @@ const CableTV: React.FC<BuyCableModalProps> = ({ isOpen, onClose }) => {
         setErrorMessage('');
 
         const res = await verifySmartCard(providerId, smartCardNumber);
-
-        if (res.success && res.customerName) {
+        console.log("Cable TV", res)
+        if (res.success) {
             setCustomerName(res.customerName);
+            setDueDate(res.dueDate);
             setIsValidated(true);
         } else {
-            setErrorMessage(res.error || 'Unable to verify smartcard. Please check your details.');
+            setErrorMessage(res.error);
             setIsValidated(false);
         }
         setIsValidating(false);
@@ -174,10 +174,7 @@ const CableTV: React.FC<BuyCableModalProps> = ({ isOpen, onClose }) => {
     const handlePurchase = async (pin?: string) => {
         if (!selectedPlan) return;
 
-        if (!phoneNumber || phoneNumber.length < 10) {
-            setErrorMessage('Please provide a valid contact phone number');
-            return;
-        }
+
 
         setIsProcessing(true);
         setErrorMessage('');
@@ -189,7 +186,6 @@ const CableTV: React.FC<BuyCableModalProps> = ({ isOpen, onClose }) => {
             cableTV: providerId,
             packageCode: selectedPlan.id,
             smartCardNo: smartCardNumber,
-            phoneNo: phoneNumber,
             transactionPin: pinToUse
         });
 
@@ -321,28 +317,16 @@ const CableTV: React.FC<BuyCableModalProps> = ({ isOpen, onClose }) => {
                                                 <Ionicons name="checkmark-circle" size={24} color="#10B981" />
                                                 <View style={styles.verifiedTextCol}>
                                                     <Text style={styles.verifiedLabel}>VERIFIED CUSTOMER</Text>
-                                                    <Text style={styles.verifiedName}>{customerName}</Text>
+                                                    <View style={{ flexDirection: 'row', justifyContent: "space-between" }}>
+                                                        <Text style={styles.verifiedName}>{customerName} {"   "}</Text>
+                                                        <Text style={styles.verifiedName}>Due Date:{dueDate}</Text>
+                                                    </View>
                                                 </View>
                                             </View>
 
 
-                                            {/* Contact Phone Number */}
                                             <View>
-                                                <Text style={[styles.inputLabel, { marginTop: 16 }]}>Contact Phone Number</Text>
-                                                <View style={styles.inputContainer}>
-                                                    <Ionicons name="call-outline" size={18} color="#9CA3AF" style={{ marginLeft: 14 }} />
-                                                    <TextInput
-                                                        style={[styles.input, { marginLeft: 10 }]}
-                                                        placeholder="Required for receipt"
-                                                        keyboardType="number-pad"
-                                                        maxLength={11}
-                                                        value={phoneNumber}
-                                                        onChangeText={(text) => {
-                                                            setPhoneNumber(text.replace(/\D/g, ''));
-                                                            setErrorMessage('');
-                                                        }}
-                                                    />
-                                                </View>
+
                                             </View>
                                             <Text style={[styles.inputLabel, { marginTop: 16 }]}>Available Packages</Text>
                                             <View style={[styles.inputContainer, { paddingHorizontal: 12 }]}>
@@ -386,8 +370,8 @@ const CableTV: React.FC<BuyCableModalProps> = ({ isOpen, onClose }) => {
                                 {isValidated && (
                                     <View style={styles.bottomAnchored}>
                                         <TouchableOpacity
-                                            style={[styles.primaryBtn, (!selectedPlan || phoneNumber.length < 10) && styles.disabledBtn]}
-                                            disabled={!selectedPlan || phoneNumber.length < 10}
+                                            style={[styles.primaryBtn, (!selectedPlan) && styles.disabledBtn]}
+                                            disabled={!selectedPlan}
                                             onPress={() => setStep('CONFIRM')}
                                         >
                                             <Text style={styles.btnText}>Proceed to Payment</Text>

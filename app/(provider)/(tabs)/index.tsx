@@ -23,6 +23,7 @@ import BuyEducationModal from "../components/drawers/Education";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getDashboardData, DashboardData } from "@/app/utils/dashboard";
 import { AuthContext } from "@/app/context/AppContext";
+import TransactionDetailsModal from "../components/modals/TransactionDetailsModal";
 
 interface StoredUser {
   userName: string;
@@ -42,6 +43,9 @@ export default function Index() {
     useState(false);
   const [cableModalVisisbility, setCableModalVisibility] = useState(false);
   const [educationModalVisibility, setEducationModalVisibility] = useState(false);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
 
   const [loadedUser, setLoadedUser] = useState<StoredUser | null>(null);
   const [dashboardData, setDashboardData] = useState<
@@ -114,6 +118,11 @@ export default function Index() {
   const user_tier = dashboardData?.user?.tier ?? "";
   const walletBalance = dashboardData?.user?.walletBalance ?? 0;
   const todaySpent = dashboardData?.todaySpent ?? 0;
+
+  const handleTransactionClick = (tx: any) => {
+    setSelectedTransaction(tx);
+    setIsModalOpen(true);
+  };
 
   return (
     <SafeAreaView
@@ -237,15 +246,35 @@ export default function Index() {
                 }}>
 
                   {
-                    dashboardData?.recentTransactions.map((item: any) => (
-                      <RecentActivityItem
-                        amount={item.amount.toString()}
-                        subtitle={item.createdAt}
-                        title={item.metadat}
-                        type={item.type}
-                        key={item.id}
-                      />
-                    ))
+                    dashboardData?.recentTransactions.map((item: any) => {
+                      const dateObj = new Date(item.date || item.createdAt || new Date());
+                      const formattedDate = dateObj.toLocaleDateString(undefined, {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      });
+
+                      const title = (() => {
+                        if (item.type === 'EDUCATION') {
+                          if (item.metadata?.examType === 'utme-mock') return 'JAMB UTME (With Mock)';
+                          if (item.metadata?.examType === 'utme-no-mock') return 'JAMB UTME (No Mock)';
+                        }
+                        return item.metadata?.planName || item.metadata?.network || item.metadata?.provider || item.type?.replace('_', ' ');
+                      })();
+
+                      return (
+                        <RecentActivityItem
+                          amount={item.amount.toString()}
+                          subtitle={formattedDate}
+                          title={title}
+                          type={item.type}
+                          status={item.status}
+                          key={item.id}
+                          onPress={() => handleTransactionClick(item)}
+                        />
+                      );
+                    })
                   }
                 </View>
               )
@@ -269,6 +298,15 @@ export default function Index() {
           </View>
         )}
       </ScrollView>
+
+      {/* Transaction Details Modal */}
+      {isModalOpen && (
+        <TransactionDetailsModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          transaction={selectedTransaction}
+        />
+      )}
     </SafeAreaView>
   );
 }

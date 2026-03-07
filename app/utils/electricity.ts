@@ -22,7 +22,6 @@ export interface ElectricityPaymentPayload {
   meterNo: string;
   meterType: "01" | "02"; // "01" = Prepaid | "02" = Postpaid
   amount: number;
-  phoneNo: string;
   transactionPin: string;
 }
 
@@ -30,9 +29,11 @@ export interface ElectricityPaymentResponse {
   success: boolean;
   message?: string;
   token?: string;
+  units?: string;
   customerName?: string;
   transactionId?: string;
   error?: string;
+  data?: any;
 }
 
 // --- ELECTRICITY ROUTES ---
@@ -126,9 +127,11 @@ export async function payElectricity(
     return {
       success: true,
       message: result.message,
-      token: result.token, // Present for prepaid meters [cite: 259, 263]
-      customerName: result.customerName,
-      transactionId: result.transactionId,
+      token: result.token || result.data?.token, // Present for prepaid meters [cite: 259, 263]
+      units: result.units || result.data?.units,
+      customerName: result.customerName || result.data?.customerName,
+      transactionId: result.transactionId || result.data?.transactionId,
+      data: result,
     };
   } catch (error) {
     console.error("Electricity Payment Error:", error);

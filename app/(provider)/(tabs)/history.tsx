@@ -224,6 +224,7 @@ const History: React.FC = () => {
                     return tx.metadata?.planName || tx.metadata?.network || tx.metadata?.provider || tx.type.replace('_', ' ');
                   })();
                   const token = tx.metadata?.token || tx.metadata?.token;
+                  console.log("Title: ", title)
 
 
                   return (
@@ -241,7 +242,7 @@ const History: React.FC = () => {
                         {/* Details */}
                         <View style={styles.detailsCol}>
                           <Text style={styles.txTitle} numberOfLines={1}>
-                            {title}
+                            {title === "MONNIFY" ? "WALLET FUNDING" : title}
                           </Text>
                           <View style={styles.dateRow}>
                             <Text style={styles.txDate}>{formattedDate}</Text>

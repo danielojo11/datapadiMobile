@@ -24,6 +24,7 @@ type FlightClass = 'ECONOMY' | 'PREMIUM_ECONOMY' | 'BUSINESS' | 'FIRST';
 const Flight = () => {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
     const [tripType, setTripType] = useState<TripType>('ONE_WAY');
 
     // Form State
@@ -83,11 +84,12 @@ const Flight = () => {
     useEffect(() => {
         const fetchAirportsData = async () => {
             setIsAirportsLoading(true);
+            setErrorMessage('');
             const result = await getAirports();
             if (result.success && result.data) {
                 setAirports(result.data);
             } else {
-                Alert.alert('Error', result.error || 'Failed to fetch airports');
+                setErrorMessage(result.error || 'Failed to fetch airports');
             }
             setIsAirportsLoading(false);
         };
@@ -102,18 +104,19 @@ const Flight = () => {
     );
 
     const handleSearch = async () => {
+        setErrorMessage('');
         if (!origin || !destination || !targetDate) {
-            Alert.alert('Missing Fields', 'Please fill in all required fields (Origin, Destination, Date).');
+            setErrorMessage('Please fill in all required fields (Origin, Destination, Date).');
             return;
         }
 
         if (tripType === 'ROUND_TRIP' && !returnDate) {
-            Alert.alert('Missing Field', 'Please select a return date for your round trip.');
+            setErrorMessage('Please select a return date for your round trip.');
             return;
         }
 
         if (tripType === 'ROUND_TRIP' && returnDate && targetDate && returnDate <= targetDate) {
-            Alert.alert('Invalid Date', 'Return date must be after departure date.');
+            setErrorMessage('Return date must be after departure date.');
             return;
         }
 
@@ -143,7 +146,7 @@ const Flight = () => {
                 [{ text: 'OK', onPress: () => { /* Optionally reset form or navigate to bookings */ } }]
             );
         } else {
-            Alert.alert('Request Failed', result.error || 'Failed to submit request.');
+            setErrorMessage(result.error || 'Failed to submit request.');
         }
 
         setIsLoading(false);
@@ -237,6 +240,12 @@ const Flight = () => {
                     </View>
 
                     <View style={styles.formContainer}>
+                        {errorMessage ? (
+                            <View style={styles.errorBox}>
+                                <Ionicons name="alert-circle-outline" size={18} color="#E53935" />
+                                <Text style={styles.errorText}>{errorMessage}</Text>
+                            </View>
+                        ) : null}
                         {/* Trip Type Tabs */}
                         <View style={styles.tabsContainer}>
                             <TouchableOpacity
@@ -732,6 +741,20 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: 'bold',
         color: '#475569',
+    },
+    errorBox: {
+        backgroundColor: "#FEE2E2",
+        borderRadius: 12,
+        padding: 12,
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 16,
+    },
+    errorText: {
+        color: "#B91C1C",
+        fontSize: 14,
+        marginLeft: 8,
+        flex: 1,
     },
 });
 

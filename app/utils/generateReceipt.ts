@@ -24,6 +24,15 @@ const generateReceipt = async (transaction: any) => {
             <span class="value">${transaction.reference || transaction.id || 'No Reference'}</span>
         </div>
     `;
+    const addressStr = transaction.address || transaction.metadata?.address;
+    if (addressStr) {
+        detailsHtml += `
+            <div class="row">
+                <span class="label">Address</span>
+                <span class="value" style="font-size: 13px; line-height: 1.4; word-break: break-word;">${addressStr}</span>
+            </div>
+        `;
+    }
 
     if (transaction.type === 'ELECTRICITY') {
         const token = transaction.token || transaction.metadata?.token || transaction.pin || transaction.metadata?.pin;
@@ -90,6 +99,8 @@ const generateReceipt = async (transaction: any) => {
             </div>
         `;
     }
+
+
 
     const html = `
     <html>

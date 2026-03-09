@@ -8,6 +8,8 @@ import {
     Modal,
     ScrollView,
     ActivityIndicator,
+    KeyboardAvoidingView,
+    Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { resetTransactionPin } from "@/app/utils/auth/resetPin";
@@ -77,110 +79,115 @@ export default function ResetPinModal({ visible, onClose }: ResetPinModalProps) 
 
     return (
         <Modal animationType="slide" transparent visible={visible} onRequestClose={handleClose}>
-            <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
-                <View style={styles.overlay}>
-                    <View style={styles.container}>
-                        <View style={styles.handle} />
+            <KeyboardAvoidingView
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                style={{ flex: 1 }}
+            >
+                <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+                    <View style={styles.overlay}>
+                        <View style={styles.container}>
+                            <View style={styles.handle} />
 
-                        <TouchableOpacity style={styles.closeBtn} onPress={handleClose}>
-                            <Ionicons name="close" size={18} color="#555" />
-                        </TouchableOpacity>
+                            <TouchableOpacity style={styles.closeBtn} onPress={handleClose}>
+                                <Ionicons name="close" size={18} color="#555" />
+                            </TouchableOpacity>
 
-                        <View style={styles.iconWrapper}>
-                            <View style={styles.iconCircle}>
-                                <Ionicons name="key-outline" size={32} color="#fff" />
+                            <View style={styles.iconWrapper}>
+                                <View style={styles.iconCircle}>
+                                    <Ionicons name="key-outline" size={32} color="#fff" />
+                                </View>
                             </View>
-                        </View>
 
-                        <Text style={styles.title}>Change Transaction PIN</Text>
-                        <Text style={styles.subtitle}>
-                            Set a new 4-digit PIN for securing your transactions. You must verify your main login password to proceed.
-                        </Text>
+                            <Text style={styles.title}>Change Transaction PIN</Text>
+                            <Text style={styles.subtitle}>
+                                Set a new 4-digit PIN for securing your transactions. You must verify your main login password to proceed.
+                            </Text>
 
-                        {error && (
-                            <View style={[styles.messageBox, styles.errorBox]}>
-                                <Ionicons name="alert-circle-outline" size={18} color="#E53935" style={{ marginRight: 8 }} />
-                                <Text style={styles.errorText}>{error}</Text>
+                            {error && (
+                                <View style={[styles.messageBox, styles.errorBox]}>
+                                    <Ionicons name="alert-circle-outline" size={18} color="#E53935" style={{ marginRight: 8 }} />
+                                    <Text style={styles.errorText}>{error}</Text>
+                                </View>
+                            )}
+
+                            {success && (
+                                <View style={[styles.messageBox, styles.successBox]}>
+                                    <Ionicons name="checkmark-circle-outline" size={18} color="#059669" style={{ marginRight: 8 }} />
+                                    <Text style={styles.successText}>{success}</Text>
+                                </View>
+                            )}
+
+                            <Text style={styles.label}>Login Password</Text>
+                            <View style={styles.inputWrapper}>
+                                <Ionicons name="lock-closed-outline" size={18} color="#9CA3AF" />
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="Enter current password"
+                                    placeholderTextColor="#9CA3AF"
+                                    value={password}
+                                    onChangeText={setPassword}
+                                    secureTextEntry={!showPassword}
+                                />
+                                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                                    <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={18} color="#9CA3AF" />
+                                </TouchableOpacity>
                             </View>
-                        )}
 
-                        {success && (
-                            <View style={[styles.messageBox, styles.successBox]}>
-                                <Ionicons name="checkmark-circle-outline" size={18} color="#059669" style={{ marginRight: 8 }} />
-                                <Text style={styles.successText}>{success}</Text>
+                            <View style={styles.row}>
+                                <View style={styles.inputHalf}>
+                                    <Text style={styles.label}>New PIN</Text>
+                                    <View style={styles.inputWrapper}>
+                                        <Ionicons name="key-outline" size={18} color="#9CA3AF" />
+                                        <TextInput
+                                            style={styles.input}
+                                            placeholder="4 digits"
+                                            placeholderTextColor="#9CA3AF"
+                                            keyboardType="numeric"
+                                            maxLength={4}
+                                            value={newPin}
+                                            onChangeText={(text) => setNewPin(text.replace(/[^0-9]/g, ''))}
+                                            secureTextEntry
+                                        />
+                                    </View>
+                                </View>
+
+                                <View style={styles.inputHalf}>
+                                    <Text style={styles.label}>Confirm PIN</Text>
+                                    <View style={styles.inputWrapper}>
+                                        <Ionicons name="key-outline" size={18} color="#9CA3AF" />
+                                        <TextInput
+                                            style={styles.input}
+                                            placeholder="4 digits"
+                                            placeholderTextColor="#9CA3AF"
+                                            keyboardType="numeric"
+                                            maxLength={4}
+                                            value={confirmPin}
+                                            onChangeText={(text) => setConfirmPin(text.replace(/[^0-9]/g, ''))}
+                                            secureTextEntry
+                                        />
+                                    </View>
+                                </View>
                             </View>
-                        )}
 
-                        <Text style={styles.label}>Login Password</Text>
-                        <View style={styles.inputWrapper}>
-                            <Ionicons name="lock-closed-outline" size={18} color="#9CA3AF" />
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Enter current password"
-                                placeholderTextColor="#9CA3AF"
-                                value={password}
-                                onChangeText={setPassword}
-                                secureTextEntry={!showPassword}
-                            />
-                            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                                <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={18} color="#9CA3AF" />
+                            <TouchableOpacity
+                                activeOpacity={0.85}
+                                style={[
+                                    styles.primaryButton,
+                                    (!isFormValid || loading) && styles.primaryButtonDisabled,
+                                ]}
+                                disabled={!isFormValid || loading}
+                                onPress={handleResetPin}
+                            >
+                                {loading ? (
+                                    <ActivityIndicator color="#fff" />
+                                ) : (
+                                    <Text style={styles.primaryButtonText}>Set New PIN</Text>
+                                )}
                             </TouchableOpacity>
                         </View>
-
-                        <View style={styles.row}>
-                            <View style={styles.inputHalf}>
-                                <Text style={styles.label}>New PIN</Text>
-                                <View style={styles.inputWrapper}>
-                                    <Ionicons name="key-outline" size={18} color="#9CA3AF" />
-                                    <TextInput
-                                        style={styles.input}
-                                        placeholder="4 digits"
-                                        placeholderTextColor="#9CA3AF"
-                                        keyboardType="numeric"
-                                        maxLength={4}
-                                        value={newPin}
-                                        onChangeText={(text) => setNewPin(text.replace(/[^0-9]/g, ''))}
-                                        secureTextEntry
-                                    />
-                                </View>
-                            </View>
-
-                            <View style={styles.inputHalf}>
-                                <Text style={styles.label}>Confirm PIN</Text>
-                                <View style={styles.inputWrapper}>
-                                    <Ionicons name="key-outline" size={18} color="#9CA3AF" />
-                                    <TextInput
-                                        style={styles.input}
-                                        placeholder="4 digits"
-                                        placeholderTextColor="#9CA3AF"
-                                        keyboardType="numeric"
-                                        maxLength={4}
-                                        value={confirmPin}
-                                        onChangeText={(text) => setConfirmPin(text.replace(/[^0-9]/g, ''))}
-                                        secureTextEntry
-                                    />
-                                </View>
-                            </View>
-                        </View>
-
-                        <TouchableOpacity
-                            activeOpacity={0.85}
-                            style={[
-                                styles.primaryButton,
-                                (!isFormValid || loading) && styles.primaryButtonDisabled,
-                            ]}
-                            disabled={!isFormValid || loading}
-                            onPress={handleResetPin}
-                        >
-                            {loading ? (
-                                <ActivityIndicator color="#fff" />
-                            ) : (
-                                <Text style={styles.primaryButtonText}>Set New PIN</Text>
-                            )}
-                        </TouchableOpacity>
                     </View>
-                </View>
-            </ScrollView>
+                </ScrollView>
+            </KeyboardAvoidingView>
         </Modal>
     );
 }

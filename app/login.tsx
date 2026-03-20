@@ -23,6 +23,8 @@ const LoginScreen: React.FC = () => {
   const authState = useContext(AuthContext);
   const router = useRouter();
 
+
+
   const handleLogin = async () => {
     if (!email || !password) return;
 
@@ -40,7 +42,9 @@ const LoginScreen: React.FC = () => {
       const response = await authState.login();
       if (response && response.success === false) {
         setError(response.error || "Login failed");
+        return;
       }
+
     } catch (error: any) {
       console.log("Login error:", error);
       setError(error?.message || "An unexpected error occurred");

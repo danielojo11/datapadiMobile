@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   TextInput,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
@@ -14,6 +15,7 @@ export default function ProfileWallet() {
   const [accountNumber, setAccountNumber] = useState("8234567890");
   const handleCopy = async (account: string) => {
     await Clipboard.setStringAsync(account);
+    Alert.alert("Copied!", "Account number copied to clipboard");
   };
   return (
     <View style={styles.card}>

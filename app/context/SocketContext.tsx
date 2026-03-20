@@ -28,7 +28,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
                     }
                 }
 
-                newSocket = io('https://dataappback.onrender.com', {
+                newSocket = io('https://api.muftipay.com/api/v1', {
                     auth: { token },
                     transports: ['websocket'],
                     reconnection: true,

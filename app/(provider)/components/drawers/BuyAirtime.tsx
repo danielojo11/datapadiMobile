@@ -16,7 +16,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { buyAirtime } from "@/app/utils/vtu";
 import TransactionPinInput from '../TransactionPinInput';
 
-type Step = 'NETWORK' | 'DETAILS' | 'CONFIRM' | 'PIN' | 'SUCCESS';
+type Step = 'DETAILS' | 'CONFIRM' | 'PIN' | 'SUCCESS';
 type NetworkId = 'MTN' | 'AIRTEL' | 'GLO' | '9MOBILE';
 
 type BuyAirtimeProps = {
@@ -24,18 +24,18 @@ type BuyAirtimeProps = {
   onClose: () => void;
 };
 
-const networks: { id: NetworkId; label: string; color: string }[] = [
-  { id: "MTN", label: "MTN", color: "#FFCC00" },
-  { id: "AIRTEL", label: "Airtel", color: "#FF0000" },
-  { id: "GLO", label: "Glo", color: "#009933" },
-  { id: "9MOBILE", label: "9mobile", color: "#006600" },
+const networks: { id: NetworkId; label: string; color: string; bgColor: string }[] = [
+  { id: "MTN", label: "MTN", color: "#F59E0B", bgColor: "#FFFBEB" },
+  { id: "AIRTEL", label: "Airtel", color: "#EF4444", bgColor: "#FEF2F2" },
+  { id: "GLO", label: "Glo", color: "#10B981", bgColor: "#ECFDF5" },
+  { id: "9MOBILE", label: "9mobile", color: "#047857", bgColor: "#D1FAE5" },
 ];
 
-const QUICK_AMOUNTS = ['100', '200', '500', '1000'];
+const quickAmounts = [100, 200, 500, 1000, 2000, 5000];
 const CURRENCY = "₦";
 
 const BuyAirtime: React.FC<BuyAirtimeProps> = ({ visible, onClose }) => {
-  const [step, setStep] = useState<Step>('NETWORK');
+  const [step, setStep] = useState<Step>('DETAILS');
   const [selectedNetwork, setSelectedNetwork] = useState<NetworkId | null>(null);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [amount, setAmount] = useState('');
@@ -50,13 +50,18 @@ const BuyAirtime: React.FC<BuyAirtimeProps> = ({ visible, onClose }) => {
     }
   }, [visible]);
 
+  useEffect(() => {
+    if (visible && !selectedNetwork) {
+      setSelectedNetwork("MTN");
+    }
+  }, [visible, selectedNetwork]);
+
   const reset = () => {
-    setStep('NETWORK');
-    setSelectedNetwork(null);
+    setStep('DETAILS');
+    setSelectedNetwork("MTN");
     setPhoneNumber('');
     setAmount('');
     setIsLoading(false);
-    setErrorMessage('');
     setErrorMessage('');
     setTransactionPin('');
     setPinError(false);
@@ -65,12 +70,6 @@ const BuyAirtime: React.FC<BuyAirtimeProps> = ({ visible, onClose }) => {
   const handleClose = () => {
     onClose();
     setTimeout(reset, 300);
-  };
-
-  const handleNetworkSelect = (networkId: NetworkId) => {
-    setSelectedNetwork(networkId);
-    setErrorMessage('');
-    setStep('DETAILS');
   };
 
   const handlePurchase = async (pin?: string) => {
@@ -107,11 +106,20 @@ const BuyAirtime: React.FC<BuyAirtimeProps> = ({ visible, onClose }) => {
     }
   };
 
-  const renderHeader = () => (
+  const activeNetworkObj = networks.find(n => n.id === selectedNetwork);
+
+  const renderHeader = (showBack = false, onBack?: () => void) => (
     <View style={styles.headerRow}>
-      <Text style={styles.drawerTitle}>{step === 'SUCCESS' ? 'Transaction Status' : 'Buy Airtime'}</Text>
-      <TouchableOpacity onPress={handleClose} style={styles.closeBtn}>
-        <Ionicons name="close" size={20} color="#333" />
+      <View style={styles.headerLeftContainer}>
+        {showBack && (
+          <TouchableOpacity onPress={onBack} style={styles.headerBackBtn}>
+            <Ionicons name="arrow-back" size={20} color="#111827" />
+          </TouchableOpacity>
+        )}
+        <Text style={styles.drawerTitle}>{step === 'SUCCESS' ? 'Status' : 'Buy Airtime'}</Text>
+      </View>
+      <TouchableOpacity onPress={handleClose} style={styles.headerCloseBtn}>
+        <Ionicons name="close" size={20} color="#6B7280" />
       </TouchableOpacity>
     </View>
   );
@@ -128,220 +136,237 @@ const BuyAirtime: React.FC<BuyAirtimeProps> = ({ visible, onClose }) => {
           behavior={Platform.OS === "ios" ? "padding" : undefined}
           style={styles.drawerContainer}
         >
-          <View style={styles.handle} />
-          {renderHeader()}
-
           {errorMessage && step !== 'SUCCESS' ? (
             <View style={styles.errorBox}>
-              <Ionicons name="alert-circle-outline" size={18} color="#E53935" />
+              <Ionicons name="alert-circle-outline" size={18} color="#EF4444" />
               <Text style={styles.errorText}>{errorMessage}</Text>
             </View>
           ) : null}
 
-          <View style={styles.contentContainer}>
-            {step === 'NETWORK' && (
-              <View style={styles.stepContainer}>
-                <Text style={styles.subText}>Select a network provider to continue</Text>
-
-                <View style={styles.networkContainer}>
-                  {networks.map((network) => (
-                    <TouchableOpacity
-                      key={network.id}
-                      style={[
-                        styles.networkButton,
-                        selectedNetwork === network.id && styles.networkButtonSelected
-                      ]}
-                      onPress={() => handleNetworkSelect(network.id)}
-                    >
-                      <View style={[styles.networkCircle, { backgroundColor: network.color }]}>
-                        <Text style={styles.networkLetter}>{network.label.charAt(0)}</Text>
-                      </View>
-                      <Text style={styles.networkLabel}>{network.label}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-            )}
-
-            {step === 'DETAILS' && (
-              <View style={styles.stepContainer}>
-                <TouchableOpacity onPress={() => setStep('NETWORK')} style={styles.backButton}>
-                  <Ionicons name="arrow-back" size={16} color="#003366" />
-                  <Text style={styles.backButtonText}>Change Network</Text>
-                </TouchableOpacity>
-
-                <ScrollView style={styles.flex1} showsVerticalScrollIndicator={false}>
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>Phone Number</Text>
-                    <View style={styles.inputContainer}>
-                      <Ionicons name="call-outline" size={18} color="#9CA3AF" />
-                      <TextInput
-                        style={styles.input}
-                        placeholder="e.g. 08012345678"
-                        keyboardType="number-pad"
-                        maxLength={11}
-                        value={phoneNumber}
-                        onChangeText={(text) => {
-                          setPhoneNumber(text.replace(/\D/g, ''));
-                          setErrorMessage('');
-                        }}
-                        autoFocus
-                      />
-                    </View>
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>Amount</Text>
-                    <View style={styles.inputContainer}>
-                      <Text style={styles.currencySymbol}>{CURRENCY}</Text>
-                      <TextInput
-                        style={styles.input}
-                        placeholder="Min ₦50"
-                        keyboardType="number-pad"
-                        value={amount}
-                        onChangeText={(text) => {
-                          setAmount(text);
-                          setErrorMessage('');
-                        }}
-                      />
-                    </View>
-
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.quickAmountsContainer}>
-                      <View style={styles.quickAmountsRow}>
-                        {QUICK_AMOUNTS.map((amt) => {
-                          const isSelected = amount === amt;
-                          return (
-                            <TouchableOpacity
-                              key={amt}
-                              onPress={() => { setAmount(amt); setErrorMessage(''); }}
-                              style={[
-                                styles.quickAmountPill,
-                                isSelected ? styles.quickAmountPillSelected : styles.quickAmountPillNormal
-                              ]}
-                            >
-                              <Ionicons
-                                name="flash"
-                                size={12}
-                                color={isSelected ? "#003366" : "#4B5563"}
-                                style={{ marginRight: 2 }}
-                              />
-                              <Text style={[
-                                styles.quickAmountText,
-                                isSelected ? styles.quickAmountTextSelected : styles.quickAmountTextNormal
-                              ]}>
-                                {CURRENCY}{amt}
-                              </Text>
-                            </TouchableOpacity>
-                          );
-                        })}
-                      </View>
-                    </ScrollView>
-                  </View>
-                </ScrollView>
-
-                <View style={styles.bottomAnchored}>
-                  <TouchableOpacity
-                    style={[
-                      styles.primaryBtn,
-                      (!amount || Number(amount) < 50 || phoneNumber.length < 10) && styles.disabledBtn
-                    ]}
-                    disabled={!amount || Number(amount) < 50 || phoneNumber.length < 10}
-                    onPress={() => setStep('CONFIRM')}
-                  >
-                    <Text style={styles.btnText}>Proceed to Payment</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
-
-            {step === 'CONFIRM' && (
-              <View style={styles.stepContainer}>
-                <TouchableOpacity onPress={() => setStep('DETAILS')} style={styles.backButton}>
-                  <Ionicons name="arrow-back" size={16} color="#003366" />
-                  <Text style={styles.backButtonText}>Edit Details</Text>
-                </TouchableOpacity>
-
-                <View style={styles.receiptCard}>
-                  <View style={styles.receiptAccent} />
-
-                  <Text style={styles.receiptHeader}>You are about to send</Text>
-                  <Text style={styles.receiptNetwork}>{networks.find(n => n.id === selectedNetwork)?.label} Airtime</Text>
-                  <Text style={styles.receiptAmount}>{CURRENCY}{Number(amount).toLocaleString()}</Text>
-
-                  <View style={styles.dashedDividerWrapper}>
-                    <View style={styles.dashedDividerLeftCircle} />
-                    <View style={styles.dashedLine} />
-                    <View style={styles.dashedDividerRightCircle} />
-                  </View>
-
-                  <View style={styles.beneficiarySection}>
-                    <Text style={styles.beneficiaryLabel}>BENEFICIARY ACCOUNT</Text>
-                    <Text style={styles.beneficiaryPhone}>{phoneNumber}</Text>
-                  </View>
+          {step === 'DETAILS' && (
+            <View style={styles.stepContainer}>
+              {renderHeader(false)}
+              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
+                <Text style={styles.sectionTitle}>SELECT NETWORK</Text>
+                <View style={styles.networkGrid}>
+                  {networks.map((network) => {
+                    const isSelected = selectedNetwork === network.id;
+                    return (
+                      <TouchableOpacity
+                        key={network.id}
+                        style={[
+                          styles.networkCard,
+                          isSelected && [styles.networkCardSelected, { borderColor: network.color, backgroundColor: network.bgColor }]
+                        ]}
+                        onPress={() => setSelectedNetwork(network.id)}
+                        activeOpacity={0.7}
+                      >
+                        {isSelected && (
+                          <View style={[styles.checkCircle, { backgroundColor: network.color }]}>
+                            <Ionicons name="checkmark" size={10} color="#FFF" />
+                          </View>
+                        )}
+                        <View style={[styles.networkCircle, { backgroundColor: isSelected ? network.color : '#F3F4F6' }]}>
+                          <Text style={[styles.networkLetter, { color: isSelected ? '#FFF' : '#9CA3AF' }]}>{network.label.charAt(0)}</Text>
+                        </View>
+                        <Text style={[styles.networkLabel, isSelected && styles.networkLabelSelected]}>{network.label}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
                 </View>
 
-                <View style={styles.bottomAnchored}>
-                  <TouchableOpacity
-                    style={styles.primaryBtn}
-                    onPress={() => setStep('PIN')}
-                  >
-                    <Text style={styles.btnText}>Proceed to Enter PIN</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
-
-            {step === 'PIN' && (
-              <View style={styles.stepContainer}>
-                <TouchableOpacity onPress={() => { setStep('CONFIRM'); setPinError(false); setErrorMessage(''); }} style={styles.backButton}>
-                  <Ionicons name="arrow-back" size={16} color="#003366" />
-                  <Text style={styles.backButtonText}>Back</Text>
-                </TouchableOpacity>
-
-                <View style={[styles.inputGroup, { marginTop: 20 }]}>
-                  <Text style={[styles.inputLabel, { textAlign: 'center', marginBottom: 20 }]}>Enter Transaction PIN</Text>
-
-                  <TransactionPinInput
-                    onComplete={(pin) => {
-                      setTransactionPin(pin);
-                      handlePurchase(pin);
-                    }}
-                    error={pinError}
-                    clearError={() => setPinError(false)}
-                    isLoading={isLoading}
+                <Text style={styles.sectionTitle}>PHONE NUMBER</Text>
+                <View style={[styles.inputContainer, phoneNumber.length >= 10 && styles.inputContainerSuccess]}>
+                  <View style={[styles.inputIconCircle, { backgroundColor: activeNetworkObj ? activeNetworkObj.bgColor : '#F3F4F6' }]}>
+                    <Ionicons name="call" size={16} color={activeNetworkObj ? activeNetworkObj.color : '#9CA3AF'} />
+                  </View>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="08012345678"
+                    keyboardType="number-pad"
+                    maxLength={11}
+                    value={phoneNumber}
+                    placeholderTextColor="#9CA3AF"
+                    onChangeText={(text) => setPhoneNumber(text.replace(/\D/g, ''))}
                   />
-
-                  {isLoading && (
-                    <View style={[styles.processingRow, { marginTop: 30 }]}>
-                      <ActivityIndicator size="small" color="#003366" />
-                      <Text style={{ marginLeft: 8, color: '#003366', fontWeight: '600' }}>Processing Payment...</Text>
-                    </View>
+                  {phoneNumber.length >= 10 && (
+                    <Ionicons name="checkmark-circle" size={24} color="#10B981" />
                   )}
                 </View>
-              </View>
-            )}
 
-            {step === 'SUCCESS' && (
-              <View style={styles.successContainer}>
-                <View style={styles.successIconWrapper}>
-                  <Ionicons name="checkmark-circle" size={80} color="#10B981" />
-                </View>
-                <Text style={styles.successTitle}>Purchase Successful!</Text>
-                <Text style={styles.successDesc}>
-                  Airtime has been successfully sent to
-                </Text>
-                <View style={styles.successPhoneBadge}>
-                  <Text style={styles.successPhone}>{phoneNumber}</Text>
+                <Text style={styles.sectionTitle}>AMOUNT</Text>
+                <View style={[styles.inputContainer, amount && Number(amount) >= 50 ? styles.inputContainerSuccess : {}]}>
+                  <View style={styles.currencyBadge}>
+                    <Text style={styles.currencySymbol}>{CURRENCY}</Text>
+                  </View>
+                  <TextInput
+                    style={styles.amountInput}
+                    placeholder="0"
+                    keyboardType="number-pad"
+                    value={amount}
+                    placeholderTextColor="#9CA3AF"
+                    onChangeText={setAmount}
+                  />
+                  {amount && Number(amount) >= 50 ? (
+                    <Ionicons name="checkmark-circle" size={24} color="#10B981" />
+                  ) : null}
                 </View>
 
-                <View style={[styles.bottomAnchored, { width: '100%' }]}>
-                  <TouchableOpacity style={styles.secondaryBtn} onPress={handleClose}>
-                    <Text style={styles.secondaryBtnText}>Done</Text>
-                  </TouchableOpacity>
+                <View style={styles.quickAmountsGrid}>
+                  {quickAmounts.map((amt) => {
+                    const isSelected = amount === amt.toString();
+                    return (
+                      <TouchableOpacity
+                        key={amt}
+                        style={[styles.quickAmountPill, isSelected && styles.quickAmountPillSelected]}
+                        onPress={() => setAmount(amt.toString())}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="flash" size={14} color={isSelected ? '#3B82F6' : '#9CA3AF'} style={{ marginRight: 6 }} />
+                        <Text style={[styles.quickAmountText, isSelected && styles.quickAmountTextSelected]}>
+                          {CURRENCY}{amt.toLocaleString()}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
                 </View>
+              </ScrollView>
+
+              <View style={styles.bottomBarDetails}>
+                {selectedNetwork && phoneNumber.length >= 10 && Number(amount) >= 50 && activeNetworkObj && (
+                  <View style={styles.bottomSummary}>
+                    <View style={styles.bottomSummaryLeft}>
+                      <View style={[styles.smallNetworkCircle, { backgroundColor: activeNetworkObj.bgColor }]}>
+                        <Text style={[styles.smallNetworkLetter, { color: activeNetworkObj.color }]}>{activeNetworkObj.label.charAt(0)}</Text>
+                      </View>
+                      <Text style={styles.bottomPhone}>{phoneNumber}</Text>
+                    </View>
+                    <Text style={styles.bottomAmount}>{CURRENCY}{Number(amount).toLocaleString()}</Text>
+                  </View>
+                )}
+
+                <TouchableOpacity
+                  style={[
+                    styles.primaryBtn,
+                    (!selectedNetwork || !amount || Number(amount) < 50 || phoneNumber.length < 10) && styles.disabledBtn
+                  ]}
+                  disabled={!selectedNetwork || !amount || Number(amount) < 50 || phoneNumber.length < 10}
+                  onPress={() => setStep('CONFIRM')}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.btnText, (!selectedNetwork || !amount || Number(amount) < 50 || phoneNumber.length < 10) && styles.disabledBtnText]}>
+                    {!selectedNetwork ? 'Select a Network' :
+                      phoneNumber.length < 10 ? 'Enter Phone Number' :
+                        (!amount || Number(amount) < 50) ? 'Enter Amount' :
+                          `Buy ${activeNetworkObj?.label} Airtime — ${CURRENCY}${Number(amount).toLocaleString()}`}
+                  </Text>
+                </TouchableOpacity>
               </View>
-            )}
-          </View>
+            </View>
+          )}
+
+          {step === 'CONFIRM' && (
+            <View style={styles.stepContainer}>
+              {renderHeader(true, () => setStep('DETAILS'))}
+              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
+                <View style={styles.confirmCard}>
+                  <View style={[styles.confirmTopBar, { backgroundColor: activeNetworkObj?.color || '#F59E0B' }]} />
+
+                  <View style={styles.confirmContent}>
+                    <View style={[styles.largeNetworkCircle, { backgroundColor: activeNetworkObj?.bgColor || '#FFFBEB' }]}>
+                      <Text style={[styles.largeNetworkLetter, { color: activeNetworkObj?.color || '#F59E0B' }]}>{activeNetworkObj?.label.charAt(0) || 'M'}</Text>
+                    </View>
+
+                    <Text style={styles.sendToText}>SEND TO</Text>
+                    <Text style={styles.confirmPhone}>{phoneNumber}</Text>
+                    <Text style={styles.confirmNetwork}>{activeNetworkObj?.label} Mobile</Text>
+
+                    <View style={styles.amountBox}>
+                      <Text style={styles.confirmAmountText}>Amount</Text>
+                      <Text style={styles.confirmAmount}>
+                        {CURRENCY}{Number(amount).toLocaleString()}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.dividerWrapper}>
+                    <View style={styles.leftCutout} />
+                    <View style={styles.dashedLine} />
+                    <View style={styles.rightCutout} />
+                  </View>
+
+                  <View style={styles.transactionTypeRow}>
+                    <Text style={styles.typeLabel}>Product</Text>
+                    <Text style={styles.typeValue}>Airtime Top-Up</Text>
+                  </View>
+                </View>
+              </ScrollView>
+
+              <View style={styles.bottomBarDetails}>
+                <TouchableOpacity style={styles.primaryBtn} onPress={() => setStep('PIN')}>
+                  <Text style={styles.btnText}>Proceed to Payment</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
+          {step === 'PIN' && (
+            <View style={styles.stepContainer}>
+              {renderHeader(true, () => { setStep('CONFIRM'); setPinError(false); setErrorMessage(''); })}
+              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24, alignItems: 'center' }}>
+
+                <View style={styles.lockIconContainer}>
+                  <View style={styles.lockIconCircle}>
+                    <Ionicons name="lock-closed" size={28} color="#4F46E5" />
+                  </View>
+                </View>
+
+                <Text style={styles.authorizeTitle}>Authorize Payment</Text>
+                <Text style={styles.authorizeSubtitle}>Enter your highly secure PIN to confirm.</Text>
+
+                <View style={[styles.pinPayloadBadge, { backgroundColor: activeNetworkObj?.bgColor || '#FFFBEB', borderColor: activeNetworkObj?.color || '#F59E0B' }]}>
+                  <Text style={[styles.pinPayloadAmount, { color: activeNetworkObj?.color || '#F59E0B' }]}>{CURRENCY}{Number(amount).toLocaleString()}</Text>
+                  <Text style={styles.pinPayloadSub}>{activeNetworkObj?.label} · {phoneNumber}</Text>
+                </View>
+
+                <TransactionPinInput
+                  onComplete={(pin) => {
+                    setTransactionPin(pin);
+                    handlePurchase(pin);
+                  }}
+                  error={pinError}
+                  clearError={() => setPinError(false)}
+                  isLoading={isLoading}
+                />
+
+                {isLoading && (
+                  <View style={styles.processingRow}>
+                    <ActivityIndicator size="small" color="#111827" />
+                    <Text style={styles.processingText}>Processing...</Text>
+                  </View>
+                )}
+              </ScrollView>
+            </View>
+          )}
+
+          {step === 'SUCCESS' && (
+            <View style={styles.successContainer}>
+              <View style={styles.successIconWrapper}>
+                <Ionicons name="checkmark-circle" size={88} color="#10B981" />
+              </View>
+              <Text style={styles.successTitle}>Transaction Successful</Text>
+              <Text style={styles.successDesc}>
+                Your airtime top-up has been fully processed and credited to <Text style={styles.successPhone}>{phoneNumber}</Text> instantly.
+              </Text>
+
+              <View style={styles.bottomBarDetails}>
+                <TouchableOpacity style={styles.primaryBtn} onPress={handleClose}>
+                  <Text style={styles.btnText}>Return to Home</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
         </KeyboardAvoidingView>
       </View>
     </Modal>
@@ -351,368 +376,477 @@ const BuyAirtime: React.FC<BuyAirtimeProps> = ({ visible, onClose }) => {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(17, 24, 39, 0.6)", // Darker, sleeker overlay
     justifyContent: "flex-end",
   },
   drawerContainer: {
-    backgroundColor: "white",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    backgroundColor: "#F9FAFB", // Extremely clean slight off-white
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
     paddingHorizontal: 20,
-    paddingTop: 12,
+    paddingTop: 16,
     paddingBottom: Platform.OS === 'ios' ? 40 : 20,
-    height: '85%',
-  },
-  handle: {
-    width: 40,
-    height: 5,
-    backgroundColor: "#E5E7EB",
-    borderRadius: 3,
-    alignSelf: "center",
-    marginBottom: 16,
-  },
-  headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  drawerTitle: { fontSize: 20, fontWeight: "700", color: "#111827" },
-  closeBtn: {
-    backgroundColor: "#F3F4F6",
-    padding: 8,
-    borderRadius: 20,
-  },
-  contentContainer: {
-    flex: 1,
+    height: '92%',
   },
   stepContainer: {
     flex: 1,
     display: 'flex',
     flexDirection: 'column',
   },
-  flex1: {
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  headerLeftContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     flex: 1,
   },
-  subText: {
-    color: "#6B7280",
-    fontSize: 14,
-    fontWeight: "500",
-    marginBottom: 20,
+  headerBackBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
   },
-  networkContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    flexWrap: "wrap",
-    gap: 16,
-    marginTop: 10,
+  headerCloseBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
   },
-  networkButton: {
-    alignItems: "center",
-    width: 70,
+  drawerTitle: {
+    fontSize: 22,
+    fontWeight: "800",
+    color: "#111827",
+    letterSpacing: -0.5,
   },
-  networkButtonSelected: {
-    opacity: 0.8,
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#9CA3AF',
+    letterSpacing: 1,
+    marginTop: 16,
+    marginBottom: 12,
+    textTransform: 'uppercase',
+  },
+  networkGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  networkCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingVertical: 14,
+    alignItems: 'center',
+    width: '23.5%',
+    borderWidth: 1.5,
+    borderColor: '#F3F4F6',
+  },
+  networkCardSelected: {
+    borderWidth: 1.5,
+  },
+  checkCircle: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    zIndex: 2,
   },
   networkCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: "center",
-    alignItems: "center",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 8,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
   },
   networkLetter: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 24,
+    fontWeight: '800',
+    fontSize: 18,
   },
   networkLabel: {
-    fontSize: 13,
-    color: "#374151",
-    fontWeight: "500",
+    fontSize: 12,
+    color: '#6B7280',
+    fontWeight: '600'
   },
-  backButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 20,
-    alignSelf: "flex-start",
-  },
-  backButtonText: {
-    color: "#003366",
-    fontSize: 14,
-    fontWeight: "700",
-    marginLeft: 6,
-  },
-  inputGroup: {
-    marginBottom: 20,
-  },
-  inputLabel: {
-    fontWeight: "600",
-    fontSize: 14,
-    color: "#111827",
-    marginBottom: 8,
+  networkLabelSelected: {
+    color: '#111827',
+    fontWeight: '800'
   },
   inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: "#D1D5DB",
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    height: 52,
+    borderColor: '#E5E7EB',
+    borderRadius: 20,
+    height: 64,
+    paddingHorizontal: 16,
+    marginBottom: 8,
+  },
+  inputContainerSuccess: {
+    borderColor: '#34D399',
+    backgroundColor: '#F0FDF4',
+  },
+  inputIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
   input: {
     flex: 1,
-    marginLeft: 10,
-    fontSize: 16,
-    color: "#111827",
+    fontSize: 18,
+    color: '#111827',
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  amountInput: {
+    flex: 1,
+    fontSize: 26,
+    color: '#111827',
+    fontWeight: '800',
+    letterSpacing: -0.5,
+  },
+  currencyBadge: {
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+    marginRight: 10,
   },
   currencySymbol: {
-    color: "#6B7280",
-    fontWeight: "800",
-    fontSize: 15,
-    paddingHorizontal: 4,
+    fontSize: 16,
+    color: '#6B7280',
+    fontWeight: '800',
   },
-  quickAmountsContainer: {
-    marginTop: 12,
-  },
-  quickAmountsRow: {
-    flexDirection: "row",
-    gap: 8,
-    paddingBottom: 4,
+  quickAmountsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginTop: 16,
+    marginBottom: 16,
   },
   quickAmountPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    width: '31.5%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 14,
+    borderRadius: 16,
     borderWidth: 1,
-  },
-  quickAmountPillNormal: {
-    backgroundColor: "#fff",
-    borderColor: "#E5E7EB",
+    borderColor: '#E5E7EB',
+    marginBottom: 12,
   },
   quickAmountPillSelected: {
-    backgroundColor: "#EFF6FF",
-    borderColor: "#3B82F6",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    backgroundColor: '#EFF6FF',
+    borderColor: '#3B82F6',
   },
   quickAmountText: {
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  quickAmountTextNormal: {
-    color: "#4B5563",
+    fontSize: 14,
+    color: '#4B5563',
+    fontWeight: '700',
   },
   quickAmountTextSelected: {
-    color: "#003366",
+    color: '#2563EB',
   },
-  bottomAnchored: {
-    marginTop: "auto",
+  bottomBarDetails: {
+    marginTop: 'auto',
     paddingTop: 16,
-    paddingBottom: 8,
+  },
+  bottomSummary: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingHorizontal: 8,
+  },
+  bottomSummaryLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  smallNetworkCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  smallNetworkLetter: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  bottomPhone: {
+    fontSize: 16,
+    color: '#4B5563',
+    fontWeight: '600',
+    letterSpacing: 0.5,
+  },
+  bottomAmount: {
+    fontSize: 18,
+    color: '#111827',
+    fontWeight: '800',
   },
   primaryBtn: {
-    backgroundColor: "#003366",
+    backgroundColor: "#111827",
     width: "100%",
-    height: 56,
-    borderRadius: 16,
+    height: 60,
+    borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
   disabledBtn: {
-    opacity: 0.5,
+    backgroundColor: '#E5E7EB',
   },
   btnText: {
-    color: "white",
-    fontWeight: "600",
+    color: "#FFFFFF",
+    fontWeight: "800",
     fontSize: 16,
+    letterSpacing: 0.5,
+  },
+  disabledBtnText: {
+    color: '#9CA3AF',
+  },
+  confirmCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  confirmTopBar: {
+    height: 8,
+    width: '100%',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+  },
+  confirmContent: {
+    padding: 32,
+    alignItems: 'center',
+  },
+  largeNetworkCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  largeNetworkLetter: {
+    fontWeight: '800',
+    fontSize: 28,
+  },
+  sendToText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#9CA3AF',
+    letterSpacing: 1,
+    marginBottom: 8,
+  },
+  confirmPhone: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#111827',
+    letterSpacing: 1.5,
+    marginBottom: 6,
+  },
+  confirmNetwork: {
+    fontSize: 15,
+    color: '#6B7280',
+    fontWeight: '500',
+  },
+  amountBox: {
+    marginTop: 32,
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 20,
+  },
+  confirmAmountText: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+  confirmAmount: {
+    fontSize: 40,
+    fontWeight: '900',
+    color: '#111827',
+  },
+  dividerWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 24,
+  },
+  dashedLine: {
+    flex: 1,
+    height: 1,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderStyle: 'dashed',
+  },
+  leftCutout: {
+    position: 'absolute',
+    left: -12,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#F9FAFB',
+    zIndex: 1,
+    borderRightWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  rightCutout: {
+    position: 'absolute',
+    right: -12,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#F9FAFB',
+    zIndex: 1,
+    borderLeftWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  transactionTypeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingVertical: 24,
+  },
+  typeLabel: {
+    color: '#9CA3AF',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  typeValue: {
+    color: '#111827',
+    fontWeight: '700',
+    fontSize: 15,
+  },
+  lockIconContainer: {
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  lockIconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#EEF2FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  authorizeTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#111827',
+    marginBottom: 8,
+  },
+  authorizeSubtitle: {
+    fontSize: 15,
+    color: '#6B7280',
+    marginBottom: 32,
+    textAlign: 'center',
+  },
+  pinPayloadBadge: {
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 24,
+    borderWidth: 1,
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  pinPayloadAmount: {
+    fontSize: 24,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  pinPayloadSub: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   processingRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    marginTop: 24,
   },
-  receiptCard: {
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#F3F4F6",
-    borderRadius: 24,
-    padding: 24,
-    alignItems: "center",
-    marginBottom: 24,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 2,
-    position: "relative",
-    overflow: "hidden",
-  },
-  receiptAccent: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 6,
-    backgroundColor: "#3B82F6",
-  },
-  receiptHeader: {
-    color: "#6B7280",
-    fontSize: 14,
-    fontWeight: "500",
-    marginBottom: 4,
-    marginTop: 8,
-  },
-  receiptNetwork: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#111827",
-    marginBottom: 8,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  receiptAmount: {
-    fontSize: 36,
-    fontWeight: "900",
-    color: "#003366",
-    marginBottom: 24,
-  },
-  dashedDividerWrapper: {
-    width: "100%",
-    height: 24,
-    position: "relative",
-    justifyContent: "center",
-    marginBottom: 24,
-  },
-  dashedLine: {
-    width: "100%",
-    height: 1,
-    borderWidth: 1,
-    borderColor: "#F3F4F6",
-    borderStyle: "dashed",
-  },
-  dashedDividerLeftCircle: {
-    position: "absolute",
-    left: -36,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "#fafafa",
-  },
-  dashedDividerRightCircle: {
-    position: "absolute",
-    right: -36,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "#fafafa",
-  },
-  beneficiarySection: {
-    alignItems: "center",
-    width: "100%",
-  },
-  beneficiaryLabel: {
-    fontSize: 10,
-    color: "#9CA3AF",
-    fontWeight: "700",
-    letterSpacing: 1,
-    marginBottom: 4,
-  },
-  beneficiaryPhone: {
-    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#1F2937",
-    letterSpacing: 1,
+  processingText: {
+    marginLeft: 12,
+    color: '#111827',
+    fontWeight: '700',
+    fontSize: 16,
   },
   successContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingBottom: 20,
+    paddingHorizontal: 20,
   },
   successIconWrapper: {
-    marginBottom: 24,
-    backgroundColor: "#ECFDF5",
-    borderRadius: 50,
+    marginBottom: 32,
+    backgroundColor: '#ECFDF5',
+    padding: 8,
+    borderRadius: 60,
   },
   successTitle: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: "800",
     color: "#111827",
-    marginBottom: 8,
-    letterSpacing: -0.5,
+    marginBottom: 12,
+    textAlign: 'center',
   },
   successDesc: {
     color: "#6B7280",
-    fontSize: 14,
+    fontSize: 16,
     textAlign: "center",
-    marginBottom: 8,
-    lineHeight: 20,
-  },
-  successPhoneBadge: {
-    backgroundColor: "#F3F4F6",
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
-    marginTop: 4,
     marginBottom: 32,
+    lineHeight: 24,
   },
   successPhone: {
-    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
-    fontWeight: "700",
-    color: "#1F2937",
-    fontSize: 16,
-  },
-  secondaryBtn: {
-    backgroundColor: "#F3F4F6",
-    width: "100%",
-    height: 56,
-    borderRadius: 16,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  secondaryBtnText: {
-    color: "#374151",
-    fontWeight: "700",
-    fontSize: 16,
+    fontWeight: "800",
+    color: "#111827",
   },
   errorBox: {
     flexDirection: "row",
     backgroundColor: "#FEF2F2",
-    padding: 14,
-    borderRadius: 12,
-    marginBottom: 16,
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 20,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#FEE2E2",
+    borderColor: "#FECACA",
   },
   errorText: {
-    color: "#DC2626",
-    fontSize: 13,
-    fontWeight: "600",
+    color: "#B91C1C",
+    fontSize: 14,
+    fontWeight: "700",
     flex: 1,
-    marginLeft: 10,
+    marginLeft: 12,
   },
 });
 

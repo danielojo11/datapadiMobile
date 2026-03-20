@@ -82,7 +82,7 @@ export async function verifyMeter(
       meterNo,
       meterType,
     });
-
+    console.log("Verification Begining")
     const response = await api.get(
       `electricity/verify?${query.toString()}`,
     );
@@ -96,6 +96,7 @@ export async function verifyMeter(
       data: result.data,
     };
   } catch (error) {
+    console.log("meter verification error", error)
     return { success: false, error: "Meter Verification Failed" };
   }
 }

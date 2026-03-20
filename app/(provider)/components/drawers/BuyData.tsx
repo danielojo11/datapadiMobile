@@ -32,11 +32,11 @@ type BuyDataProps = {
   onClose: () => void;
 };
 
-const networks: { id: NetworkId; label: string; color: string }[] = [
-  { id: "MTN", label: "MTN", color: "#FFCC00" },
-  { id: "AIRTEL", label: "Airtel", color: "#FF0000" },
-  { id: "GLO", label: "Glo", color: "#009933" },
-  { id: "9MOBILE", label: "9mobile", color: "#006600" },
+const networks: { id: NetworkId; label: string; color: string; bgColor: string }[] = [
+  { id: "MTN", label: "MTN", color: "#FFCC00", bgColor: "#FFFDF5" },
+  { id: "AIRTEL", label: "Airtel", color: "#FF0000", bgColor: "#FFF5F5" },
+  { id: "GLO", label: "Glo", color: "#00E600", bgColor: "#F5FFF5" },
+  { id: "9MOBILE", label: "9mobile", color: "#006600", bgColor: "#F5FAF5" },
 ];
 
 const CURRENCY = "₦";
@@ -62,6 +62,12 @@ const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
     }
   }, [visible]);
 
+  useEffect(() => {
+    if (visible && !selectedNetwork && step === 'NETWORK') {
+      setSelectedNetwork("MTN");
+    }
+  }, [visible, selectedNetwork, step]);
+
   const fetchPlans = async () => {
     setIsLoadingPlans(true);
     setErrorMessage('');
@@ -73,7 +79,7 @@ const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
         setErrorMessage('Failed to load data plans.');
       }
     } catch (error: any) {
-      console.log("Erororororo: ", error)
+      console.log("Error: ", error);
       setErrorMessage(error?.message || 'An error occurred while fetching plans.');
     } finally {
       setIsLoadingPlans(false);
@@ -88,12 +94,11 @@ const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
 
   const reset = () => {
     setStep('NETWORK');
-    setSelectedNetwork(null);
+    setSelectedNetwork("MTN");
     setSelectedPlan(null);
     setPhoneNumber('');
     setIsPurchasing(false);
     setSearchQuery('');
-    setErrorMessage('');
     setErrorMessage('');
     setTransactionPin('');
     setPinError(false);
@@ -107,11 +112,11 @@ const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
   const handleNetworkSelect = (networkId: NetworkId) => {
     setSelectedNetwork(networkId);
     setErrorMessage('');
+    setSearchQuery('');
     setStep('PLAN');
   };
 
   const handlePlanSelect = (plan: UIPlan) => {
-    console.log("Plan: ", plan);
     setSelectedPlan(plan);
     setErrorMessage('');
     setStep('PHONE');
@@ -174,7 +179,6 @@ const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
         phoneNumber,
         pinToUse
       );
-      console.log('Buy Data Result:', result);
 
       if (result.success) {
         DeviceEventEmitter.emit('refreshData');
@@ -191,11 +195,22 @@ const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
     }
   };
 
-  const renderHeader = () => (
+  const activeNetworkObj = networks.find(n => n.id === selectedNetwork);
+
+  const renderHeader = (showBack = false, onBack?: () => void) => (
     <View style={styles.headerRow}>
-      <Text style={styles.drawerTitle}>{step === 'SUCCESS' ? 'Success' : 'Buy Data'}</Text>
-      <TouchableOpacity onPress={handleClose} style={styles.closeBtn}>
-        <Ionicons name="close" size={20} color="#333" />
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        {showBack ? (
+          <TouchableOpacity onPress={onBack} style={[styles.headerIconBtn, { marginRight: 12 }]}>
+            <Ionicons name="arrow-back" size={20} color="#111827" />
+          </TouchableOpacity>
+        ) : (
+          <View style={{ width: 0 }} />
+        )}
+        <Text style={[styles.drawerTitle, !showBack && { marginTop: 4 }]}>{step === 'SUCCESS' ? 'Transaction Status' : 'Buy Data'}</Text>
+      </View>
+      <TouchableOpacity onPress={handleClose} style={styles.headerIconBtn}>
+        <Ionicons name="close" size={20} color="#111827" />
       </TouchableOpacity>
     </View>
   );
@@ -212,9 +227,6 @@ const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
           behavior={Platform.OS === "ios" ? "padding" : undefined}
           style={styles.drawerContainer}
         >
-          <View style={styles.handle} />
-          {renderHeader()}
-
           {errorMessage && step !== 'SUCCESS' ? (
             <View style={styles.errorBox}>
               <Ionicons name="alert-circle-outline" size={18} color="#E53935" />
@@ -222,221 +234,272 @@ const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
             </View>
           ) : null}
 
-          <View style={styles.contentContainer}>
-            {step === 'NETWORK' && (
-              <View style={styles.stepContainer}>
-                <Text style={styles.subText}>Select a network provider</Text>
+          {step === 'NETWORK' && (
+            <View style={styles.stepContainer}>
+              {renderHeader(false)}
+              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
+                <Text style={styles.sectionTitle}>SELECT NETWORK</Text>
                 {isLoadingPlans ? (
-                  <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#003366" />
-                    <Text style={styles.loadingText}>Loading networks...</Text>
+                  <View style={{ padding: 40, alignItems: 'center' }}>
+                    <ActivityIndicator size="small" color="#111827" />
                   </View>
                 ) : (
-                  <View style={styles.networkContainer}>
-                    {networks.map((network) => (
-                      <TouchableOpacity
-                        key={network.id}
-                        style={[
-                          styles.networkButton,
-                          selectedNetwork === network.id && styles.networkButtonSelected
-                        ]}
-                        onPress={() => handleNetworkSelect(network.id)}
-                      >
-                        <View style={[styles.networkCircle, { backgroundColor: network.color }]}>
-                          <Text style={styles.networkLetter}>{network.label.charAt(0)}</Text>
-                        </View>
-                        <Text style={styles.networkLabel}>{network.label}</Text>
-                      </TouchableOpacity>
-                    ))}
+                  <View style={styles.networkGrid}>
+                    {networks.map((network) => {
+                      const isSelected = selectedNetwork === network.id;
+                      return (
+                        <TouchableOpacity
+                          key={network.id}
+                          style={[
+                            styles.networkCard,
+                            isSelected && [styles.networkCardSelected, { borderColor: network.color, backgroundColor: network.bgColor }]
+                          ]}
+                          onPress={() => handleNetworkSelect(network.id)}
+                        >
+                          {isSelected && (
+                            <View style={[styles.checkCircle, { backgroundColor: network.color }]}>
+                              <Ionicons name="checkmark" size={10} color="#fff" />
+                            </View>
+                          )}
+                          <View style={[styles.networkCircle, { backgroundColor: network.color }]}>
+                            <Text style={styles.networkLetter}>{network.label.charAt(0)}</Text>
+                          </View>
+                          <Text style={[styles.networkLabel, isSelected && styles.networkLabelSelected]}>{network.label}</Text>
+                        </TouchableOpacity>
+                      );
+                    })}
                   </View>
                 )}
-              </View>
-            )}
+              </ScrollView>
+            </View>
+          )}
 
-            {step === 'PLAN' && (
-              <View style={styles.stepContainer}>
-                <TouchableOpacity onPress={() => setStep('NETWORK')} style={styles.backButton}>
-                  <Ionicons name="arrow-back" size={16} color="#003366" />
-                  <Text style={styles.backButtonText}>Back to Networks</Text>
-                </TouchableOpacity>
-
-                <View style={styles.searchContainer}>
-                  <Ionicons name="search" size={18} color="#999" />
-                  <TextInput
-                    style={styles.searchInput}
-                    placeholder="Search plans (e.g. 1GB)"
-                    value={searchQuery}
-                    onChangeText={setSearchQuery}
-                  />
+          {step === 'PLAN' && (
+            <View style={styles.stepContainer}>
+              {renderHeader(true, () => setStep('NETWORK'))}
+              
+              <View style={styles.planHeaderRow}>
+                <View style={[styles.smallNetworkCircle, { backgroundColor: activeNetworkObj?.color || '#FFCC00', width: 32, height: 32, borderRadius: 16 }]}>
+                  <Text style={[styles.smallNetworkLetter, { fontSize: 16 }]}>{activeNetworkObj?.label.charAt(0) || 'M'}</Text>
                 </View>
+                <Text style={styles.planHeaderText}>{activeNetworkObj?.label} Data Plans</Text>
+              </View>
 
-                <Text style={styles.sectionLabel}>AVAILABLE PLANS</Text>
+              <View style={styles.searchInputContainer}>
+                <Ionicons name="search" size={20} color="#9CA3AF" />
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Search plans..."
+                  placeholderTextColor="#9CA3AF"
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                />
+              </View>
 
-                <ScrollView
-                  style={styles.flex1}
-                  showsVerticalScrollIndicator={false}
-                  refreshControl={
-                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-                  }
-                >
-                  {filteredPlans.length > 0 ? (
-                    filteredPlans.map((plan, index) => (
-                      <TouchableOpacity
-                        key={`${plan.id}-${index}`}
-                        onPress={() => handlePlanSelect(plan)}
-                        style={styles.planCard}
-                      >
-                        <View>
-                          <View style={styles.planNameRow}>
-                            <Text style={styles.planName}>{plan.name}</Text>
-                            <View style={styles.groupBadge}>
-                              <Text style={styles.groupBadgeText}>{plan.groupName}</Text>
-                            </View>
+              <Text style={styles.sectionTitle}>{filteredPlans.length} PLANS AVAILABLE</Text>
+
+              <ScrollView 
+                showsVerticalScrollIndicator={false} 
+                contentContainerStyle={{ paddingBottom: 24 }}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+              >
+                {filteredPlans.length > 0 ? (
+                  filteredPlans.map((plan, index) => (
+                    <TouchableOpacity
+                      key={`${plan.id}-${index}`}
+                      onPress={() => handlePlanSelect(plan)}
+                      style={styles.planCardNew}
+                    >
+                      <View style={{ flex: 1, paddingRight: 10 }}>
+                        <Text style={styles.planNameText}>{plan.name}</Text>
+                        <View style={{ flexDirection: 'row', marginTop: 8 }}>
+                          <View style={styles.planBadge}>
+                            <Text style={styles.planBadgeText}>{plan.groupName}</Text>
                           </View>
                         </View>
-                        <View style={styles.planPriceRow}>
-                          <Text style={styles.planPrice}>{CURRENCY}{plan.price.toLocaleString()}</Text>
-                          <Ionicons name="chevron-forward" size={16} color="#CCC" />
-                        </View>
-                      </TouchableOpacity>
-                    ))
-                  ) : (
-                    <Text style={styles.emptyText}>
-                      {searchQuery ? "No matching plans found" : "No plans available"}
-                    </Text>
-                  )}
-                </ScrollView>
-              </View>
-            )}
+                      </View>
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <Text style={[styles.planPriceText, { color: activeNetworkObj?.color || '#FFCC00' }]}>{CURRENCY}{plan.price.toLocaleString()}</Text>
+                        <Ionicons name="chevron-forward" size={16} color="#D1D5DB" style={{ marginLeft: 4 }} />
+                      </View>
+                    </TouchableOpacity>
+                  ))
+                ) : (
+                  <Text style={styles.emptyText}>
+                    {searchQuery ? "No matching plans found" : "No plans available"}
+                  </Text>
+                )}
+              </ScrollView>
+            </View>
+          )}
 
-            {step === 'PHONE' && (
-              <View style={styles.stepContainer}>
-                <TouchableOpacity onPress={() => setStep('PLAN')} style={styles.backButton}>
-                  <Ionicons name="arrow-back" size={16} color="#003366" />
-                  <Text style={styles.backButtonText}>Change Plan</Text>
-                </TouchableOpacity>
-
-                <View style={styles.summaryBox}>
-                  <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>Plan</Text>
-                    <Text style={styles.summaryValue}>{selectedPlan?.name}</Text>
-                  </View>
-                  <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>Amount</Text>
-                    <Text style={styles.summaryPrice}>{CURRENCY}{selectedPlan?.price.toLocaleString()}</Text>
-                  </View>
-                </View>
-
-                <View style={styles.flex1}>
-                  <Text style={styles.inputLabel}>Phone Number</Text>
-                  <View style={styles.inputContainer}>
-                    <Ionicons name="call-outline" size={18} color="#666" />
-                    <TextInput
-                      style={styles.input}
-                      placeholder="08012345678"
-                      keyboardType="number-pad"
-                      maxLength={11}
-                      value={phoneNumber}
-                      onChangeText={(text) => {
-                        setPhoneNumber(text.replace(/\D/g, ''));
-                        setErrorMessage('');
-                      }}
-                      autoFocus
-                    />
-                  </View>
-                </View>
-
-                <View style={styles.bottomAnchored}>
-                  <TouchableOpacity
-                    style={[styles.primaryBtn, phoneNumber.length < 10 && styles.disabledBtn]}
-                    disabled={phoneNumber.length < 10}
-                    onPress={() => setStep('CONFIRM')}
-                  >
-                    <Text style={styles.btnText}>Proceed</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
-
-            {step === 'CONFIRM' && (
-              <View style={styles.stepContainer}>
-                <TouchableOpacity onPress={() => setStep('PHONE')} style={styles.backButton}>
-                  <Ionicons name="arrow-back" size={16} color="#003366" />
-                  <Text style={styles.backButtonText}>Edit Details</Text>
-                </TouchableOpacity>
-
-                <View style={styles.confirmBox}>
-                  <Text style={styles.confirmHeader}>You are about to purchase</Text>
-                  <Text style={styles.confirmPlanName}>{selectedPlan?.name}</Text>
-                  <Text style={styles.confirmPlanPrice}>{CURRENCY}{selectedPlan?.price.toLocaleString()}</Text>
-
-                  <View style={styles.confirmDivider} />
-
-                  <Text style={styles.confirmLabel}>BENEFICIARY</Text>
-                  <Text style={styles.confirmPhone}>{phoneNumber}</Text>
-                  <Text style={styles.confirmNetwork}>{networks.find(n => n.id === selectedNetwork)?.label}</Text>
-                </View>
-
-                <View style={styles.bottomAnchored}>
-                  <TouchableOpacity
-                    style={styles.primaryBtn}
-                    onPress={() => setStep('PIN')}
-                  >
-                    <Text style={styles.btnText}>Proceed to Enter PIN</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
-
-            {step === 'PIN' && (
-              <View style={styles.stepContainer}>
-                <TouchableOpacity onPress={() => { setStep('CONFIRM'); setPinError(false); setErrorMessage(''); }} style={styles.backButton}>
-                  <Ionicons name="arrow-back" size={16} color="#003366" />
-                  <Text style={styles.backButtonText}>Back</Text>
-                </TouchableOpacity>
-
-                <View style={[styles.inputGroup, { marginTop: 20 }]}>
-                  <Text style={[styles.inputLabel, { textAlign: 'center', marginBottom: 20 }]}>Enter Transaction PIN</Text>
-
-                  <TransactionPinInput
-                    onComplete={(pin) => {
-                      setTransactionPin(pin);
-                      handlePurchase(pin);
-                    }}
-                    error={pinError}
-                    clearError={() => setPinError(false)}
-                    isLoading={isPurchasing}
-                  />
-
-                  {isPurchasing && (
-                    <View style={[styles.processingRow, { marginTop: 30 }]}>
-                      <ActivityIndicator size="small" color="#003366" />
-                      <Text style={{ marginLeft: 8, color: '#003366', fontWeight: '600' }}>Processing Payment...</Text>
+          {step === 'PHONE' && (
+            <View style={styles.stepContainer}>
+              {renderHeader(true, () => setStep('PLAN'))}
+              
+              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
+                <View style={[styles.selectedPlanCard, { borderColor: activeNetworkObj?.color || '#FFCC00', backgroundColor: activeNetworkObj?.bgColor || '#FFF9E6' }]}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <View style={[styles.smallNetworkCircle, { backgroundColor: activeNetworkObj?.color || '#FFCC00', width: 44, height: 44, borderRadius: 22, marginRight: 16 }]}>
+                      <Text style={[styles.smallNetworkLetter, { fontSize: 22 }]}>{activeNetworkObj?.label.charAt(0) || 'M'}</Text>
                     </View>
+                    <View style={{ flex: 1, paddingRight: 8 }}>
+                      <Text style={styles.selectedPlanName} numberOfLines={2}>{selectedPlan?.name}</Text>
+                      <Text style={styles.selectedPlanNetwork}>{activeNetworkObj?.label}</Text>
+                    </View>
+                    <Text style={[styles.selectedPlanPrice, { color: activeNetworkObj?.color || '#FFCC00' }]}>{CURRENCY}{selectedPlan?.price.toLocaleString()}</Text>
+                  </View>
+                </View>
+
+                <Text style={[styles.sectionTitle, { marginTop: 24 }]}>PHONE NUMBER</Text>
+                <View style={styles.inputContainer}>
+                  <View style={[styles.inputIconCircle, { backgroundColor: activeNetworkObj?.color || '#FFCC00' }]}>
+                    <Ionicons name="call" size={16} color="#fff" />
+                  </View>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="08012345678"
+                    keyboardType="number-pad"
+                    maxLength={11}
+                    value={phoneNumber}
+                    placeholderTextColor="#9CA3AF"
+                    onChangeText={(text) => setPhoneNumber(text.replace(/\D/g, ''))}
+                  />
+                  {phoneNumber.length >= 10 && (
+                    <Ionicons name="checkmark-circle-outline" size={24} color="#10B981" style={{ marginRight: 12 }} />
                   )}
                 </View>
+              </ScrollView>
+              
+              <View style={styles.bottomAnchoredDetails}>
+                <TouchableOpacity
+                  style={[
+                    styles.primaryBtn,
+                    phoneNumber.length < 10 && styles.disabledBtn
+                  ]}
+                  disabled={phoneNumber.length < 10}
+                  onPress={() => setStep('CONFIRM')}
+                >
+                  <Text style={styles.btnText}>Proceed</Text>
+                </TouchableOpacity>
               </View>
-            )}
+            </View>
+          )}
 
-            {step === 'SUCCESS' && (
-              <View style={styles.successContainer}>
-                <View style={styles.successIconWrapper}>
-                  <Ionicons name="checkmark-circle" size={80} color="#10B981" />
-                </View>
-                <Text style={styles.successTitle}>Transaction Successful</Text>
-                <Text style={styles.successDesc}>
-                  Your data has been sent to{" "}
-                  <Text style={styles.successPhone}>{phoneNumber}</Text>
-                </Text>
+          {step === 'CONFIRM' && (
+            <View style={styles.stepContainer}>
+              {renderHeader(true, () => setStep('PHONE'))}
+              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
+                <View style={styles.confirmCard}>
+                  <View style={[styles.confirmTopBar, { backgroundColor: activeNetworkObj?.color || '#FFCC00' }]} />
 
-                <View style={[styles.bottomAnchored, { width: '100%' }]}>
-                  <TouchableOpacity style={styles.secondaryBtn} onPress={handleClose}>
-                    <Text style={styles.secondaryBtnText}>Done</Text>
-                  </TouchableOpacity>
+                  <View style={styles.confirmContent}>
+                    <View style={[styles.largeNetworkCircle, { backgroundColor: activeNetworkObj?.color || '#FFCC00' }]}>
+                      <Text style={styles.largeNetworkLetter}>{activeNetworkObj?.label.charAt(0) || 'M'}</Text>
+                    </View>
+
+                    <Text style={styles.confirmPlanNameInfo}>{selectedPlan?.name}</Text>
+                    <Text style={styles.confirmPhone}>{phoneNumber}</Text>
+                    <Text style={styles.confirmNetwork}>{activeNetworkObj?.label}</Text>
+
+                    <Text style={[styles.confirmAmount, { color: activeNetworkObj?.color || '#FFCC00' }]}>
+                      {CURRENCY}{selectedPlan?.price.toLocaleString()}
+                    </Text>
+                  </View>
+
+                  <View style={styles.dividerWrapper}>
+                    <View style={styles.leftCutout} />
+                    <View style={styles.dashedLine} />
+                    <View style={styles.rightCutout} />
+                  </View>
+
+                  <View style={styles.transactionTypeRow}>
+                    <Text style={styles.typeLabel}>Type</Text>
+                    <Text style={styles.typeValue}>Data Bundle</Text>
+                  </View>
+
+                  <View style={styles.deliveryBadge}>
+                    <Ionicons name="wifi-outline" size={16} color="#8B5CF6" />
+                    <Text style={styles.deliveryText}>Data will be activated instantly</Text>
+                  </View>
                 </View>
+              </ScrollView>
+
+              <View style={styles.bottomAnchored}>
+                <TouchableOpacity style={styles.primaryBtn} onPress={() => setStep('PIN')}>
+                  <Text style={styles.btnText}>Proceed to Payment</Text>
+                </TouchableOpacity>
               </View>
-            )}
-          </View>
+            </View>
+          )}
+
+          {step === 'PIN' && (
+            <View style={styles.stepContainer}>
+              {renderHeader(true, () => { setStep('CONFIRM'); setPinError(false); setErrorMessage(''); })}
+              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24, alignItems: 'center' }}>
+
+                <View style={styles.lockIconContainer}>
+                  <View style={styles.lockIconCircle}>
+                    <Ionicons name="lock-closed-outline" size={28} color="#3B82F6" />
+                  </View>
+                  <View style={styles.shieldIconBadge}>
+                    <Ionicons name="shield-checkmark" size={14} color="#fff" />
+                  </View>
+                </View>
+
+                <Text style={styles.authorizeTitle}>Authorize Payment</Text>
+                <Text style={styles.authorizeSubtitle}>Enter your 4-digit PIN to confirm</Text>
+
+                <View style={[styles.pinPayloadBadge, { backgroundColor: activeNetworkObj?.bgColor || '#FFF9E6', borderColor: activeNetworkObj?.color || '#FFCC00' }]}>
+                  <Text style={[styles.pinPayloadAmount, { color: activeNetworkObj?.color || '#FFCC00' }]}>{CURRENCY}{selectedPlan?.price.toLocaleString()}</Text>
+                  <Text style={styles.pinPayloadSub}>{activeNetworkObj?.label} Data · {phoneNumber}</Text>
+                </View>
+
+                <TransactionPinInput
+                  onComplete={(pin) => {
+                    setTransactionPin(pin);
+                    handlePurchase(pin);
+                  }}
+                  error={pinError}
+                  clearError={() => setPinError(false)}
+                  isLoading={isPurchasing}
+                />
+
+                {isPurchasing && (
+                  <View style={[styles.processingRow, { marginTop: 10 }]}>
+                    <ActivityIndicator size="small" color="#111827" />
+                    <Text style={{ marginLeft: 8, color: '#111827', fontWeight: '600' }}>Processing Payment...</Text>
+                  </View>
+                )}
+              </ScrollView>
+
+              <View style={styles.bottomAnchored}>
+                <TouchableOpacity style={styles.confirmPinBtn} disabled={true}>
+                  <Text style={styles.confirmPinBtnText}>Confirm Payment</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
+          {step === 'SUCCESS' && (
+            <View style={styles.successContainer}>
+              <View style={styles.successIconWrapper}>
+                <Ionicons name="checkmark-circle" size={80} color="#10B981" />
+              </View>
+              <Text style={styles.successTitle}>Transaction Successful</Text>
+              <Text style={styles.successDesc}>
+                Data sent to{' '}
+                <Text style={styles.successPhone}>{phoneNumber}</Text>
+              </Text>
+
+              <View style={[styles.bottomAnchored, { width: '100%' }]}>
+                <TouchableOpacity style={styles.primaryBtn} onPress={handleClose}>
+                  <Text style={styles.btnText}>Done</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
         </KeyboardAvoidingView>
       </View>
     </Modal>
@@ -446,259 +509,246 @@ const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(0,0,0,0.4)",
     justifyContent: "flex-end",
   },
   drawerContainer: {
-    backgroundColor: "white",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    backgroundColor: "#E5E7EB", // Like BuyAirtime background
+    borderTopLeftRadius: 36,
+    borderTopRightRadius: 36,
     paddingHorizontal: 20,
-    paddingTop: 12,
+    paddingTop: 24,
     paddingBottom: Platform.OS === 'ios' ? 40 : 20,
-    height: '85%',
-  },
-  handle: {
-    width: 40,
-    height: 5,
-    backgroundColor: "#E5E7EB",
-    borderRadius: 3,
-    alignSelf: "center",
-    marginBottom: 16,
-  },
-  headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  drawerTitle: { fontSize: 20, fontWeight: "700", color: "#111827" },
-  closeBtn: {
-    backgroundColor: "#F3F4F6",
-    padding: 8,
-    borderRadius: 20,
-  },
-  contentContainer: {
-    flex: 1,
+    height: '92%',
   },
   stepContainer: {
     flex: 1,
     display: 'flex',
     flexDirection: 'column',
   },
-  flex1: {
-    flex: 1,
-  },
-  subText: {
-    color: "#6B7280",
-    fontSize: 14,
-    fontWeight: "500",
-    marginBottom: 20,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#003366",
-  },
-  networkContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    flexWrap: "wrap",
-    gap: 16,
-    marginTop: 10,
-  },
-  networkButton: {
-    alignItems: "center",
-    width: 70,
-  },
-  networkButtonSelected: {
-    opacity: 0.8,
-  },
-  networkCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 8,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  networkLetter: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 24,
-  },
-  networkLabel: {
-    fontSize: 13,
-    color: "#374151",
-    fontWeight: "500",
-  },
-  backButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 16,
-    alignSelf: "flex-start",
-  },
-  backButtonText: {
-    color: "#003366",
-    fontSize: 14,
-    fontWeight: "600",
-    marginLeft: 4,
-  },
-  searchContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#F9FAFB",
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    height: 48,
-    marginBottom: 16,
-  },
-  searchInput: {
-    flex: 1,
-    marginLeft: 8,
-    fontSize: 15,
-    color: "#111827",
-  },
-  sectionLabel: {
-    fontSize: 11,
-    color: "#6B7280",
-    fontWeight: "700",
-    letterSpacing: 0.5,
-    marginBottom: 12,
-  },
-  planCard: {
+  headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 16,
+    marginBottom: 20,
+  },
+  headerIconBtn: {
     backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#F3F4F6",
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  drawerTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#111827"
+  },
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#9CA3AF',
+    letterSpacing: 1,
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  networkGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  networkCard: {
+    backgroundColor: '#fff',
     borderRadius: 16,
-    marginBottom: 12,
+    padding: 12,
+    alignItems: 'center',
+    width: '23%',
+    borderWidth: 2,
+    borderColor: 'transparent',
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 1,
   },
-  planNameRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 4,
+  networkCardSelected: {
+    borderWidth: 2,
   },
-  planName: {
-    fontWeight: "600",
-    fontSize: 15,
-    color: "#111827",
+  checkCircle: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#fff',
+    zIndex: 2,
   },
-  groupBadge: {
-    backgroundColor: "#F3F4F6",
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 10,
-    marginLeft: 8,
-  },
-  groupBadgeText: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: "#4B5563",
-    textTransform: "uppercase",
-  },
-  planPriceRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  planPrice: {
-    color: "#003366",
-    fontWeight: "700",
-    fontSize: 15,
-    marginRight: 6,
-  },
-  emptyText: {
-    textAlign: "center",
-    color: "#9CA3AF",
-    fontSize: 14,
-    marginTop: 30,
-  },
-  summaryBox: {
-    backgroundColor: "#EFF6FF",
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#DBEAFE",
-    marginBottom: 24,
-  },
-  summaryRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 4,
-  },
-  summaryLabel: {
-    color: "#6B7280",
-    fontSize: 14,
-  },
-  summaryValue: {
-    fontWeight: "600",
-    color: "#111827",
-    fontSize: 15,
-  },
-  summaryPrice: {
-    fontWeight: "700",
-    color: "#003366",
-    fontSize: 15,
-  },
-  inputGroup: {
-    marginBottom: 4,
-  },
-  inputLabel: {
-    fontWeight: "600",
-    fontSize: 14,
-    color: "#111827",
+  networkCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 8,
   },
-  inputContainer: {
+  networkLetter: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 20,
+  },
+  networkLabel: {
+    fontSize: 13,
+    color: '#6B7280',
+    fontWeight: '600'
+  },
+  networkLabelSelected: {
+    color: '#111827',
+    fontWeight: 'bold'
+  },
+  planHeaderRow: {
     flexDirection: "row",
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    height: 52,
+    marginBottom: 20,
   },
-  input: {
+  smallNetworkCircle: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  smallNetworkLetter: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  planHeaderText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#111827",
+  },
+  searchInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    height: 56,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  searchInput: {
     flex: 1,
     marginLeft: 10,
     fontSize: 16,
     color: "#111827",
   },
-  bottomAnchored: {
-    marginTop: "auto",
+  planCardNew: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 18,
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    marginBottom: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  planNameText: {
+    fontWeight: "600",
+    fontSize: 15,
+    color: "#111827",
+  },
+  planBadge: {
+    backgroundColor: "#ECFDF5",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  planBadgeText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#10B981",
+  },
+  planPriceText: {
+    fontWeight: "800",
+    fontSize: 16,
+  },
+  selectedPlanCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 18,
+    borderWidth: 1,
+    borderRadius: 16,
+  },
+  selectedPlanName: {
+    fontWeight: "600",
+    fontSize: 15,
+    color: "#111827",
+  },
+  selectedPlanNetwork: {
+    fontSize: 13,
+    color: "#6B7280",
+    marginTop: 4,
+    textTransform: "uppercase",
+  },
+  selectedPlanPrice: {
+    fontWeight: "800",
+    fontSize: 20,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    height: 64,
+    paddingLeft: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  inputIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  input: {
+    flex: 1,
+    height: '100%',
+    marginLeft: 12,
+    fontSize: 18,
+    color: '#111827',
+    fontWeight: '600',
+  },
+  bottomAnchoredDetails: {
+    marginTop: 'auto',
     paddingTop: 16,
-    paddingBottom: 8,
+  },
+  bottomAnchored: {
+    marginTop: 'auto',
+    paddingTop: 16,
   },
   primaryBtn: {
-    backgroundColor: "#003366",
+    backgroundColor: "#71717A",
     width: "100%",
-    height: 54,
-    borderRadius: 14,
+    height: 56,
+    borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -707,7 +757,183 @@ const styles = StyleSheet.create({
   },
   btnText: {
     color: "white",
-    fontWeight: "600",
+    fontWeight: "700",
+    fontSize: 16,
+  },
+  confirmCard: {
+    backgroundColor: '#fff',
+    borderRadius: 24,
+    marginTop: 10,
+    overflow: 'hidden',
+  },
+  confirmTopBar: {
+    height: 8,
+    width: '100%',
+  },
+  confirmContent: {
+    padding: 30,
+    alignItems: 'center',
+  },
+  largeNetworkCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  largeNetworkLetter: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 28,
+  },
+  confirmPlanNameInfo: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    marginBottom: 6,
+    textAlign: 'center',
+  },
+  confirmPhone: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#111827',
+    letterSpacing: 2,
+    marginBottom: 4,
+  },
+  confirmNetwork: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    marginBottom: 20,
+    textTransform: 'uppercase',
+  },
+  confirmAmount: {
+    fontSize: 48,
+    fontWeight: '900',
+    marginBottom: 10,
+  },
+  dividerWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    position: 'relative',
+    height: 24,
+    marginVertical: 4,
+  },
+  dashedLine: {
+    flex: 1,
+    height: 1,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+    borderStyle: 'dashed',
+  },
+  leftCutout: {
+    position: 'absolute',
+    left: -12,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#E5E7EB',
+    zIndex: 1,
+  },
+  rightCutout: {
+    position: 'absolute',
+    right: -12,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#E5E7EB',
+    zIndex: 1,
+  },
+  transactionTypeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingVertical: 20,
+  },
+  typeLabel: {
+    color: '#9CA3AF',
+    fontSize: 14,
+  },
+  typeValue: {
+    color: '#111827',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  deliveryBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+  },
+  deliveryText: {
+    marginLeft: 8,
+    color: '#6B7280',
+    fontSize: 14,
+  },
+  lockIconContainer: {
+    marginTop: 20,
+    marginBottom: 24,
+  },
+  lockIconCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#EFF6FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  shieldIconBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#10B981',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: '#E5E7EB',
+  },
+  authorizeTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#111827',
+    marginBottom: 8,
+  },
+  authorizeSubtitle: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    marginBottom: 24,
+  },
+  pinPayloadBadge: {
+    paddingHorizontal: 30,
+    paddingVertical: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  pinPayloadAmount: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  pinPayloadSub: {
+    fontSize: 12,
+    color: '#6B7280',
+  },
+  confirmPinBtn: {
+    backgroundColor: "#71717A",
+    width: "100%",
+    height: 56,
+    borderRadius: 16,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  confirmPinBtnText: {
+    color: "#D1D5DB",
+    fontWeight: "700",
     fontSize: 16,
   },
   processingRow: {
@@ -715,103 +941,35 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  confirmBox: {
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#F3F4F6",
-    borderRadius: 20,
-    padding: 24,
-    alignItems: "center",
-    marginBottom: 24,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 2,
-  },
-  confirmHeader: {
-    color: "#6B7280",
-    fontSize: 14,
-    marginBottom: 8,
-  },
-  confirmPlanName: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#111827",
-    marginBottom: 4,
-  },
-  confirmPlanPrice: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: "#003366",
-    marginBottom: 20,
-  },
-  confirmDivider: {
-    height: 1,
-    backgroundColor: "#F3F4F6",
-    width: "100%",
-    marginBottom: 16,
-  },
-  confirmLabel: {
-    fontSize: 11,
-    color: "#9CA3AF",
-    fontWeight: "600",
-    letterSpacing: 0.5,
-    marginBottom: 4,
-  },
-  confirmPhone: {
-    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#374151",
-    letterSpacing: 1,
-    marginBottom: 2,
-  },
-  confirmNetwork: {
-    fontSize: 13,
-    color: "#6B7280",
-    fontWeight: "500",
-    textTransform: "uppercase",
-  },
   successContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingBottom: 20,
   },
   successIconWrapper: {
     marginBottom: 24,
-    backgroundColor: "#ECFDF5",
-    borderRadius: 50,
   },
   successTitle: {
     fontSize: 24,
-    fontWeight: "700",
+    fontWeight: "bold",
     color: "#111827",
-    marginBottom: 8,
+    marginBottom: 12,
   },
   successDesc: {
+    fontSize: 16,
     color: "#6B7280",
-    fontSize: 15,
     textAlign: "center",
+    paddingHorizontal: 40,
   },
   successPhone: {
-    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
-    fontWeight: "600",
-    color: "#374151",
+    fontWeight: "bold",
+    color: "#111827",
   },
-  secondaryBtn: {
-    backgroundColor: "#F3F4F6",
-    width: "100%",
-    height: 54,
-    borderRadius: 14,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  secondaryBtnText: {
-    color: "#374151",
-    fontWeight: "600",
-    fontSize: 16,
+  emptyText: {
+    textAlign: "center",
+    color: "#9CA3AF",
+    fontSize: 14,
+    marginTop: 30,
   },
   errorBox: {
     flexDirection: "row",
@@ -820,15 +978,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 16,
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#FEE2E2",
   },
   errorText: {
-    color: "#DC2626",
-    fontSize: 13,
-    fontWeight: "500",
-    flex: 1,
+    color: "#EF4444",
     marginLeft: 8,
+    fontSize: 14,
   },
 });
 

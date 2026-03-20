@@ -78,6 +78,7 @@ export async function verifySmartCard(
             success: true,
             customerName: result.data?.customer_name || result.customerName || result.data?.customerName,
             dueDate: result.data?.dueDate || result.dueDate || result.data?.dueDate,
+            currentBouquet: result.data?.Current_Bouquet || result.Current_Bouquet || result.data?.CurrentBouquet || result.CurrentBouquet || result.data?.currentBouquet || result.currentBouquet || result.data?.package || result.package || result.data?.bouquet || result.bouquet,
         };
     } catch (error: any) {
         console.error("Smartcard Verification Error:", error);

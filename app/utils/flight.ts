@@ -209,3 +209,24 @@ export async function getFlightHistory(): Promise<{ success: boolean; data?: Fli
         };
     }
 }
+
+/**
+ * Utility: Get Flight Link
+ */
+export async function getFlightLink(): Promise<{ success: boolean; url?: string; error?: string }> {
+    try {
+        // Matched to the existing 'api' axios instance format
+        const response = await api.get("flights/link");
+        const result = response.data;
+        return {
+            success: true,
+            url: result.url as string,
+        };
+    } catch (error: any) {
+        console.error("Get Flight Link Error:", error);
+        return {
+            success: false,
+            error: error?.response?.data?.message || error?.message || "Failed to get flight link."
+        };
+    }
+}

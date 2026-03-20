@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { Modal, View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, Alert, ActivityIndicator } from 'react-native';
+import { Modal, View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as Clipboard from 'expo-clipboard';
 import generateReceipt from '../../../utils/generateReceipt';
 
 type TransactionDetailsModalProps = {
@@ -34,148 +36,210 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
     const isFunding = transaction.type === 'WALLET_FUNDING';
     const amountStr = Number(transaction.amount).toLocaleString();
 
-    const getStatusColor = (status: string) => {
-        switch (status?.toUpperCase()) {
-            case 'SUCCESS': return '#15803D';
-            case 'PENDING': return '#B45309';
-            case 'FAILED': return '#B91C1C';
-            default: return '#6B7280';
-        }
+    // Try to match the exact format: "3/20/2026, 12:35:49 PM"
+    const dateObj = new Date(transaction.date || transaction.createdAt || new Date());
+    const formattedDate = dateObj.toLocaleDateString() + ', ' + dateObj.toLocaleTimeString();
+
+    const formatType = (type: string) => {
+        if (!type) return '';
+        const lower = type.toLowerCase().replace('_', ' ');
+        return lower.charAt(0).toUpperCase() + lower.slice(1);
     };
 
-    const formattedDate = new Date(transaction.date || transaction.createdAt || new Date()).toLocaleDateString(undefined, {
-        weekday: 'long',
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-    });
+    const transactionTypeStr = formatType(transaction.type);
 
-    const renderDetails = () => {
-        const details = transaction.metadata;
-        const type = transaction.type as any;
+    const statusUpper = transaction.status?.toUpperCase() || 'UNKNOWN';
+    let statusColor = '#10B981'; // Default SUCCESS
+    if (statusUpper === 'PENDING') statusColor = '#F59E0B';
+    if (statusUpper === 'FAILED') statusColor = '#EF4444';
 
-        if (!details && type !== 'FLIGHT') return <Text style={[styles.detailValue, { color: '#6B7280', textAlign: 'center', width: '100%' }]}>No additional details available.</Text>;
+    const renderTopCard = () => {
+        let bgGradient = ['#2E2C77', '#0F766E'] as [string, string]; // Default fallback
+        let iconName: any = 'cash-outline';
+        let typeLabel = transactionTypeStr.toUpperCase();
 
-        switch (type) {
-            case 'ELECTRICITY':
-                return (
-                    <View style={styles.detailsGroup}>
-                        <DetailRow label="Provider" value={details?.provider} />
-                        <DetailRow label="Meter Type" value={details?.meterType} />
-                        <DetailRow label="Meter Number" value={details?.meterNumber} />
-                        <DetailRow label="Customer Name" value={details?.customerName} />
-                        <DetailRow label="Address" value={details?.address} />
-                        {details?.token && (
-                            <View style={styles.tokenBox}>
-                                <Text style={styles.tokenLabel}>TOKEN</Text>
-                                <Text style={styles.tokenValue}>{details.token}</Text>
-                            </View>
-                        )}
-                    </View>
-                );
-
-            case 'EDUCATION':
-                return (
-                    <View style={styles.detailsGroup}>
-                        <DetailRow label="Exam Body" value={(() => {
-                            if (details?.examType === 'utme-mock') return 'JAMB UTME (With Mock)';
-                            if (details?.examType === 'utme-no-mock') return 'JAMB UTME (No Mock)';
-                            return details?.provider || 'Education PIN';
-                        })()} />
-                        {details?.customerName && <DetailRow label="Customer Name" value={details.customerName} />}
-                        {details?.plan && <DetailRow label="Plan" value={details.plan} />}
-                        <DetailRow label="Quantity" value={details?.quantity} />
-                        {details?.profileId && <DetailRow label="Profile ID" value={details.profileId} />}
-                        <DetailRow label="Phone Number" value={details?.phoneNumber} />
-                        {details?.pins && Array.isArray(details.pins) && (
-                            <View style={{ marginTop: 16 }}>
-                                <Text style={styles.groupLabel}>PURCHASED PINS</Text>
-                                {details.pins.map((pin: any, index: number) => (
-                                    <View key={index} style={styles.pinBox}>
-                                        <Text style={styles.pinLabel}>Serial: {pin.serial || pin.Serial}</Text>
-                                        <Text style={styles.pinValue}>{pin.pin || pin.Pin}</Text>
-                                    </View>
-                                ))}
-                            </View>
-                        )}
-                        {details?.cardDetails && typeof details.cardDetails === 'string' && (
-                            <View style={{ marginTop: 16 }}>
-                                <Text style={styles.groupLabel}>PIN DETAILS</Text>
-                                <View style={styles.pinBox}>
-                                    <Text style={styles.pinValue}>{details.cardDetails}</Text>
-                                </View>
-                            </View>
-                        )}
-                    </View>
-                );
-
-            case 'CABLE':
-            case 'CABLE_TV':
-                return (
-                    <View style={styles.detailsGroup}>
-                        <DetailRow label="Provider" value={details?.provider} />
-                        <DetailRow label="Package" value={details?.plan} />
-                        <DetailRow label="Smart Card / IUC" value={details?.smartCardNumber} />
-                        <DetailRow label="Customer Name" value={details?.customerName} />
-                    </View>
-                );
-
-            case 'DATA':
-                return (
-                    <View style={styles.detailsGroup}>
-                        <DetailRow label="Network" value={details?.network} />
-                        <DetailRow label="Plan" value={details?.plan} />
-                        <DetailRow label="Beneficiary" value={details?.phoneNumber} />
-                    </View>
-                );
-
-            case 'AIRTIME':
-                return (
-                    <View style={styles.detailsGroup}>
-                        <DetailRow label="Network" value={details?.network} />
-                        <DetailRow label="Beneficiary" value={details?.phoneNumber} />
-                    </View>
-                );
-
-            case 'FLIGHT':
-                const flightBooking = (transaction as any).flightBooking;
-                const flight = flightBooking?.flight;
-                const passengers = flightBooking?.passengers;
-                return (
-                    <View style={styles.detailsGroup}>
-                        <View style={{ backgroundColor: '#F9FAFB', padding: 12, borderRadius: 12, borderWidth: 1, borderColor: '#F3F4F6', marginBottom: 16 }}>
-                            <Text style={[styles.groupLabel, { marginBottom: 8 }]}>FLIGHT INFORMATION</Text>
-                            <DetailRow label="Airline" value={flight?.airline} />
-                            <DetailRow label="Flight No" value={flight?.flightNumber} />
-                            <DetailRow label="Route" value={`${flight?.departure?.code} → ${flight?.arrival?.code}`} />
-                            <DetailRow label="PNR" value={flightBooking?.pnr} />
-                        </View>
-
-                        {passengers && (
-                            <View>
-                                <Text style={styles.groupLabel}>PASSENGERS</Text>
-                                {passengers.map((p: any, idx: number) => (
-                                    <View key={idx} style={[styles.pinBox, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
-                                        <Text style={{ fontWeight: '500', color: '#111827', fontSize: 13 }}>{p.title} {p.firstName} {p.lastName}</Text>
-                                        <Text style={{ color: '#2563EB', fontWeight: '700', fontSize: 13 }}>{p.seatNumber || 'N/A'}</Text>
-                                    </View>
-                                ))}
-                            </View>
-                        )}
-                    </View>
-                );
-
-            default:
-                return (
-                    <View style={styles.detailsGroup}>
-                        {details && Object.entries(details).map(([key, value]) => (
-                            <DetailRow key={key} label={key.charAt(0).toUpperCase() + key.slice(1)} value={String(value)} />
-                        ))}
-                    </View>
-                );
+        if (transaction.type === 'EDUCATION') {
+            bgGradient = ['#28246E', '#14A37D'];
+            iconName = 'school-outline';
+        } else if (transaction.type === 'AIRTIME' || transaction.type === 'DATA') {
+            bgGradient = ['#431E6B', '#C026D3'];
+            iconName = 'phone-portrait-outline';
+        } else if (transaction.type === 'CABLE' || transaction.type === 'CABLE_TV') {
+            bgGradient = ['#0F2027', '#2A4365'];
+            iconName = 'tv-outline';
+        } else if (transaction.type === 'ELECTRICITY') {
+            bgGradient = ['#4A1D96', '#E11D48'];
+            iconName = 'flash-outline';
         }
+
+        return (
+            <LinearGradient
+                colors={bgGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.topCard}
+            >
+                <View style={styles.topCardHeader}>
+                    <View style={styles.typePill}>
+                        <Ionicons name={iconName} size={16} color="#FFF" />
+                        <Text style={styles.typePillText}>{typeLabel}</Text>
+                    </View>
+                    <View style={styles.statusPill}>
+                        <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
+                        <Text style={[styles.statusText, { color: statusColor }]}>{statusUpper}</Text>
+                    </View>
+                </View>
+
+                <Text style={styles.amountLabel}>AMOUNT PAID</Text>
+                <Text style={styles.amountValue}>
+                    {isFunding ? '+' : '-'}{CURRENCY}{amountStr}
+                </Text>
+                <Text style={styles.amountSubtext}>{transactionTypeStr}</Text>
+            </LinearGradient>
+        );
+    };
+
+    const renderBasicDetails = () => (
+        <View style={styles.card}>
+            <DetailRow label="Date" value={formattedDate} boldValue />
+            <DetailRow
+                label="Reference"
+                value={transaction.reference || transaction.id || 'No Reference'}
+                boldValue
+                copyable
+            />
+            <DetailRow label="Type" value={transactionTypeStr} boldValue isLast />
+        </View>
+    );
+
+    const renderAdditionalDetails = () => {
+        const details = transaction.metadata;
+        const type = transaction.type as string;
+
+        if (!details && type !== 'FLIGHT') return null;
+
+        let content = null;
+
+        if (type === 'EDUCATION') {
+            content = (
+                <>
+                    <DetailRow label="Exam Body" value={(() => {
+                        if (details?.examType === 'utme-mock') return 'JAMB UTME (With Mock)';
+                        if (details?.examType === 'utme-no-mock') return 'JAMB UTME (No Mock)';
+                        return details?.provider || 'Education PIN';
+                    })()} boldValue isLast />
+
+                    {details?.customerName && <DetailRow label="Customer Name" value={details.customerName} boldValue />}
+                    {details?.plan && <DetailRow label="Plan" value={details.plan} boldValue />}
+                    {details?.quantity && <DetailRow label="Quantity" value={details.quantity} boldValue />}
+                    {details?.profileId && <DetailRow label="Profile ID" value={details.profileId} boldValue />}
+                    {details?.phoneNumber && <DetailRow label="Phone Number" value={details.phoneNumber} boldValue />}
+
+                    {details?.pins && Array.isArray(details.pins) && details.pins.length > 0 && (
+                        <View style={{ marginTop: 24 }}>
+                            <Text style={styles.sectionHeader}>PIN DETAILS</Text>
+                            {details.pins.map((pin: any, index: number) => (
+                                <View key={index} style={styles.pinBox}>
+                                    <Text style={styles.pinValue}>Serial: {pin.serial || pin.Serial} | PIN: {pin.pin || pin.Pin}</Text>
+                                </View>
+                            ))}
+                        </View>
+                    )}
+                    {details?.cardDetails && typeof details.cardDetails === 'string' && (
+                        <View style={{ marginTop: 24 }}>
+                            <Text style={styles.sectionHeader}>PIN DETAILS</Text>
+                            <View style={styles.pinBox}>
+                                <Text style={styles.pinValue}>{details.cardDetails}</Text>
+                            </View>
+                        </View>
+                    )}
+                </>
+            );
+        } else if (type === 'ELECTRICITY') {
+            content = (
+                <>
+                    <DetailRow label="Provider" value={details?.provider} boldValue />
+                    <DetailRow label="Meter Type" value={details?.meterType} boldValue />
+                    <DetailRow label="Meter Number" value={details?.meterNumber} boldValue />
+                    <DetailRow label="Customer Name" value={details?.customerName} boldValue />
+                    <DetailRow label="Address" value={details?.address} boldValue isLast />
+                    {details?.token && (
+                        <View style={{ marginTop: 24 }}>
+                            <Text style={styles.sectionHeader}>TOKEN DETAILS</Text>
+                            <View style={[styles.pinBox, { backgroundColor: '#FFFBEB', borderColor: '#FEF3C7' }]}>
+                                <Text style={[styles.pinValue, { fontSize: 24, letterSpacing: 2, textAlign: 'center' }]}>{details.token}</Text>
+                            </View>
+                        </View>
+                    )}
+                </>
+            );
+        } else if (type === 'CABLE' || type === 'CABLE_TV') {
+            content = (
+                <>
+                    <DetailRow label="Provider" value={details?.provider} boldValue />
+                    <DetailRow label="Package" value={details?.plan} boldValue />
+                    <DetailRow label="Smart Card / IUC" value={details?.smartCardNumber} boldValue />
+                    <DetailRow label="Customer Name" value={details?.customerName} boldValue isLast />
+                </>
+            );
+        } else if (type === 'DATA') {
+            content = (
+                <>
+                    <DetailRow label="Network" value={details?.network} boldValue />
+                    <DetailRow label="Plan" value={details?.plan} boldValue />
+                    <DetailRow label="Beneficiary" value={details?.phoneNumber} boldValue isLast />
+                </>
+            );
+        } else if (type === 'AIRTIME') {
+            content = (
+                <>
+                    <DetailRow label="Network" value={details?.network} boldValue />
+                    <DetailRow label="Beneficiary" value={details?.phoneNumber} boldValue isLast />
+                </>
+            );
+        } else if (type === 'FLIGHT') {
+            const flightBooking = (transaction as any).flightBooking;
+            const flight = flightBooking?.flight;
+            const passengers = flightBooking?.passengers;
+            content = (
+                <>
+                    <Text style={[styles.sectionHeader, { marginTop: 0 }]}>FLIGHT INFORMATION</Text>
+                    <DetailRow label="Airline" value={flight?.airline} boldValue />
+                    <DetailRow label="Flight No" value={flight?.flightNumber} boldValue />
+                    <DetailRow label="Route" value={`${flight?.departure?.code || '?'} → ${flight?.arrival?.code || '?'}`} boldValue />
+                    <DetailRow label="PNR" value={flightBooking?.pnr} boldValue isLast />
+
+                    {passengers && passengers.length > 0 && (
+                        <View style={{ marginTop: 24 }}>
+                            <Text style={styles.sectionHeader}>PASSENGERS</Text>
+                            {passengers.map((p: any, idx: number) => (
+                                <View key={idx} style={[styles.pinBox, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#F9FAFB', borderColor: '#F3F4F6' }]}>
+                                    <Text style={{ fontWeight: '500', color: '#111827', fontSize: 13 }}>{p.title} {p.firstName} {p.lastName}</Text>
+                                    <Text style={{ color: '#2563EB', fontWeight: '700', fontSize: 13 }}>{p.seatNumber || 'N/A'}</Text>
+                                </View>
+                            ))}
+                        </View>
+                    )}
+                </>
+            );
+        } else {
+            content = (
+                <>
+                    {details && Object.entries(details).map(([key, value], idx, arr) => (
+                        <DetailRow key={key} label={key.charAt(0).toUpperCase() + key.slice(1)} value={String(value)} boldValue isLast={idx === arr.length - 1} />
+                    ))}
+                </>
+            );
+        }
+
+        if (!content) return null;
+
+        return (
+            <View style={styles.card}>
+                {type !== 'FLIGHT' && <Text style={styles.sectionHeader}>ADDITIONAL DETAILS</Text>}
+                {content}
+            </View>
+        );
     };
 
     return (
@@ -192,54 +256,32 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
                     <View style={styles.header}>
                         <Text style={styles.title}>Transaction Details</Text>
                         <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-                            <Ionicons name="close" size={20} color="#374151" />
+                            <Ionicons name="close" size={20} color="#6B7280" />
                         </TouchableOpacity>
                     </View>
 
-                    <ScrollView showsVerticalScrollIndicator={false}>
-                        <View style={styles.amountContainer}>
-                            <Text style={styles.amountLabel}>Amount</Text>
-                            <Text style={[styles.amountValue, isFunding && { color: '#059669' }]}>
-                                {isFunding ? '+' : '-'}{CURRENCY}{amountStr}
-                            </Text>
-
-                            <View style={[styles.statusBadge, { borderColor: getStatusColor(transaction.status) }]}>
-                                <Text style={[styles.statusText, { color: getStatusColor(transaction.status) }]}>
-                                    {transaction.status || 'UNKNOWN'}
-                                </Text>
-                            </View>
-                        </View>
-
-                        <View style={styles.detailsGroup}>
-                            <Text style={styles.groupLabel}>TRANSACTION OVERVIEW</Text>
-                            <DetailRow label="Date" value={formattedDate} />
-                            <DetailRow label="Reference" value={transaction.reference || transaction.id || 'No Reference'} />
-                            <DetailRow label="Type" value={transaction.type.replace('_', ' ')} />
-                        </View>
-
-                        {renderDetails()}
-
+                    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
+                        {renderTopCard()}
+                        {renderBasicDetails()}
+                        {renderAdditionalDetails()}
                     </ScrollView>
 
-                    <View style={styles.footer}>
-                        {transaction.type === 'ELECTRICITY' && (
-                            <TouchableOpacity
-                                style={[styles.downloadBtn, isSaving && { opacity: 0.7 }]}
-                                onPress={handleSaveReceipt}
-                                disabled={isSaving}
-                            >
-                                {isSaving ? (
-                                    <ActivityIndicator color="#fff" size="small" />
-                                ) : (
-                                    <Ionicons name="download-outline" size={20} color="#fff" />
-                                )}
-                                <Text style={styles.downloadBtnText}>
-                                    {isSaving ? 'Saving...' : 'Save Receipt'}
-                                </Text>
-                            </TouchableOpacity>
-                        )}
-                        <TouchableOpacity style={styles.doneBtn} onPress={onClose}>
-                            <Text style={styles.doneBtnText}>Close</Text>
+                    <View style={styles.footerRow}>
+                        <TouchableOpacity
+                            style={[styles.saveBtn, isSaving && { opacity: 0.7 }]}
+                            onPress={handleSaveReceipt}
+                            disabled={isSaving}
+                        >
+                            {isSaving ? (
+                                <ActivityIndicator color="#111827" size="small" />
+                            ) : (
+                                <Ionicons name="download-outline" size={20} color="#111827" />
+                            )}
+                            <Text style={styles.saveBtnText}>Save PDF</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={styles.closeFooterBtn} onPress={onClose}>
+                            <Text style={styles.closeFooterBtnText}>Close</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -248,12 +290,25 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
     );
 };
 
-const DetailRow: React.FC<{ label: string; value?: string | number }> = ({ label, value }) => {
+const DetailRow: React.FC<{ label: string; value?: string | number; boldValue?: boolean; copyable?: boolean; isLast?: boolean }> = ({ label, value, boldValue, copyable, isLast }) => {
     if (!value) return null;
+
+    const handleCopy = async () => {
+        await Clipboard.setStringAsync(value.toString());
+        Alert.alert("Copied!", `${label} successfully copied to clipboard`);
+    };
+
     return (
-        <View style={styles.detailRow}>
+        <View style={[styles.detailRow, isLast && { marginBottom: 0 }]}>
             <Text style={styles.detailLabel}>{label}</Text>
-            <Text style={styles.detailValue}>{value}</Text>
+            <View style={styles.detailValueContainer}>
+                <Text numberOfLines={1} style={[styles.detailValue, boldValue && styles.detailValueBold]}>{value}</Text>
+                {copyable && (
+                    <TouchableOpacity style={styles.copyBtn} onPress={handleCopy}>
+                        <Ionicons name="copy-outline" size={16} color="#9CA3AF" />
+                    </TouchableOpacity>
+                )}
+            </View>
         </View>
     );
 };
@@ -265,27 +320,28 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-end',
     },
     modalContent: {
-        backgroundColor: '#fff',
+        backgroundColor: '#F3F4F6',
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
-        paddingHorizontal: 20,
+        paddingHorizontal: 16,
         paddingTop: 12,
-        paddingBottom: Platform.OS === 'ios' ? 40 : 20,
-        maxHeight: '80%',
+        paddingBottom: Platform.OS === 'ios' ? 32 : 24,
+        maxHeight: '90%',
     },
     handle: {
         width: 40,
-        height: 4,
-        backgroundColor: '#E5E7EB',
-        borderRadius: 2,
+        height: 5,
+        backgroundColor: '#D1D5DB',
+        borderRadius: 3,
         alignSelf: 'center',
-        marginBottom: 16,
+        marginBottom: 20,
     },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 24,
+        marginBottom: 16,
+        paddingHorizontal: 4,
     },
     title: {
         fontSize: 18,
@@ -293,137 +349,176 @@ const styles = StyleSheet.create({
         color: '#111827',
     },
     closeBtn: {
-        backgroundColor: '#F3F4F6',
-        padding: 8,
-        borderRadius: 20,
+        backgroundColor: '#FFF',
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 2,
     },
-    amountContainer: {
+    topCard: {
+        borderRadius: 20,
+        padding: 24,
+        marginBottom: 16,
+    },
+    topCardHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: 32,
-        paddingVertical: 16,
-        backgroundColor: '#F9FAFB',
-        borderRadius: 16,
     },
-    amountLabel: {
-        fontSize: 13,
-        color: '#6B7280',
-        marginBottom: 4,
+    typePill: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255,255,255,0.15)',
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 20,
     },
-    amountValue: {
-        fontSize: 32,
-        fontWeight: '800',
-        color: '#111827',
-        marginBottom: 12,
-    },
-    statusBadge: {
-        paddingHorizontal: 12,
-        paddingVertical: 4,
-        borderRadius: 999,
-        borderWidth: 1,
-    },
-    statusText: {
+    typePillText: {
+        color: '#FFF',
         fontSize: 12,
         fontWeight: '700',
+        marginLeft: 8,
         letterSpacing: 0.5,
     },
-    detailsGroup: {
-        marginBottom: 24,
+    statusPill: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FFF',
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 16,
     },
-    groupLabel: {
+    statusDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+        marginRight: 6,
+    },
+    statusText: {
+        fontSize: 11,
+        fontWeight: '800',
+        letterSpacing: 0.5,
+    },
+    amountLabel: {
+        color: 'rgba(255,255,255,0.7)',
+        fontSize: 13,
+        fontWeight: '500',
+        letterSpacing: 1,
+        marginBottom: 4,
+        textTransform: 'uppercase',
+    },
+    amountValue: {
+        color: '#FFF',
+        fontSize: 40,
+        fontWeight: '800',
+        marginBottom: 4,
+        letterSpacing: -1,
+    },
+    amountSubtext: {
+        color: 'rgba(255,255,255,0.7)',
+        fontSize: 14,
+    },
+    card: {
+        backgroundColor: '#FFF',
+        borderRadius: 16,
+        padding: 20,
+        marginBottom: 16,
+    },
+    sectionHeader: {
         fontSize: 12,
         fontWeight: '700',
         color: '#9CA3AF',
-        letterSpacing: 0.5,
+        letterSpacing: 1,
         marginBottom: 16,
+        textTransform: 'uppercase',
     },
     detailRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        paddingVertical: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: '#F3F4F6',
+        alignItems: 'center',
+        marginBottom: 20,
     },
     detailLabel: {
         fontSize: 14,
-        color: '#6B7280',
+        color: '#9CA3AF',
+        fontWeight: '500',
+    },
+    detailValueContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+        justifyContent: 'flex-end',
     },
     detailValue: {
         fontSize: 14,
-        fontWeight: '600',
-        color: '#111827',
-        maxWidth: '60%',
+        color: '#1F2937',
         textAlign: 'right',
+        marginLeft: 30
     },
-    tokenBox: {
-        marginTop: 16,
-        padding: 16,
-        backgroundColor: '#FFFBEB',
-        borderWidth: 1,
-        borderColor: '#FEF3C7',
-        borderRadius: 12,
-        alignItems: 'center',
-    },
-    tokenLabel: {
-        fontSize: 12,
-        color: '#D97706',
+    detailValueBold: {
         fontWeight: '700',
-        letterSpacing: 1,
-        marginBottom: 4,
-    },
-    tokenValue: {
-        fontSize: 24,
-        fontWeight: '800',
         color: '#111827',
-        letterSpacing: 2,
+    },
+    copyBtn: {
+        marginLeft: 8,
     },
     pinBox: {
-        backgroundColor: '#F9FAFB',
-        padding: 12,
-        borderRadius: 12,
-        marginBottom: 12,
+        backgroundColor: '#ECFDF5',
         borderWidth: 1,
-        borderColor: '#F3F4F6',
-    },
-    pinLabel: {
-        fontSize: 11,
-        color: '#6B7280',
-        marginBottom: 4,
-        fontWeight: '500',
+        borderColor: '#D1FAE5',
+        padding: 16,
+        borderRadius: 12,
     },
     pinValue: {
-        fontSize: 16,
-        fontWeight: '700',
+        fontSize: 15,
+        fontWeight: '600',
         color: '#111827',
-        letterSpacing: 1,
+        fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+        lineHeight: 22,
     },
-    footer: {
-        marginTop: 16,
+    footerRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        gap: 12,
+        marginTop: 8,
     },
-    downloadBtn: {
-        backgroundColor: '#2563EB',
-        paddingVertical: 16,
-        borderRadius: 16,
+    saveBtn: {
+        flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: 12,
+        backgroundColor: '#F3F4F6', // Lighter background 
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+        height: 56,
+        borderRadius: 16,
         gap: 8,
     },
-    downloadBtnText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: '600',
+    saveBtnText: {
+        color: '#111827',
+        fontSize: 15,
+        fontWeight: '700',
     },
-    doneBtn: {
-        backgroundColor: '#111827',
-        paddingVertical: 16,
-        borderRadius: 16,
+    closeFooterBtn: {
+        flex: 1,
         alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#111827',
+        height: 56,
+        borderRadius: 16,
     },
-    doneBtnText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: '600',
+    closeFooterBtnText: {
+        color: '#FFF',
+        fontSize: 15,
+        fontWeight: '700',
     },
 });
 

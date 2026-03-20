@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
     StyleSheet,
     View,
@@ -13,10 +13,10 @@ import {
     DeviceEventEmitter,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { verifyJambProfile, buyEducationPin } from "../../../utils/vtu";
+import { buyEducationPin } from "../../../utils/vtu";
 import TransactionPinInput from '../TransactionPinInput';
 
-type Provider = 'WAEC' | 'JAMB' | 'JAMB_MOCK';
+type Provider = 'WAEC' | 'NECO' | 'NABTEB';
 type Step = 'PROVIDER' | 'DETAILS' | 'CONFIRM' | 'PIN' | 'SUCCESS';
 
 interface BuyEducationModalProps {
@@ -24,10 +24,10 @@ interface BuyEducationModalProps {
     onClose: () => void;
 }
 
-const EDUCATION_PRODUCTS = {
-    WAEC: { name: 'WAEC Result Checker', price: 3500, examType: 'waecdirect', icon: 'document-text-outline' as const },
-    JAMB: { name: 'JAMB UTME (No Mock)', price: 6200, examType: 'utme-no-mock', icon: 'school-outline' as const },
-    JAMB_MOCK: { name: 'JAMB UTME (With Mock)', price: 7700, examType: 'utme-mock', icon: 'school-outline' as const },
+const EDUCATION_PRODUCTS: Record<Provider, { name: string, price: number, examType: string, desc: string, icon: any, bg: string, iconColor: string }> = {
+    WAEC: { name: 'WAEC Result Checker', price: 3500, examType: 'waecdirect', desc: 'Check WAEC/WASSCE results instantly', icon: 'document-text-outline', bg: '#ECFDF5', iconColor: '#10B981' },
+    NECO: { name: 'NECO Result Token', price: 1500, examType: 'neco', desc: 'Check NECO results with token', icon: 'document-text-outline', bg: '#FEF3C7', iconColor: '#F59E0B' },
+    NABTEB: { name: 'NABTEB Result Checker', price: 1500, examType: 'nabteb', desc: 'Check NABTEB results instantly', icon: 'document-text-outline', bg: '#FEE2E2', iconColor: '#EF4444' },
 };
 
 const CURRENCY = "₦";
@@ -37,10 +37,7 @@ const BuyEducationModal: React.FC<BuyEducationModalProps> = ({ isOpen, onClose }
     const [provider, setProvider] = useState<Provider | null>(null);
 
     const [phoneNo, setPhoneNo] = useState('');
-    const [profileId, setProfileId] = useState('');
-    const [verifiedName, setVerifiedName] = useState<string | null>(null);
 
-    const [isVerifying, setIsVerifying] = useState(false);
     const [isPurchasing, setIsPurchasing] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [transactionData, setTransactionData] = useState<any>(null);
@@ -51,10 +48,7 @@ const BuyEducationModal: React.FC<BuyEducationModalProps> = ({ isOpen, onClose }
         setStep('PROVIDER');
         setProvider(null);
         setPhoneNo('');
-        setProfileId('');
-        setVerifiedName(null);
         setIsPurchasing(false);
-        setIsVerifying(false);
         setErrorMessage('');
         setTransactionData(null);
         setTransactionPin('');
@@ -72,49 +66,26 @@ const BuyEducationModal: React.FC<BuyEducationModalProps> = ({ isOpen, onClose }
         setStep('DETAILS');
     };
 
-    // Verify JAMB Profile ID when it reaches 10 digits
-    useEffect(() => {
-        const isJambProvider = provider === 'JAMB' || provider === 'JAMB_MOCK';
-        if (isJambProvider && profileId.length === 10 && !verifiedName && !isVerifying) {
-            handleVerifyProfile();
-        } else if (profileId.length !== 10) {
-            setVerifiedName(null);
-        }
-    }, [profileId, provider]);
-
-    const handleVerifyProfile = async () => {
-        if (profileId.length !== 10) return;
-
-        setIsVerifying(true);
-        setErrorMessage('');
-        setVerifiedName(null);
-
-        try {
-            const result = await verifyJambProfile(profileId);
-            if (result.success && result.data?.customer_name) {
-                setVerifiedName(result.data.customer_name);
-            } else {
-                setErrorMessage(result.error || 'Failed to verify profile ID.');
-            }
-        } catch (error: any) {
-            setErrorMessage(error?.message || 'An error occurred during verification.');
-        } finally {
-            setIsVerifying(false);
-        }
-    };
-
     const handleProceedToConfirm = () => {
         setErrorMessage('');
         if (phoneNo.length < 10) {
             setErrorMessage('Please enter a valid phone number');
             return;
         }
-        const isJambProvider = provider === 'JAMB' || provider === 'JAMB_MOCK';
-        if (isJambProvider && (!verifiedName || profileId.length !== 10)) {
-            setErrorMessage('Please enter and verify a valid JAMB Profile ID first');
-            return;
-        }
         setStep('CONFIRM');
+    };
+
+    const handleBack = () => {
+        if (step === 'PIN') {
+            setStep('CONFIRM');
+            setPinError(false);
+            setErrorMessage('');
+        } else if (step === 'CONFIRM') {
+            setStep('DETAILS');
+        } else if (step === 'DETAILS') {
+            setStep('PROVIDER');
+            setProvider(null);
+        }
     };
 
     const handlePurchase = async (pin?: string) => {
@@ -125,25 +96,21 @@ const BuyEducationModal: React.FC<BuyEducationModalProps> = ({ isOpen, onClose }
         setPinError(false);
 
         const product = EDUCATION_PRODUCTS[provider];
-        const isJambProvider = provider === 'JAMB' || provider === 'JAMB_MOCK';
-        const backendProvider = isJambProvider ? 'JAMB' : 'WAEC';
-
         const pinToUse = pin || transactionPin;
 
         try {
             const result = await buyEducationPin(
-                backendProvider,
+                provider,
                 product.examType,
                 phoneNo,
-                pinToUse,
-                isJambProvider ? profileId : undefined
+                pinToUse
             );
 
             if (result.success) {
                 setTransactionData({
-                    status: result.status, // 'OK' or 'PENDING'
-                    details: result.data?.cardDetails, // The PIN/Serial string
-                    message: result.message // For PENDING: "Connection delay... etc."
+                    status: result.status,
+                    details: result.data?.cardDetails,
+                    message: result.message
                 });
                 DeviceEventEmitter.emit('refreshData');
                 setStep('SUCCESS');
@@ -161,10 +128,15 @@ const BuyEducationModal: React.FC<BuyEducationModalProps> = ({ isOpen, onClose }
 
     const renderHeader = () => (
         <View style={styles.headerRow}>
-            <Text style={styles.drawerTitle}>
-                {step === 'SUCCESS' ? 'Transaction Status' : 'Education PINs'}
-            </Text>
-            <TouchableOpacity onPress={handleClose} style={styles.closeBtn}>
+            {step !== 'PROVIDER' && step !== 'SUCCESS' ? (
+                <TouchableOpacity onPress={handleBack} style={styles.iconBtn}>
+                    <Ionicons name="arrow-back" size={20} color="#333" />
+                </TouchableOpacity>
+            ) : (
+                <View style={[styles.iconBtn, { backgroundColor: 'transparent', elevation: 0, shadowOpacity: 0 }]} />
+            )}
+            <Text style={styles.drawerTitle}>Education Payment</Text>
+            <TouchableOpacity onPress={handleClose} style={styles.iconBtn}>
                 <Ionicons name="close" size={20} color="#333" />
             </TouchableOpacity>
         </View>
@@ -195,7 +167,7 @@ const BuyEducationModal: React.FC<BuyEducationModalProps> = ({ isOpen, onClose }
 
                         {step === 'PROVIDER' && (
                             <View style={styles.stepContainer}>
-                                <Text style={styles.subText}>Select an Education body</Text>
+                                <Text style={styles.sectionTitle}>SELECT SERVICE</Text>
 
                                 <ScrollView style={styles.flex1} showsVerticalScrollIndicator={false}>
                                     {(Object.keys(EDUCATION_PRODUCTS) as Provider[]).map((prov) => {
@@ -207,13 +179,14 @@ const BuyEducationModal: React.FC<BuyEducationModalProps> = ({ isOpen, onClose }
                                                 onPress={() => handleProviderSelect(prov)}
                                             >
                                                 <View style={styles.providerInfoRow}>
-                                                    <View style={styles.iconCircle}>
-                                                        <Ionicons name={info.icon} size={20} color="#4F46E5" />
+                                                    <View style={[styles.iconCircle, { backgroundColor: info.bg }]}>
+                                                        <Ionicons name={info.icon} size={20} color={info.iconColor} />
                                                     </View>
-                                                    <View>
-                                                        <Text style={styles.providerName}>{prov}</Text>
-                                                        <Text style={styles.providerNameSub}>{info.name}</Text>
+                                                    <View style={styles.providerTextCol}>
+                                                        <Text style={styles.providerName}>{info.name}</Text>
+                                                        <Text style={styles.providerNameSub}>{info.desc}</Text>
                                                     </View>
+                                                    <Text style={[styles.providerPrice, { color: info.iconColor }]}>{CURRENCY}{info.price.toLocaleString()}</Text>
                                                 </View>
                                             </TouchableOpacity>
                                         );
@@ -222,80 +195,52 @@ const BuyEducationModal: React.FC<BuyEducationModalProps> = ({ isOpen, onClose }
                             </View>
                         )}
 
-                        {step === 'DETAILS' && (
+                        {step === 'DETAILS' && provider && (
                             <View style={styles.stepContainer}>
-                                <TouchableOpacity onPress={() => setStep('PROVIDER')} style={styles.backButton}>
-                                    <Ionicons name="arrow-back" size={16} color="#4F46E5" />
-                                    <Text style={styles.backButtonText}>Change Provider</Text>
-                                </TouchableOpacity>
+                                <View style={[styles.selectedProviderCard, { borderTopColor: EDUCATION_PRODUCTS[provider].iconColor, backgroundColor: EDUCATION_PRODUCTS[provider].bg }]}>
+                                    <View style={styles.providerInfoRow}>
+                                        <View style={[styles.iconCircle, { backgroundColor: '#FFF' }]}>
+                                            <Ionicons name={EDUCATION_PRODUCTS[provider].icon} size={20} color={EDUCATION_PRODUCTS[provider].iconColor} />
+                                        </View>
+                                        <View style={styles.providerTextCol}>
+                                            <Text style={styles.providerName}>{EDUCATION_PRODUCTS[provider].name}</Text>
+                                            <Text style={styles.providerNameSub}>{EDUCATION_PRODUCTS[provider].desc}</Text>
+                                        </View>
+                                        <Text style={[styles.providerPrice, { color: EDUCATION_PRODUCTS[provider].iconColor }]}>{CURRENCY}{EDUCATION_PRODUCTS[provider].price.toLocaleString()}</Text>
+                                    </View>
+                                </View>
 
                                 <ScrollView style={styles.flex1} showsVerticalScrollIndicator={false}>
-                                    {(provider === 'JAMB' || provider === 'JAMB_MOCK') && (
-                                        <View style={styles.inputGroup}>
-                                            <Text style={styles.inputLabel}>JAMB Profile ID</Text>
-                                            <View style={styles.inputContainer}>
-                                                <Ionicons name="person-outline" size={18} color="#666" style={{ marginLeft: 14 }} />
-                                                <TextInput
-                                                    style={[styles.input, { marginLeft: 10 }]}
-                                                    placeholder="Enter 10-digit Profile ID"
-                                                    keyboardType="number-pad"
-                                                    maxLength={10}
-                                                    value={profileId}
-                                                    onChangeText={(text) => {
-                                                        setProfileId(text.replace(/\D/g, ''));
-                                                        setErrorMessage('');
-                                                    }}
-                                                    editable={!isVerifying}
-                                                />
-                                            </View>
-
-                                            {isVerifying ? (
-                                                <View style={styles.verifyingRow}>
-                                                    <ActivityIndicator size="small" color="#4F46E5" />
-                                                    <Text style={styles.verifyingText}>Verifying Profile ID...</Text>
-                                                </View>
-                                            ) : verifiedName ? (
-                                                <View style={styles.verifiedBox}>
-                                                    <Ionicons name="checkmark-circle" size={18} color="#10B981" />
-                                                    <Text style={styles.verifiedName}>{verifiedName}</Text>
-                                                </View>
-                                            ) : profileId.length === 10 && !verifiedName && !errorMessage ? (
-                                                <TouchableOpacity style={styles.verifyBtn} onPress={handleVerifyProfile}>
-                                                    <Text style={styles.verifyBtnText}>Verify Manually</Text>
-                                                </TouchableOpacity>
-                                            ) : null}
+                                    <Text style={styles.sectionTitle}>PHONE NUMBER</Text>
+                                    <View style={[styles.inputContainer, phoneNo.length >= 10 && styles.inputContainerSuccess]}>
+                                        <View style={styles.phoneIconCircle}>
+                                            <Ionicons name="call" size={16} color="#FFF" />
                                         </View>
-                                    )}
-
-                                    <View style={[styles.inputGroup, { marginTop: 16 }]}>
-                                        <Text style={styles.inputLabel}>Phone Number</Text>
-                                        <View style={styles.inputContainer}>
-                                            <Ionicons name="call-outline" size={18} color="#666" style={{ marginLeft: 14 }} />
-                                            <TextInput
-                                                style={[styles.input, { marginLeft: 10 }]}
-                                                placeholder="08012345678"
-                                                keyboardType="number-pad"
-                                                maxLength={11}
-                                                value={phoneNo}
-                                                onChangeText={(text) => {
-                                                    setPhoneNo(text.replace(/\D/g, ''));
-                                                    setErrorMessage('');
-                                                }}
-                                            />
-                                        </View>
+                                        <TextInput
+                                            style={styles.input}
+                                            placeholder="08012345678"
+                                            placeholderTextColor="#9CA3AF"
+                                            keyboardType="number-pad"
+                                            maxLength={11}
+                                            value={phoneNo}
+                                            onChangeText={(text) => {
+                                                setPhoneNo(text.replace(/\D/g, ''));
+                                                setErrorMessage('');
+                                            }}
+                                        />
+                                        {phoneNo.length >= 10 && (
+                                            <Ionicons name="checkmark-circle-outline" size={24} color="#10B981" style={{ marginRight: 14 }} />
+                                        )}
                                     </View>
                                 </ScrollView>
 
                                 <View style={styles.bottomAnchored}>
                                     <TouchableOpacity
-                                        style={[
-                                            styles.primaryBtn,
-                                            (phoneNo.length < 10 || ((provider === 'JAMB' || provider === 'JAMB_MOCK') && !verifiedName)) && styles.disabledBtn
-                                        ]}
-                                        disabled={phoneNo.length < 10 || ((provider === 'JAMB' || provider === 'JAMB_MOCK') && (!verifiedName))}
+                                        style={[styles.primaryBtn, phoneNo.length < 10 && styles.disabledBtn]}
+                                        disabled={phoneNo.length < 10}
                                         onPress={handleProceedToConfirm}
                                     >
-                                        <Text style={styles.btnText}>Proceed</Text>
+                                        <Text style={styles.btnText}>Proceed — {CURRENCY}{EDUCATION_PRODUCTS[provider].price.toLocaleString()}</Text>
                                     </TouchableOpacity>
                                 </View>
                             </View>
@@ -303,36 +248,22 @@ const BuyEducationModal: React.FC<BuyEducationModalProps> = ({ isOpen, onClose }
 
                         {step === 'CONFIRM' && provider && (
                             <View style={styles.stepContainer}>
-                                <TouchableOpacity onPress={() => setStep('DETAILS')} style={styles.backButton}>
-                                    <Ionicons name="arrow-back" size={16} color="#4F46E5" />
-                                    <Text style={styles.backButtonText}>Edit Details</Text>
-                                </TouchableOpacity>
-
-                                <View style={styles.receiptCard}>
-                                    <Text style={styles.receiptSubText}>You are about to purchase</Text>
-                                    <Text style={styles.receiptTitle}>{EDUCATION_PRODUCTS[provider].name}</Text>
-                                    <Text style={styles.receiptAmount}>{CURRENCY}{EDUCATION_PRODUCTS[provider].price.toLocaleString()}</Text>
-
-                                    <View style={styles.receiptDividerBorder} />
-
-                                    <View style={styles.receiptRow}>
-                                        <Text style={styles.receiptLabel}>Provider</Text>
-                                        <Text style={styles.receiptValue}>{provider === 'JAMB_MOCK' ? 'JAMB' : provider}</Text>
+                                <View style={[styles.receiptCard, { borderTopColor: EDUCATION_PRODUCTS[provider].iconColor }]}>
+                                    <View style={[styles.iconCircle, { backgroundColor: EDUCATION_PRODUCTS[provider].bg, marginBottom: 12 }]}>
+                                        <Ionicons name={EDUCATION_PRODUCTS[provider].icon} size={24} color={EDUCATION_PRODUCTS[provider].iconColor} />
                                     </View>
-                                    {(provider === 'JAMB' || provider === 'JAMB_MOCK') && (
-                                        <>
-                                            <View style={styles.receiptRow}>
-                                                <Text style={styles.receiptLabel}>Profile ID</Text>
-                                                <Text style={styles.receiptValue}>{profileId}</Text>
-                                            </View>
-                                            <View style={styles.receiptRow}>
-                                                <Text style={styles.receiptLabel}>Name</Text>
-                                                <Text style={[styles.receiptValue, { flex: 1, textAlign: 'right', marginLeft: 16 }]}>{verifiedName}</Text>
-                                            </View>
-                                        </>
-                                    )}
+                                    <Text style={styles.receiptSubText}>YOU ARE PURCHASING</Text>
+                                    <Text style={styles.receiptTitle}>{EDUCATION_PRODUCTS[provider].name}</Text>
+                                    <Text style={[styles.receiptAmount, { color: EDUCATION_PRODUCTS[provider].iconColor }]}>{CURRENCY}{EDUCATION_PRODUCTS[provider].price.toLocaleString()}</Text>
+
+                                    <View style={styles.receiptDividerContainer}>
+                                        <View style={styles.receiptDividerCutoutLeft} />
+                                        <View style={styles.receiptDividerBorder} />
+                                        <View style={styles.receiptDividerCutoutRight} />
+                                    </View>
+
                                     <View style={styles.receiptRow}>
-                                        <Text style={styles.receiptLabel}>Phone Number</Text>
+                                        <Text style={styles.receiptLabel}>Phone</Text>
                                         <Text style={styles.receiptValue}>{phoneNo}</Text>
                                     </View>
                                 </View>
@@ -342,7 +273,7 @@ const BuyEducationModal: React.FC<BuyEducationModalProps> = ({ isOpen, onClose }
                                         style={styles.primaryBtn}
                                         onPress={() => setStep('PIN')}
                                     >
-                                        <Text style={styles.btnText}>Proceed to Enter PIN</Text>
+                                        <Text style={styles.btnText}>Proceed to Payment</Text>
                                     </TouchableOpacity>
                                 </View>
                             </View>
@@ -350,11 +281,6 @@ const BuyEducationModal: React.FC<BuyEducationModalProps> = ({ isOpen, onClose }
 
                         {step === 'PIN' && (
                             <View style={styles.stepContainer}>
-                                <TouchableOpacity onPress={() => { setStep('CONFIRM'); setPinError(false); setErrorMessage(''); }} style={styles.backButton}>
-                                    <Ionicons name="arrow-back" size={16} color="#4F46E5" />
-                                    <Text style={styles.backButtonText}>Back</Text>
-                                </TouchableOpacity>
-
                                 <View style={[styles.inputGroup, { marginTop: 20 }]}>
                                     <Text style={[styles.inputLabel, { textAlign: 'center', marginBottom: 20 }]}>Enter Transaction PIN</Text>
 
@@ -370,8 +296,8 @@ const BuyEducationModal: React.FC<BuyEducationModalProps> = ({ isOpen, onClose }
 
                                     {isPurchasing && (
                                         <View style={[styles.processingRow, { marginTop: 30, justifyContent: 'center' }]}>
-                                            <ActivityIndicator size="small" color="#4F46E5" />
-                                            <Text style={{ marginLeft: 8, color: '#4F46E5', fontWeight: '600' }}>Processing Purchase...</Text>
+                                            <ActivityIndicator size="small" color="#111827" />
+                                            <Text style={{ marginLeft: 8, color: '#111827', fontWeight: '600' }}>Processing Purchase...</Text>
                                         </View>
                                     )}
                                 </View>
@@ -397,7 +323,7 @@ const BuyEducationModal: React.FC<BuyEducationModalProps> = ({ isOpen, onClose }
                                             <Ionicons name="checkmark-circle" size={80} color="#10B981" />
                                         </View>
                                         <Text style={styles.successTitle}>Purchase Successful</Text>
-                                        <Text style={styles.successDesc}>Your {provider?.replace('_', ' ')} PIN has been generated.</Text>
+                                        <Text style={styles.successDesc}>Your {provider} PIN has been generated.</Text>
 
                                         {transactionData?.details && (
                                             <View style={styles.pinBox}>
@@ -429,7 +355,7 @@ const styles = StyleSheet.create({
         justifyContent: "flex-end",
     },
     drawerContainer: {
-        backgroundColor: "white",
+        backgroundColor: "#F3F4F6",
         borderTopLeftRadius: 24,
         borderTopRightRadius: 24,
         paddingHorizontal: 20,
@@ -440,7 +366,7 @@ const styles = StyleSheet.create({
     handle: {
         width: 40,
         height: 5,
-        backgroundColor: "#E5E7EB",
+        backgroundColor: "#D1D5DB",
         borderRadius: 3,
         alignSelf: "center",
         marginBottom: 16,
@@ -449,15 +375,21 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        marginBottom: 16,
+        marginBottom: 24,
     },
     drawerTitle: { fontSize: 20, fontWeight: "700", color: "#111827" },
-    closeBtn: {
-        backgroundColor: "#F3F4F6",
-        padding: 8,
-        borderRadius: 20,
+    iconBtn: {
+        backgroundColor: "#FFF",
+        width: 36,
+        height: 36,
+        borderRadius: 18,
         alignItems: "center",
         justifyContent: "center",
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 2,
     },
     contentContainer: {
         flex: 1,
@@ -470,21 +402,31 @@ const styles = StyleSheet.create({
     flex1: {
         flex: 1,
     },
-    subText: {
-        color: "#6B7280",
-        fontSize: 14,
-        fontWeight: "500",
-        marginBottom: 16,
+    sectionTitle: {
+        color: "#9CA3AF",
+        fontSize: 12,
+        fontWeight: "700",
+        letterSpacing: 1,
+        marginBottom: 12,
     },
     providerCard: {
-        flexDirection: "row",
-        alignItems: "center",
-        padding: 16,
-        backgroundColor: "#fff",
-        borderWidth: 1,
-        borderColor: "#F3F4F6",
+        backgroundColor: "#FFF",
         borderRadius: 16,
+        padding: 16,
         marginBottom: 12,
+        borderWidth: 1,
+        borderColor: "#FFF", // Subtle or no border
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+        elevation: 1,
+    },
+    selectedProviderCard: {
+        borderRadius: 16,
+        padding: 16,
+        marginBottom: 24,
+        borderTopWidth: 4,
     },
     providerInfoRow: {
         flexDirection: "row",
@@ -494,32 +436,26 @@ const styles = StyleSheet.create({
         width: 48,
         height: 48,
         borderRadius: 24,
-        backgroundColor: "#EEF2FF", // indigo-50
         justifyContent: "center",
         alignItems: "center",
         marginRight: 16,
     },
+    providerTextCol: {
+        flex: 1,
+    },
     providerName: {
         fontWeight: "700",
-        fontSize: 16,
+        fontSize: 15,
         color: "#111827",
+        marginBottom: 2,
     },
     providerNameSub: {
-        fontSize: 14,
-        color: "#6B7280",
-        marginTop: 2,
+        fontSize: 13,
+        color: "#9CA3AF",
     },
-    backButton: {
-        flexDirection: "row",
-        alignItems: "center",
-        marginBottom: 20,
-        alignSelf: "flex-start",
-    },
-    backButtonText: {
-        color: "#4F46E5",
-        fontSize: 14,
-        fontWeight: "600",
-        marginLeft: 6,
+    providerPrice: {
+        fontWeight: "700",
+        fontSize: 16,
     },
     inputGroup: {
         marginBottom: 4,
@@ -533,130 +469,121 @@ const styles = StyleSheet.create({
     inputContainer: {
         flexDirection: "row",
         alignItems: "center",
-        borderWidth: 1,
-        borderColor: "#D1D5DB",
-        borderRadius: 12,
-        height: 52,
+        backgroundColor: "#FFF",
+        borderRadius: 16,
+        height: 60,
         marginBottom: 8,
+        paddingLeft: 12,
+        borderWidth: 1,
+        borderColor: "transparent",
+    },
+    inputContainerSuccess: {
+        borderColor: "#10B981",
+    },
+    phoneIconCircle: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: "#10B981",
+        justifyContent: "center",
+        alignItems: "center",
     },
     input: {
         flex: 1,
         fontSize: 16,
         color: "#111827",
-        paddingHorizontal: 14,
-    },
-    verifyingRow: {
-        flexDirection: "row",
-        alignItems: "center",
-        paddingHorizontal: 8,
-        marginTop: 4,
-    },
-    verifyingText: {
-        color: "#4F46E5",
-        fontSize: 13,
+        paddingHorizontal: 12,
         fontWeight: "600",
-        marginLeft: 8,
-    },
-    verifiedBox: {
-        flexDirection: "row",
-        alignItems: "center",
-        backgroundColor: "#ECFDF5",
-        borderWidth: 1,
-        borderColor: "#D1FAE5",
-        borderRadius: 8,
-        padding: 12,
-        marginTop: 4,
-    },
-    verifiedName: {
-        color: "#047857",
-        fontSize: 14,
-        fontWeight: "600",
-        marginLeft: 8,
-    },
-    verifyBtn: {
-        borderWidth: 1,
-        borderColor: "#D1D5DB",
-        borderRadius: 8,
-        paddingVertical: 8,
-        paddingHorizontal: 16,
-        alignSelf: "flex-start",
-        marginTop: 8,
-    },
-    verifyBtnText: {
-        fontSize: 12,
-        fontWeight: "600",
-        color: "#374151"
     },
     bottomAnchored: {
         marginTop: "auto",
         paddingTop: 16,
     },
     primaryBtn: {
-        backgroundColor: "#003366", // from the app styling
-        height: 54,
-        borderRadius: 12,
+        backgroundColor: "#171717",
+        height: 56,
+        borderRadius: 16,
         justifyContent: "center",
         alignItems: "center",
     },
     disabledBtn: {
-        opacity: 0.6,
+        opacity: 0.5,
     },
     btnText: {
         color: "#FFF",
         fontSize: 16,
         fontWeight: "700",
     },
-    processingRow: {
-        flexDirection: "row",
-        alignItems: "center",
-    },
     receiptCard: {
         backgroundColor: "#FFF",
-        borderWidth: 1,
-        borderColor: "#F3F4F6",
         borderRadius: 24,
         padding: 24,
         alignItems: "center",
         marginBottom: 24,
+        borderTopWidth: 4,
     },
     receiptSubText: {
-        color: "#6B7280",
-        fontSize: 14,
-        marginBottom: 4,
+        color: "#9CA3AF",
+        fontSize: 12,
+        fontWeight: "700",
+        letterSpacing: 1,
+        marginBottom: 8,
     },
     receiptTitle: {
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: "700",
         color: "#111827",
-        marginBottom: 4,
+        marginBottom: 8,
     },
     receiptAmount: {
-        fontSize: 28,
+        fontSize: 36,
         fontWeight: "800",
-        color: "#4F46E5",
-        marginBottom: 20,
+        marginBottom: 24,
+    },
+    receiptDividerContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        width: "100%",
+        marginBottom: 24,
     },
     receiptDividerBorder: {
-        width: "100%",
+        flex: 1,
         height: 1,
         borderWidth: 1,
-        borderColor: "#F3F4F6",
-        borderStyle: "solid",
-        marginBottom: 20,
+        borderColor: "#E5E7EB",
+        borderStyle: "dashed",
+    },
+    receiptDividerCutoutLeft: {
+        position: "absolute",
+        left: -32,
+        width: 16,
+        height: 16,
+        borderRadius: 8,
+        backgroundColor: "#F3F4F6",
+        zIndex: 1,
+    },
+    receiptDividerCutoutRight: {
+        position: "absolute",
+        right: -32,
+        width: 16,
+        height: 16,
+        borderRadius: 8,
+        backgroundColor: "#F3F4F6",
+        zIndex: 1,
     },
     receiptRow: {
         flexDirection: "row",
         justifyContent: "space-between",
         width: "100%",
-        marginBottom: 12,
     },
     receiptLabel: {
-        fontSize: 14,
-        color: "#6B7280",
+        fontSize: 15,
+        color: "#9CA3AF",
+        fontWeight: "500",
     },
     receiptValue: {
-        fontSize: 14,
-        fontWeight: "600",
+        fontSize: 15,
+        fontWeight: "700",
         color: "#111827",
     },
     errorBox: {
@@ -675,6 +602,10 @@ const styles = StyleSheet.create({
         fontWeight: "500",
         marginLeft: 8,
         flex: 1,
+    },
+    processingRow: {
+        flexDirection: "row",
+        alignItems: "center",
     },
     successContainer: {
         flex: 1,
@@ -702,29 +633,32 @@ const styles = StyleSheet.create({
     },
     pinBox: {
         width: "100%",
-        backgroundColor: "#F9FAFB",
+        backgroundColor: "#FFF",
         borderWidth: 1,
         borderColor: "#E5E7EB",
-        borderRadius: 12,
-        padding: 16,
+        borderRadius: 16,
+        padding: 20,
         marginBottom: 24,
     },
     pinLabel: {
-        fontSize: 10,
-        color: "#6B7280",
+        fontSize: 11,
+        color: "#9CA3AF",
         fontWeight: "700",
         marginBottom: 8,
         letterSpacing: 0.5,
     },
     pinValue: {
-        fontSize: 14,
+        fontSize: 16,
         fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
-        color: "#1F2937",
+        color: "#111827",
+        fontWeight: "700",
     },
     secondaryBtn: {
-        backgroundColor: "#F3F4F6",
-        height: 54,
-        borderRadius: 12,
+        backgroundColor: "#FFF",
+        borderWidth: 1,
+        borderColor: "#E5E7EB",
+        height: 56,
+        borderRadius: 16,
         justifyContent: "center",
         alignItems: "center",
         width: "100%",

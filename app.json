@@ -32,7 +32,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-screen.jpg",
+          "image": "./assets/images/splash-screen.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
@@ -50,7 +50,8 @@
           }
         }
       ],
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "expo-notifications"
     ],
     "experiments": {
       "typedRoutes": true,
@@ -67,7 +68,8 @@
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/7530dd1b-0816-4d51-99dd-2cfbc4281475"
+      "url": "https://u.expo.dev/7530dd1b-0816-4d51-99dd-2cfbc4281475",
+      "fallbackToCacheTimeout": 0
     }
   }
 }

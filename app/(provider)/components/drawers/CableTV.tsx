@@ -55,6 +55,7 @@ const CableTV: React.FC<BuyCableModalProps> = ({ isOpen, onClose }) => {
 
     const [customerName, setCustomerName] = useState('');
     const [dueDate, setDueDate] = useState('');
+    const [currentBouquet, setCurrentBouquet] = useState('');
     const [isLoadingPackages, setIsLoadingPackages] = useState(false);
     const [isValidating, setIsValidating] = useState(false);
     const [isValidated, setIsValidated] = useState(false);
@@ -98,7 +99,8 @@ const CableTV: React.FC<BuyCableModalProps> = ({ isOpen, onClose }) => {
         setSelectedPlan(null);
         setSearchQuery('');
         setCustomerName('');
-        setDueDate('')
+        setDueDate('');
+        setCurrentBouquet('');
         setIsValidated(false);
         setIsValidating(false);
         setIsProcessing(false);
@@ -132,6 +134,7 @@ const CableTV: React.FC<BuyCableModalProps> = ({ isOpen, onClose }) => {
         if (res.success) {
             setCustomerName(res.customerName);
             setDueDate(res.dueDate);
+            setCurrentBouquet(res.currentBouquet || '');
             setIsValidated(true);
         } else {
             setErrorMessage(res.error);
@@ -314,13 +317,32 @@ const CableTV: React.FC<BuyCableModalProps> = ({ isOpen, onClose }) => {
                                     ) : (
                                         <View style={styles.validatedSection}>
                                             <View style={styles.verifiedBox}>
-                                                <Ionicons name="checkmark-circle" size={24} color="#10B981" />
-                                                <View style={styles.verifiedTextCol}>
+                                                <View style={styles.verifiedHeader}>
+                                                    <Ionicons name="checkmark-circle" size={24} color="#10B981" />
                                                     <Text style={styles.verifiedLabel}>VERIFIED CUSTOMER</Text>
-                                                    <View style={{ flexDirection: 'row', justifyContent: "space-between" }}>
-                                                        <Text style={styles.verifiedName}>{customerName} {"   "}</Text>
-                                                        <Text style={styles.verifiedName}>Due Date:{dueDate}</Text>
+                                                </View>
+
+                                                <View style={styles.verifiedDetails}>
+                                                    <View style={styles.verifiedRow}>
+                                                        <Text style={styles.verifiedRowLabel}>Name</Text>
+                                                        <Text style={styles.verifiedRowValue}>{customerName}</Text>
                                                     </View>
+                                                    <View style={styles.verifiedRow}>
+                                                        <Text style={styles.verifiedRowLabel}>Smartcard No.</Text>
+                                                        <Text style={styles.verifiedRowValue}>{smartCardNumber}</Text>
+                                                    </View>
+                                                    {dueDate ? (
+                                                        <View style={styles.verifiedRow}>
+                                                            <Text style={styles.verifiedRowLabel}>Due Date</Text>
+                                                            <Text style={styles.verifiedRowValue}>{dueDate}</Text>
+                                                        </View>
+                                                    ) : null}
+                                                    {currentBouquet ? (
+                                                        <View style={styles.verifiedRow}>
+                                                            <Text style={styles.verifiedRowLabel}>Current Bouquet</Text>
+                                                            <Text style={styles.verifiedRowValue}>{currentBouquet}</Text>
+                                                        </View>
+                                                    ) : null}
                                                 </View>
                                             </View>
 
@@ -628,28 +650,45 @@ const styles = StyleSheet.create({
         marginTop: 16,
     },
     verifiedBox: {
+        backgroundColor: "#F0FDF4",
+        borderWidth: 1,
+        borderColor: "#DCFCE7",
+        borderRadius: 16,
+        padding: 20,
+        marginBottom: 8,
+    },
+    verifiedHeader: {
         flexDirection: "row",
         alignItems: "center",
-        backgroundColor: "#ECFDF5",
-        borderWidth: 1,
-        borderColor: "#D1FAE5",
-        borderRadius: 12,
-        padding: 16,
-    },
-    verifiedTextCol: {
-        marginLeft: 12,
+        marginBottom: 16,
     },
     verifiedLabel: {
-        fontSize: 10,
+        fontSize: 13,
         color: "#059669",
         fontWeight: "700",
         letterSpacing: 0.5,
-        marginBottom: 2,
+        marginLeft: 8,
     },
-    verifiedName: {
-        fontWeight: "700",
+    verifiedDetails: {
+        gap: 12,
+    },
+    verifiedRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+    },
+    verifiedRowLabel: {
+        color: "#059669",
+        fontSize: 14,
+        fontWeight: "600",
+        flex: 1,
+    },
+    verifiedRowValue: {
         color: "#1F2937",
-        fontSize: 15,
+        fontSize: 13,
+        fontWeight: "700",
+        textAlign: "right",
+        flex: 2,
     },
     plansContainer: {
         marginBottom: 16,

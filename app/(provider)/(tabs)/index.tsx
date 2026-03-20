@@ -75,6 +75,7 @@ export default function Index() {
       setLoadedUser(user);
       setLoadingRecentTransactions(true)
       const dashResponse = await getDashboardData();
+      console.log("Dashboard resonse: ", dashResponse.error)
 
       if (dashResponse?.success) {
         console.log("dashboard data", dashResponse.data);

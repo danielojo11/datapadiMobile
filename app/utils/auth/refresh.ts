@@ -17,7 +17,7 @@ export async function refreshUser(refreshToken: string) {
 
   try {
     const response = await fetch(
-      `https://dataappback.onrender.com/api/v1/auth/refresh/`,
+      `https://api.muftipay.com/api/v1/auth/refresh/`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },

@@ -2,7 +2,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios, { AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from "axios";
 
 const api = axios.create({
-  baseURL: "https://dataappback.onrender.com/api/v1/",
+  // baseURL: "https://dataappback.onrender.com/api/v1/",
+  baseURL: "https://api.muftipay.com/api/v1/",
 });
 
 // Types for the queue

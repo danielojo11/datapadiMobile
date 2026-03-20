@@ -9,8 +9,8 @@ import configs from "../../app.json"
 const APP_NAME = configs.expo.name || "Data Padi";
 const APP_VERSION = configs.expo.version || "1.0.0";
 const SUPPORT_EMAIL = "support@muftipay.com";
-const SUPPORT_PHONE = "+234 800 123 4567";
-const WEBSITE_URL = "https://data-padi.vercel.app";
+const SUPPORT_PHONE = "+234 805 792 5095";
+const WEBSITE_URL = "https://muftipay.com";
 const LOGO_SRC = require("../../assets/images/mufti-icon.png");
 
 export default function HelpSupportScreen() {

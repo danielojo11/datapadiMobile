@@ -95,6 +95,7 @@ export async function buyData(
 
     console.log("Result from internal handler: ", result);
     return {
+      success: true,
       message: result.message, // [cite: 179]
       transactionId: result.transactionId, // [cite: 180]
     };

@@ -5,6 +5,7 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import * as Clipboard from "expo-clipboard";
 import { Ionicons } from "@expo/vector-icons";
@@ -25,6 +26,7 @@ type Props = {
 const VoucherList: React.FC<Props> = ({ vouchers, network, amount }) => {
   const handleCopy = async (pin: string) => {
     await Clipboard.setStringAsync(pin);
+    Alert.alert("Copied!", "Voucher PIN copied to clipboard");
   };
 
   return (

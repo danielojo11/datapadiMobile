@@ -3,7 +3,7 @@ import React, { useContext } from "react";
 import { Redirect, Stack } from "expo-router";
 import { AuthContext } from "../context/AppContext";
 
-const _layout = () => {
+const ProviderLayout = () => {
   const authState = useContext(AuthContext);
   if (!authState.isReady) {
     return null;
@@ -46,4 +46,4 @@ const _layout = () => {
   );
 };
 
-export default _layout;
+export default ProviderLayout;

@@ -23,7 +23,7 @@ type RenderBatchProps = {
   item: Item;
 };
 
-export default function print() {
+export default function Print() {
   const [activeTab, setActiveTab] = useState("newPrint");
   const [selectionMode, setSelectionMode] = useState(false);
   return (

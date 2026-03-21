@@ -11,7 +11,7 @@ type Props = {
 const TransactionPinInput: React.FC<Props> = ({ onComplete, error, clearError, isLoading }) => {
     const [pin, setPin] = useState(['', '', '', '']);
     const [toastMessage, setToastMessage] = useState('');
-    const inputRefs = useRef<Array<TextInput | null>>([]);
+    const inputRefs = useRef<(TextInput | null)[]>([]);
     const shakeAnimation = useRef(new Animated.Value(0)).current;
 
     // Setup refs

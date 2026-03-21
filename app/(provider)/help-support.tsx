@@ -44,7 +44,7 @@ export default function HelpSupportScreen() {
                 <View style={styles.appInfoSection}>
                     <Image source={LOGO_SRC} style={styles.logo} resizeMode="contain" />
                     <Text style={styles.appName}>{APP_NAME}</Text>
-                    <Text style={styles.tagline}>We're here to help you</Text>
+                    <Text style={styles.tagline}>We&apos;re here to help you</Text>
                 </View>
 
                 {/* Contact Options */}

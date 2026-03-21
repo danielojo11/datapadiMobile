@@ -5,7 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 type QuickActionButtonProps = {
   iconName: any;
   iconColor: any;
-  label: String;
+  label: string;
   onPress: () => void;
 };
 

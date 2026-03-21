@@ -321,7 +321,7 @@ const PinBatchModal: React.FC<PinBatchModalProps> = ({ visible, onClose, batch }
                             </Text>
                         </TouchableOpacity>
                         <Text style={styles.printHelperText}>
-                            A4 Layout: 3 Columns • Landscape or Portrait • Set Margin to "None"
+                            A4 Layout: 3 Columns • Landscape or Portrait • Set Margin to &quot;None&quot;
                         </Text>
                     </View>
                 </View>

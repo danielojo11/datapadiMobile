@@ -62,7 +62,7 @@ const FlightHistory = () => {
         <View style={styles.emptyContainer}>
             <Ionicons name="airplane-outline" size={64} color="#CBD5E1" style={{ marginBottom: 16, transform: [{ rotate: '-45deg' }] }} />
             <Text style={styles.emptyTitle}>No flights found</Text>
-            <Text style={styles.emptySub}>You haven't made any flight requests yet.</Text>
+            <Text style={styles.emptySub}>You haven&apos;t made any flight requests yet.</Text>
             <TouchableOpacity style={styles.emptyBtn} onPress={() => router.back()}>
                 <Text style={styles.emptyBtnText}>Book a Flight</Text>
             </TouchableOpacity>

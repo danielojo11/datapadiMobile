@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 
 const categories = ["All", "Data", "Airtime", "Pins", "Funding"];
 type CategoryTabsProps = {
-  active: String;
+  active: string;
   setActive: any;
 };
 

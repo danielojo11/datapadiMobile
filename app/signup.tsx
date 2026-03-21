@@ -63,6 +63,10 @@ const CreateAccountScreen = () => {
       setError("Transaction PIN must be 4 digits.");
       return;
     }
+    if (password !== confirmPassword) {
+      setError("Passwords must match")
+      return;
+    }
     setIsLoading(true);
     setError("");
     try {
@@ -223,7 +227,7 @@ const CreateAccountScreen = () => {
                     <Text style={styles.eyeIcon}>
                       <Ionicons
                         size={18}
-                        name={showPassword ? "eye-outline" : "eye-off-outline"}
+                        name={showConfirmPassword ? "eye-outline" : "eye-off-outline"}
                       />
                     </Text>
                   </TouchableOpacity>

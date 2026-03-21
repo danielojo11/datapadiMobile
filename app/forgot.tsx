@@ -12,7 +12,7 @@ import { useRouter } from "expo-router";
 import AuthInput from "./(provider)/components/AuthInput";
 import { generateOTP, verifyOTP, resetPassword } from "./utils/auth/forgotPassword";
 
-const forgot: React.FC = () => {
+const Forgot: React.FC = () => {
     const [step, setStep] = useState<1 | 2 | 3>(1);
     const [email, setEmail] = useState("");
     const [otp, setOtp] = useState("");
@@ -251,4 +251,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default forgot;
+export default Forgot;

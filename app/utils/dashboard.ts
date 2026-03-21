@@ -8,14 +8,14 @@ export interface DashboardData {
     walletBalance: number;
     lifetimeSpent: number;
   };
-  recentTransactions: Array<{
+  recentTransactions: {
     id: string;
     type: string;
     amount: number;
     status: string;
     createdAt: string;
     metadata?: any;
-  }>;
+  }[];
   todaySpent: number;
 }
 

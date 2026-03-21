@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios, { AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from "axios";
+import { router } from "expo-router";
 
 const api = axios.create({
   // baseURL: "https://dataappback.onrender.com/api/v1/",
@@ -62,7 +63,15 @@ api.interceptors.response.use(
     const originalRequest = error.config;
 
     // Handle 401 Unauthorized errors
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401) {
+      // If it was already retried and failed again with 401, log out immediately
+      if (originalRequest._retry) {
+        await AsyncStorage.multiRemove(["login_obj", "accessToken", "refreshToken"]);
+        await AsyncStorage.setItem("isAuthenticated", "false");
+        try { router.replace("/login"); } catch (e) { console.log('Navigation failed', e); }
+        return Promise.reject(error);
+      }
+
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
@@ -85,7 +94,6 @@ api.interceptors.response.use(
         }
 
         // Hit the refresh endpoint
-        // Note: Sending as { refreshToken } object to match common API patterns
         const res = await axios.post(`${api.defaults.baseURL}auth/refresh/`, {
           refreshToken: refreshToken
         });
@@ -121,6 +129,9 @@ api.interceptors.response.use(
         // Clear auth data on failure
         await AsyncStorage.multiRemove(["login_obj", "accessToken", "refreshToken"]);
         await AsyncStorage.setItem("isAuthenticated", "false");
+
+        // Auto logout redirect
+        try { router.replace("/login"); } catch (e) { console.log('Navigation failed', e); }
 
         return Promise.reject(refreshError);
       } finally {

@@ -223,13 +223,32 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
                 </>
             );
         } else {
-            content = (
-                <>
-                    {details && Object.entries(details).map(([key, value], idx, arr) => (
-                        <DetailRow key={key} label={key.charAt(0).toUpperCase() + key.slice(1)} value={String(value)} boldValue isLast={idx === arr.length - 1} />
-                    ))}
-                </>
-            );
+            const validDetails = details ? Object.entries(details).filter(([key, value]) => {
+                const lowerKey = key.toLowerCase();
+                if (type === 'WALLET_FUNDING' && (
+                    lowerKey.includes('accountdetails') ||
+                    lowerKey === 'provider' ||
+                    lowerKey === 'transactionreference'
+                )) return false;
+                if (typeof value === 'object' && value !== null) return false;
+                return true;
+            }) : [];
+
+            if (validDetails.length === 0) {
+                content = null;
+            } else {
+                content = (
+                    <>
+                        {validDetails.map(([key, value], idx, arr) => {
+                            const formattedLabel = key.replace(/([A-Z])/g, ' $1').trim();
+                            const finalLabel = formattedLabel.charAt(0).toUpperCase() + formattedLabel.slice(1);
+                            return (
+                                <DetailRow key={key} label={finalLabel} value={String(value)} boldValue isLast={idx === arr.length - 1} />
+                            );
+                        })}
+                    </>
+                );
+            }
         }
 
         if (!content) return null;

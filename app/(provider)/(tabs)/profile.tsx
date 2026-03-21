@@ -20,7 +20,7 @@ import { getProfileData } from "@/app/utils/user";
 import { initializeGatewayFunding } from "@/app/utils/payment";
 import { AuthContext } from "@/app/context/AppContext";
 import ActionRequired from "../components/drawers/ActionRequired";
-import WebScreen from "../components/WebViewer";
+import BankTransferModal from "../components/drawers/BankTransferModal";
 import ResetPinModal from "../components/drawers/ResetPinModal";
 
 const CURRENCY = "₦";
@@ -46,8 +46,8 @@ export default function ProfileScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   const [warningModalVisisbility, setWarningModalVisibility] = useState(false);
-  const [webViewVisible, setWebViewVisible] = useState(false);
-  const [webViewUrl, setWebViewUrl] = useState("");
+  const [transferModalVisible, setTransferModalVisible] = useState(false);
+  const [transferDetails, setTransferDetails] = useState<any>(null);
   const [copied, setCopied] = useState(false);
 
   const [fundingAmount, setFundingAmount] = useState("");
@@ -102,9 +102,12 @@ export default function ProfileScreen() {
 
     try {
       const result: any = await initializeGatewayFunding(amount);
-      if (result && result.paymentLink) {
-        setWebViewUrl(result.paymentLink);
-        setWebViewVisible(true);
+      console.log("result", result);
+
+      if (result && (result.success || result.accountNumber || result.account_number || (result.data && (result.data.accountNumber || result.data.account_number)))) {
+        const dataPayload = result.data || result;
+        setTransferDetails({ ...dataPayload, requestAmount: amount });
+        setTransferModalVisible(true);
         setFundingAmount("");
       } else {
         setError(result?.error || "Could not initialize payment");
@@ -153,10 +156,14 @@ export default function ProfileScreen() {
   return (
     <>
       <SafeAreaView style={styles.safeArea}>
-        <WebScreen
-          url={webViewUrl}
-          visible={webViewVisible}
-          onClose={() => setWebViewVisible(false)}
+        <BankTransferModal
+          visible={transferModalVisible}
+          onClose={() => setTransferModalVisible(false)}
+          amount={transferDetails?.amount || transferDetails?.requestAmount || 0}
+          accountNumber={transferDetails?.accountNumber || transferDetails?.account_number || ""}
+          bankName={transferDetails?.bankName || transferDetails?.bank_name || ""}
+          accountName={transferDetails?.accountName || transferDetails?.account_name || ""}
+          reference={transferDetails?.reference || transferDetails?.tx_ref || transferDetails?.transactionReference || ""}
         />
         <ActionRequired
           visible={warningModalVisisbility}

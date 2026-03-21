@@ -14,9 +14,13 @@ export async function initializeGatewayFunding(amount: number) {
     });
 
     const result = response.data;
+    console.log("Result from handler: ", result)
     return {
+      success: true,
       paymentLink: result.paymentLink,
       error: result.message,
+      data: result.data || result,
+      ...result
     };
   } catch (error) {
     return { success: false, error: "Failed to connect to payment gateway" };

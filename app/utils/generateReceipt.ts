@@ -2,19 +2,17 @@ import * as Print from 'expo-print';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
+import { Asset } from 'expo-asset';
 
 const generateReceipt = async (transaction: any) => {
     const isFunding = transaction.type === 'WALLET_FUNDING';
     const amountStr = Number(transaction.amount).toLocaleString();
-    const formattedDate = new Date(transaction.date || transaction.createdAt || new Date()).toLocaleString();
+    const dateObj = new Date(transaction.date || transaction.createdAt || new Date());
+    const formattedDate = dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ', ' + dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
     let detailsHtml = '';
 
     detailsHtml += `
-        <div class="row">
-            <span class="label">Type</span>
-            <span class="value">${transaction.type.replace('_', ' ')}</span>
-        </div>
         <div class="row">
             <span class="label">Date</span>
             <span class="value">${formattedDate}</span>
@@ -22,6 +20,10 @@ const generateReceipt = async (transaction: any) => {
         <div class="row">
             <span class="label">Reference</span>
             <span class="value">${transaction.reference || transaction.id || 'No Reference'}</span>
+        </div>
+        <div class="row">
+            <span class="label">Description</span>
+            <span class="value">${transaction.type.replace('_', ' ')}</span>
         </div>
     `;
     const addressStr = transaction.address || transaction.metadata?.address;
@@ -102,50 +104,232 @@ const generateReceipt = async (transaction: any) => {
 
 
 
+    let base64Logo = '';
+    try {
+        const asset = Asset.fromModule(require('../../assets/images/splash-screen.png'));
+        await asset.downloadAsync();
+        const localUri = asset.localUri || asset.uri;
+        if (localUri) {
+            base64Logo = await FileSystem.readAsStringAsync(localUri, { encoding: FileSystem.EncodingType.Base64 });
+        }
+    } catch (e) {
+        console.warn('Could not load logo for receipt', e);
+    }
+
     const html = `
     <html>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
         <style>
-          body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 20px; color: #333; }
-          .receipt-container { max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-          .header { text-align: center; border-bottom: 2px solid #f0f0f0; padding-bottom: 20px; margin-bottom: 20px; }
-          .header h1 { margin: 0; color: #111827; font-size: 24px; }
-          .header p { margin: 5px 0 0; color: #6b7280; font-size: 14px; }
-          .amount-section { text-align: center; margin-bottom: 30px; padding: 20px; background-color: #f9fafb; border-radius: 8px; }
-          .amount-label { font-size: 14px; color: #6B7280; text-transform: uppercase; letter-spacing: 1px; }
-          .amount-value { font-size: 36px; font-weight: bold; color: ${isFunding ? '#059669' : '#111827'}; margin: 10px 0; }
-          .status { display: inline-block; padding: 5px 15px; border-radius: 20px; font-size: 14px; font-weight: bold; text-transform: uppercase; }
-          .status.success { background-color: #def7ec; color: #03543f; }
-          .status.pending { background-color: #fef3c7; color: #92400e; }
-          .status.failed { background-color: #fde8e8; color: #9b1c1c; }
-          .details { margin-top: 20px; }
-          .row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f3f4f6; }
-          .row:last-child { border-bottom: none; }
-          .label { color: #6b7280; font-weight: 500; }
-          .value { font-weight: 600; color: #111827; text-align: right; max-width: 60%; }
-          .footer { margin-top: 40px; text-align: center; font-size: 12px; color: #9ca3af; }
+          body { 
+            font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif; 
+            padding: 20px; 
+            background-color: #F8FAFC; 
+            color: #111827; 
+          }
+          .receipt-container { 
+            max-width: 480px; 
+            margin: 0 auto; 
+            background-color: #FFFFFF; 
+            border-radius: 16px; 
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05); 
+            overflow: hidden;
+          }
+          .top-section {
+            background: linear-gradient(135deg, #2A2568 0%, #6D28D9 100%);
+            padding: 32px;
+            color: #FFFFFF;
+          }
+          .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 40px;
+          }
+          .logo-img {
+            height: 32px;
+            object-fit: contain;
+          }
+          .receipt-id-area {
+            text-align: right;
+          }
+          .receipt-label {
+            font-size: 11px;
+            color: rgba(255,255,255,0.6);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+            font-weight: 600;
+          }
+          .receipt-id {
+            font-size: 11px;
+            color: rgba(255,255,255,0.5);
+            font-family: monospace;
+          }
+          .amount-label {
+            font-size: 11px;
+            color: rgba(255,255,255,0.6);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            font-weight: 600;
+          }
+          .amount-value {
+            font-size: 42px;
+            font-weight: 800;
+            color: #FFFFFF;
+            letter-spacing: -1px;
+            margin-bottom: 24px;
+          }
+          .badges-row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+          }
+          .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background-color: #FEF3C7;
+            color: #D97706;
+            padding: 6px 16px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          }
+          .status-badge.success { background-color: #FFFFFF; color: #10B981; }
+          .status-badge.failed { background-color: #FFFFFF; color: #EF4444; }
+          .status-badge.pending { background-color: #FFFFFF; color: #D97706; }
+          .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 3px;
+            background-color: currentColor;
+          }
+          .type-badge {
+            background-color: rgba(255,255,255,0.15);
+            color: #FFFFFF;
+            padding: 6px 16px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+          }
+          
+          .bottom-section {
+            padding: 32px;
+            background-color: #FFFFFF;
+          }
+          .section-title {
+            font-size: 11px;
+            font-weight: 800;
+            color: #9CA3AF;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+          }
+          .details-list {
+            display: flex;
+            flex-direction: column;
+          }
+          .row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 16px 0;
+            border-bottom: 1px solid #F3F4F6;
+          }
+          .label {
+            color: #9CA3AF;
+            font-size: 13px;
+            font-weight: 500;
+          }
+          .value {
+            color: #111827;
+            font-size: 13px;
+            font-weight: 700;
+            text-align: right;
+            max-width: 65%;
+            word-break: break-all;
+          }
+          .divider {
+            border-top: 1px dashed #E5E7EB;
+            margin: 24px 0;
+          }
+          .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+          }
+          .footer-brand-title {
+            font-size: 13px;
+            font-weight: 800;
+            color: #1E1B4B;
+            margin-bottom: 4px;
+          }
+          .footer-brand-sub {
+            font-size: 11px;
+            color: #9CA3AF;
+          }
+          .footer-date {
+            font-size: 11px;
+            color: #D1D5DB;
+            text-align: right;
+            margin-bottom: 4px;
+          }
+          .footer-note {
+            font-size: 11px;
+            color: #E5E7EB;
+            text-align: right;
+          }
         </style>
       </head>
       <body>
         <div class="receipt-container">
-          <div class="header">
-            <h1>Transaction Receipt</h1>
-            <p>Generated on ${new Date().toLocaleString()}</p>
-          </div>
-          
-          <div class="amount-section">
-            <div class="amount-label">Amount</div>
+          <!-- Top Section -->
+          <div class="top-section">
+            <div class="header-row">
+              ${base64Logo ? '<img src="data:image/png;base64,' + base64Logo + '" class="logo-img" />' : '<div><span style="font-weight:800;font-size:18px;">MuftiPay</span></div>'}
+              <div class="receipt-id-area">
+                <div class="receipt-label">RECEIPT</div>
+                <div class="receipt-id">#${(transaction.reference || transaction.id || '').toString().slice(-12).toUpperCase()}</div>
+              </div>
+            </div>
+
+            <div class="amount-label">TOTAL AMOUNT</div>
             <div class="amount-value">${isFunding ? '+' : '-'}₦${amountStr}</div>
-            <div class="status ${transaction.status?.toLowerCase() || ''}">${transaction.status || 'UNKNOWN'}</div>
+            
+            <div class="badges-row">
+              <div class="status-badge ${transaction.status?.toLowerCase() || 'success'}">
+                <span class="status-dot"></span>
+                ${(transaction.status || 'SUCCESS').toUpperCase()}
+              </div>
+              <div class="type-badge">${transaction.type.replace('_', ' ')}</div>
+            </div>
           </div>
 
-          <div class="details">
-            ${detailsHtml}
-          </div>
+          <!-- Bottom Section -->
+          <div class="bottom-section">
+            <div class="section-title">TRANSACTION DETAILS</div>
+            <div class="details-list">
+              ${detailsHtml}
+            </div>
 
-          <div class="footer">
-            <p>Thank you for using our service.</p>
+            <div class="divider"></div>
+
+            <div class="footer">
+              <div>
+                <div class="footer-brand-title">MuftiPay</div>
+                <div class="footer-brand-sub">Secure · Fast · Reliable</div>
+              </div>
+              <div style="text-align: right;">
+                <div class="footer-date">Generated ${formattedDate}</div>
+                <div class="footer-note">This is an automated receipt</div>
+              </div>
+            </div>
           </div>
         </div>
       </body>

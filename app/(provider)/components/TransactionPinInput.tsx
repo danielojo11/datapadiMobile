@@ -34,7 +34,6 @@ const TransactionPinInput: React.FC<Props> = ({ onComplete, error, clearError, i
             });
 
             // Show toast
-            setToastMessage('Incorrect Transaction PIN');
             const timer = setTimeout(() => {
                 setToastMessage('');
                 if (clearError) clearError();

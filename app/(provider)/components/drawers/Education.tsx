@@ -13,10 +13,10 @@ import {
     DeviceEventEmitter,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { buyEducationPin } from "../../../utils/vtu";
+import { verifyJambProfile, buyEducationPin, getEducationPackages } from "../../../utils/vtu";
 import TransactionPinInput from '../TransactionPinInput';
 
-type Provider = 'WAEC' | 'NECO' | 'NABTEB';
+type Provider = 'WAEC' | 'JAMB' | 'JAMB_MOCK' | 'NECO' | 'NABTEB';
 type Step = 'PROVIDER' | 'DETAILS' | 'CONFIRM' | 'PIN' | 'SUCCESS';
 
 interface BuyEducationModalProps {
@@ -26,6 +26,8 @@ interface BuyEducationModalProps {
 
 const EDUCATION_PRODUCTS: Record<Provider, { name: string, price: number, examType: string, desc: string, icon: any, bg: string, iconColor: string }> = {
     WAEC: { name: 'WAEC Result Checker', price: 3500, examType: 'waecdirect', desc: 'Check WAEC/WASSCE results instantly', icon: 'document-text-outline', bg: '#ECFDF5', iconColor: '#10B981' },
+    JAMB: { name: 'JAMB PIN', price: 7700, examType: 'jamb', desc: 'Get your JAMB registration PIN', icon: 'school-outline', bg: '#F3E8FF', iconColor: '#9333EA' },
+    JAMB_MOCK: { name: 'JAMB Mock PIN', price: 1500, examType: 'jamb_mock', desc: 'Get your JAMB Mock PIN', icon: 'school-outline', bg: '#E0E7FF', iconColor: '#4F46E5' },
     NECO: { name: 'NECO Result Token', price: 1500, examType: 'neco', desc: 'Check NECO results with token', icon: 'document-text-outline', bg: '#FEF3C7', iconColor: '#F59E0B' },
     NABTEB: { name: 'NABTEB Result Checker', price: 1500, examType: 'nabteb', desc: 'Check NABTEB results instantly', icon: 'document-text-outline', bg: '#FEE2E2', iconColor: '#EF4444' },
 };
@@ -44,11 +46,115 @@ const BuyEducationModal: React.FC<BuyEducationModalProps> = ({ isOpen, onClose }
     const [transactionPin, setTransactionPin] = useState('');
     const [pinError, setPinError] = useState(false);
 
+    const [profileId, setProfileId] = useState('');
+    const [verifiedName, setVerifiedName] = useState<string | null>(null);
+    const [isVerifying, setIsVerifying] = useState(false);
+
+    const [products, setProducts] = useState<any[]>([]);
+    const [isLoadingProducts, setIsLoadingProducts] = useState(false);
+
+    React.useEffect(() => {
+        if (isOpen) {
+            fetchProducts();
+        }
+    }, [isOpen]);
+
+    const fetchProducts = async () => {
+        setIsLoadingProducts(true);
+        try {
+            const [waecRes, jambRes, jambMockRes, necoRes, nabtebRes] = await Promise.all([
+                getEducationPackages('WAEC'),
+                getEducationPackages('JAMB'),
+                getEducationPackages('JAMB_MOCK'),
+                getEducationPackages('NECO'),
+                getEducationPackages('NABTEB')
+            ]);
+
+            let allProducts: any[] = [];
+
+            // Collect any errors without breaking the rest
+            const results = [
+                { name: 'WAEC', res: waecRes },
+                { name: 'JAMB', res: jambRes },
+                { name: 'JAMB MOCK', res: jambMockRes },
+                { name: 'NECO', res: necoRes },
+                { name: 'NABTEB', res: nabtebRes }
+            ];
+
+            let errorList: string[] = [];
+            for (const item of results) {
+                if (!item.res.success) {
+                    errorList.push(`${item.name}: ${item.res.error || 'Unknown error'}`);
+                }
+            }
+
+            if (waecRes.success && waecRes.data) {
+                allProducts = [...allProducts, ...waecRes.data.map((p: any) => ({ ...p, providerType: 'WAEC' as Provider }))];
+            }
+            if (jambRes.success && jambRes.data) {
+                allProducts = [...allProducts, ...jambRes.data.map((p: any) => ({ ...p, providerType: 'JAMB' as Provider }))];
+            }
+            if (jambMockRes.success && jambMockRes.data) {
+                allProducts = [...allProducts, ...jambMockRes.data.map((p: any) => ({ ...p, providerType: 'JAMB_MOCK' as Provider }))];
+            }
+            if (necoRes.success && necoRes.data) {
+                allProducts = [...allProducts, ...necoRes.data.map((p: any) => ({ ...p, providerType: 'NECO' as Provider }))];
+            }
+            if (nabtebRes.success && nabtebRes.data) {
+                allProducts = [...allProducts, ...nabtebRes.data.map((p: any) => ({ ...p, providerType: 'NABTEB' as Provider }))];
+            }
+
+            setProducts(allProducts);
+
+            if (allProducts.length === 0 && errorList.length > 0) {
+                setErrorMessage("Failed to load any packages.\n" + errorList.join('\n'));
+            } else if (errorList.length > 0) {
+                // If some loaded, maybe we don't need to show an aggressive error, or just a little warning.
+                console.warn("Some providers failed to load:", errorList.join(', '));
+            }
+        } catch (error: any) {
+            console.error("Failed to fetch education products", error);
+            setErrorMessage(error?.message || "Failed to fetch education products");
+        } finally {
+            setIsLoadingProducts(false);
+        }
+    };
+
+    const activeProduct = provider ? products.find(p => p.providerType === provider) : null;
+    const isJamb = provider === 'JAMB' || provider === 'JAMB_MOCK';
+
+    React.useEffect(() => {
+        if (isJamb && profileId.length === 10 && !verifiedName && !isVerifying) {
+            handleVerifyProfile();
+        } else if (profileId.length !== 10) {
+            setVerifiedName(null);
+        }
+    }, [profileId, provider]);
+
+    const handleVerifyProfile = async () => {
+        if (profileId.length !== 10) return;
+        setIsVerifying(true);
+        setErrorMessage('');
+        setVerifiedName(null);
+
+        const result = await verifyJambProfile(profileId);
+        setIsVerifying(false);
+
+        if (result.success && result.data?.customer_name) {
+            setVerifiedName(result.data.customer_name);
+        } else {
+            setErrorMessage(result.error || 'Failed to verify Profile ID.');
+        }
+    };
+
     const resetState = () => {
         setStep('PROVIDER');
         setProvider(null);
         setPhoneNo('');
+        setProfileId('');
+        setVerifiedName(null);
         setIsPurchasing(false);
+        setIsVerifying(false);
         setErrorMessage('');
         setTransactionData(null);
         setTransactionPin('');
@@ -70,6 +176,10 @@ const BuyEducationModal: React.FC<BuyEducationModalProps> = ({ isOpen, onClose }
         setErrorMessage('');
         if (phoneNo.length < 10) {
             setErrorMessage('Please enter a valid phone number');
+            return;
+        }
+        if (isJamb && (!verifiedName || profileId.length !== 10)) {
+            setErrorMessage('Please enter and verify a valid JAMB Profile ID first');
             return;
         }
         setStep('CONFIRM');
@@ -95,15 +205,17 @@ const BuyEducationModal: React.FC<BuyEducationModalProps> = ({ isOpen, onClose }
         setErrorMessage('');
         setPinError(false);
 
-        const product = EDUCATION_PRODUCTS[provider];
         const pinToUse = pin || transactionPin;
+        const backendProvider = isJamb ? 'JAMB' : provider;
+        const passedProfileId = isJamb ? profileId : undefined;
 
         try {
             const result = await buyEducationPin(
-                provider,
-                product.examType,
+                backendProvider,
+                activeProduct?.PRODUCT_CODE || EDUCATION_PRODUCTS[provider].examType,
                 phoneNo,
-                pinToUse
+                pinToUse,
+                passedProfileId
             );
 
             if (result.success) {
@@ -170,32 +282,39 @@ const BuyEducationModal: React.FC<BuyEducationModalProps> = ({ isOpen, onClose }
                                 <Text style={styles.sectionTitle}>SELECT SERVICE</Text>
 
                                 <ScrollView style={styles.flex1} showsVerticalScrollIndicator={false}>
-                                    {(Object.keys(EDUCATION_PRODUCTS) as Provider[]).map((prov) => {
-                                        const info = EDUCATION_PRODUCTS[prov];
-                                        return (
-                                            <TouchableOpacity
-                                                key={prov}
-                                                style={styles.providerCard}
-                                                onPress={() => handleProviderSelect(prov)}
-                                            >
-                                                <View style={styles.providerInfoRow}>
-                                                    <View style={[styles.iconCircle, { backgroundColor: info.bg }]}>
-                                                        <Ionicons name={info.icon} size={20} color={info.iconColor} />
+                                    {isLoadingProducts ? (
+                                        <ActivityIndicator size="small" color="#10B981" style={{ marginTop: 24 }} />
+                                    ) : (
+                                        products.map((product, idx) => {
+                                            const prov = product.providerType as Provider;
+                                            const info = EDUCATION_PRODUCTS[prov];
+                                            if (!info) return null;
+
+                                            return (
+                                                <TouchableOpacity
+                                                    key={product.PRODUCT_CODE || idx}
+                                                    style={styles.providerCard}
+                                                    onPress={() => handleProviderSelect(prov)}
+                                                >
+                                                    <View style={styles.providerInfoRow}>
+                                                        <View style={[styles.iconCircle, { backgroundColor: info.bg }]}>
+                                                            <Ionicons name={info.icon} size={20} color={info.iconColor} />
+                                                        </View>
+                                                        <View style={styles.providerTextCol}>
+                                                            <Text style={styles.providerName}>{product.PRODUCT_NAME}</Text>
+                                                            <Text style={styles.providerNameSub}>{info.desc}</Text>
+                                                        </View>
+                                                        <Text style={[styles.providerPrice, { color: info.iconColor }]}>{CURRENCY}{product.SELLING_PRICE?.toLocaleString()}</Text>
                                                     </View>
-                                                    <View style={styles.providerTextCol}>
-                                                        <Text style={styles.providerName}>{info.name}</Text>
-                                                        <Text style={styles.providerNameSub}>{info.desc}</Text>
-                                                    </View>
-                                                    <Text style={[styles.providerPrice, { color: info.iconColor }]}>{CURRENCY}{info.price.toLocaleString()}</Text>
-                                                </View>
-                                            </TouchableOpacity>
-                                        );
-                                    })}
+                                                </TouchableOpacity>
+                                            );
+                                        })
+                                    )}
                                 </ScrollView>
                             </View>
                         )}
 
-                        {step === 'DETAILS' && provider && (
+                        {step === 'DETAILS' && provider && activeProduct && (
                             <View style={styles.stepContainer}>
                                 <View style={[styles.selectedProviderCard, { borderTopColor: EDUCATION_PRODUCTS[provider].iconColor, backgroundColor: EDUCATION_PRODUCTS[provider].bg }]}>
                                     <View style={styles.providerInfoRow}>
@@ -203,14 +322,55 @@ const BuyEducationModal: React.FC<BuyEducationModalProps> = ({ isOpen, onClose }
                                             <Ionicons name={EDUCATION_PRODUCTS[provider].icon} size={20} color={EDUCATION_PRODUCTS[provider].iconColor} />
                                         </View>
                                         <View style={styles.providerTextCol}>
-                                            <Text style={styles.providerName}>{EDUCATION_PRODUCTS[provider].name}</Text>
+                                            <Text style={styles.providerName}>{activeProduct.PRODUCT_NAME}</Text>
                                             <Text style={styles.providerNameSub}>{EDUCATION_PRODUCTS[provider].desc}</Text>
                                         </View>
-                                        <Text style={[styles.providerPrice, { color: EDUCATION_PRODUCTS[provider].iconColor }]}>{CURRENCY}{EDUCATION_PRODUCTS[provider].price.toLocaleString()}</Text>
+                                        <Text style={[styles.providerPrice, { color: EDUCATION_PRODUCTS[provider].iconColor }]}>{CURRENCY}{activeProduct.SELLING_PRICE.toLocaleString()}</Text>
                                     </View>
                                 </View>
 
                                 <ScrollView style={styles.flex1} showsVerticalScrollIndicator={false}>
+                                    {isJamb && (
+                                        <View style={{ marginBottom: 16 }}>
+                                            <Text style={styles.sectionTitle}>JAMB PROFILE ID</Text>
+                                            <View style={[styles.inputContainer, profileId.length === 10 && styles.inputContainerSuccess]}>
+                                                <View style={[styles.phoneIconCircle, { backgroundColor: '#9333EA' }]}>
+                                                    <Ionicons name="person" size={16} color="#FFF" />
+                                                </View>
+                                                <TextInput
+                                                    style={styles.input}
+                                                    placeholder="10-digit Profile ID"
+                                                    placeholderTextColor="#9CA3AF"
+                                                    keyboardType="number-pad"
+                                                    maxLength={10}
+                                                    value={profileId}
+                                                    onChangeText={(text) => {
+                                                        setProfileId(text.replace(/\D/g, ''));
+                                                        setErrorMessage('');
+                                                    }}
+                                                />
+                                                {isVerifying && <ActivityIndicator size="small" color="#9333EA" style={{ marginRight: 14 }} />}
+                                                {verifiedName && !isVerifying && (
+                                                    <Ionicons name="checkmark-circle-outline" size={24} color="#10B981" style={{ marginRight: 14 }} />
+                                                )}
+                                            </View>
+                                            {isVerifying && (
+                                                <Text style={{ color: '#9333EA', fontSize: 13, marginTop: 4, marginLeft: 4, fontWeight: '600' }}>Verifying Profile ID...</Text>
+                                            )}
+                                            {verifiedName && !isVerifying && (
+                                                <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#ECFDF5', padding: 8, borderRadius: 8, marginTop: 8 }}>
+                                                    <Ionicons name="checkmark-circle" size={16} color="#10B981" />
+                                                    <Text style={{ color: '#065F46', fontSize: 13, fontWeight: '700', marginLeft: 6 }}>{verifiedName}</Text>
+                                                </View>
+                                            )}
+                                            {profileId.length === 10 && !verifiedName && !isVerifying && !errorMessage && (
+                                                <TouchableOpacity onPress={handleVerifyProfile} style={{ marginTop: 8 }}>
+                                                    <Text style={{ color: '#9333EA', fontSize: 13, fontWeight: '700', marginLeft: 4 }}>Verify Manually</Text>
+                                                </TouchableOpacity>
+                                            )}
+                                        </View>
+                                    )}
+
                                     <Text style={styles.sectionTitle}>PHONE NUMBER</Text>
                                     <View style={[styles.inputContainer, phoneNo.length >= 10 && styles.inputContainerSuccess]}>
                                         <View style={styles.phoneIconCircle}>
@@ -236,25 +396,31 @@ const BuyEducationModal: React.FC<BuyEducationModalProps> = ({ isOpen, onClose }
 
                                 <View style={styles.bottomAnchored}>
                                     <TouchableOpacity
-                                        style={[styles.primaryBtn, phoneNo.length < 10 && styles.disabledBtn]}
-                                        disabled={phoneNo.length < 10}
+                                        style={[styles.primaryBtn, (phoneNo.length < 10 || (isJamb && (!verifiedName || profileId.length !== 10))) && styles.disabledBtn]}
+                                        disabled={phoneNo.length < 10 || (isJamb && (!verifiedName || profileId.length !== 10))}
                                         onPress={handleProceedToConfirm}
                                     >
-                                        <Text style={styles.btnText}>Proceed — {CURRENCY}{EDUCATION_PRODUCTS[provider].price.toLocaleString()}</Text>
+                                        <Text style={styles.btnText}>
+                                            {!phoneNo || phoneNo.length < 10
+                                                ? 'Enter Phone Number'
+                                                : isJamb && !verifiedName
+                                                    ? 'Verify Profile ID First'
+                                                    : `Proceed — ${CURRENCY}${activeProduct?.SELLING_PRICE?.toLocaleString()}`}
+                                        </Text>
                                     </TouchableOpacity>
                                 </View>
                             </View>
                         )}
 
-                        {step === 'CONFIRM' && provider && (
+                        {step === 'CONFIRM' && provider && activeProduct && (
                             <View style={styles.stepContainer}>
                                 <View style={[styles.receiptCard, { borderTopColor: EDUCATION_PRODUCTS[provider].iconColor }]}>
                                     <View style={[styles.iconCircle, { backgroundColor: EDUCATION_PRODUCTS[provider].bg, marginBottom: 12 }]}>
                                         <Ionicons name={EDUCATION_PRODUCTS[provider].icon} size={24} color={EDUCATION_PRODUCTS[provider].iconColor} />
                                     </View>
                                     <Text style={styles.receiptSubText}>YOU ARE PURCHASING</Text>
-                                    <Text style={styles.receiptTitle}>{EDUCATION_PRODUCTS[provider].name}</Text>
-                                    <Text style={[styles.receiptAmount, { color: EDUCATION_PRODUCTS[provider].iconColor }]}>{CURRENCY}{EDUCATION_PRODUCTS[provider].price.toLocaleString()}</Text>
+                                    <Text style={styles.receiptTitle}>{activeProduct.PRODUCT_NAME}</Text>
+                                    <Text style={[styles.receiptAmount, { color: EDUCATION_PRODUCTS[provider].iconColor }]}>{CURRENCY}{activeProduct.SELLING_PRICE.toLocaleString()}</Text>
 
                                     <View style={styles.receiptDividerContainer}>
                                         <View style={styles.receiptDividerCutoutLeft} />
@@ -262,10 +428,22 @@ const BuyEducationModal: React.FC<BuyEducationModalProps> = ({ isOpen, onClose }
                                         <View style={styles.receiptDividerCutoutRight} />
                                     </View>
 
-                                    <View style={styles.receiptRow}>
+                                    <View style={[styles.receiptRow, { marginBottom: isJamb ? 12 : 0 }]}>
                                         <Text style={styles.receiptLabel}>Phone</Text>
                                         <Text style={styles.receiptValue}>{phoneNo}</Text>
                                     </View>
+                                    {isJamb && (
+                                        <>
+                                            <View style={[styles.receiptRow, { marginBottom: 12 }]}>
+                                                <Text style={styles.receiptLabel}>Profile ID</Text>
+                                                <Text style={styles.receiptValue}>{profileId}</Text>
+                                            </View>
+                                            <View style={styles.receiptRow}>
+                                                <Text style={styles.receiptLabel}>Name</Text>
+                                                <Text style={[styles.receiptValue, { maxWidth: '60%', textAlign: 'right' }]} numberOfLines={1}>{verifiedName}</Text>
+                                            </View>
+                                        </>
+                                    )}
                                 </View>
 
                                 <View style={styles.bottomAnchored}>

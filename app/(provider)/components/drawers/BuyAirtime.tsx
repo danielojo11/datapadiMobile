@@ -26,9 +26,9 @@ type BuyAirtimeProps = {
 
 const networks: { id: NetworkId; label: string; color: string; bgColor: string }[] = [
   { id: "MTN", label: "MTN", color: "#F59E0B", bgColor: "#FFFBEB" },
-  { id: "AIRTEL", label: "Airtel", color: "#EF4444", bgColor: "#FEF2F2" },
-  { id: "GLO", label: "Glo", color: "#10B981", bgColor: "#ECFDF5" },
-  { id: "9MOBILE", label: "9mobile", color: "#047857", bgColor: "#D1FAE5" },
+  { id: "AIRTEL", label: "AIRTEL", color: "#EF4444", bgColor: "#FEF2F2" },
+  { id: "GLO", label: "GLO", color: "#10B981", bgColor: "#ECFDF5" },
+  { id: "9MOBILE", label: "9MOBILE", color: "#047857", bgColor: "#D1FAE5" },
 ];
 
 const quickAmounts = [100, 200, 500, 1000, 2000, 5000];

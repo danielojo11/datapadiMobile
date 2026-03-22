@@ -34,9 +34,9 @@ type BuyDataProps = {
 
 const networks: { id: NetworkId; label: string; color: string; bgColor: string }[] = [
   { id: "MTN", label: "MTN", color: "#FFCC00", bgColor: "#FFFDF5" },
-  { id: "AIRTEL", label: "Airtel", color: "#FF0000", bgColor: "#FFF5F5" },
-  { id: "GLO", label: "Glo", color: "#00E600", bgColor: "#F5FFF5" },
-  { id: "9MOBILE", label: "9mobile", color: "#006600", bgColor: "#F5FAF5" },
+  { id: "AIRTEL", label: "AIRTEL", color: "#FF0000", bgColor: "#FFF5F5" },
+  { id: "GLO", label: "GLO", color: "#00E600", bgColor: "#F5FFF5" },
+  { id: "9MOBILE", label: "9MOBILE", color: "#006600", bgColor: "#F5FAF5" },
 ];
 
 const CURRENCY = "₦";
@@ -277,7 +277,7 @@ const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
           {step === 'PLAN' && (
             <View style={styles.stepContainer}>
               {renderHeader(true, () => setStep('NETWORK'))}
-              
+
               <View style={styles.planHeaderRow}>
                 <View style={[styles.smallNetworkCircle, { backgroundColor: activeNetworkObj?.color || '#FFCC00', width: 32, height: 32, borderRadius: 16 }]}>
                   <Text style={[styles.smallNetworkLetter, { fontSize: 16 }]}>{activeNetworkObj?.label.charAt(0) || 'M'}</Text>
@@ -298,8 +298,8 @@ const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
 
               <Text style={styles.sectionTitle}>{filteredPlans.length} PLANS AVAILABLE</Text>
 
-              <ScrollView 
-                showsVerticalScrollIndicator={false} 
+              <ScrollView
+                showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: 24 }}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
               >
@@ -336,7 +336,7 @@ const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
           {step === 'PHONE' && (
             <View style={styles.stepContainer}>
               {renderHeader(true, () => setStep('PLAN'))}
-              
+
               <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
                 <View style={[styles.selectedPlanCard, { borderColor: activeNetworkObj?.color || '#FFCC00', backgroundColor: activeNetworkObj?.bgColor || '#FFF9E6' }]}>
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -370,7 +370,7 @@ const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
                   )}
                 </View>
               </ScrollView>
-              
+
               <View style={styles.bottomAnchoredDetails}>
                 <TouchableOpacity
                   style={[

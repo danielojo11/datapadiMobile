@@ -253,11 +253,8 @@ export async function getPrintOrderPins(reference: string) {
   }
 }
 
-// --- 4. EDUCATION ROUTES ---
+// --- 4. EDUCATION ROUTES (JAMB/WAEC) ---
 
-/**
- * Verify JAMB Profile ID
- */
 export async function verifyJambProfile(profileId: string) {
   try {
     const response = await api.get(`education/verify-jamb?profileId=${profileId}`);
@@ -265,45 +262,61 @@ export async function verifyJambProfile(profileId: string) {
 
     return {
       success: true,
-      data: result.data
+      data: result.data // { customer_name: "JOHN CHUKWUDI DOE" }
     };
   } catch (error: any) {
     return {
       success: false,
-      error: error?.response?.data?.message || error?.message || "Failed to verify JAMB profile."
+      error: error?.response?.data?.message || error?.message || 'Invalid JAMB Profile ID.'
     };
   }
 }
 
-/**
- * Buy Education PIN (WAEC / JAMB)
- */
-export async function buyEducationPin(provider: string, examType: string, phoneNo: string, transactionPin: string, profileId?: string) {
+export async function getEducationPackages(provider: 'WAEC' | 'JAMB' | 'JAMB_MOCK' | 'NECO' | 'NABTEB' | string) {
   try {
-    const payload: any = {
-      provider,
-      examType,
-      phoneNo,
-      transactionPin
-    };
-
-    if (profileId) {
-      payload.profileId = profileId;
-    }
-
-    const response = await api.post("education/purchase/", payload);
-    const result = await response.data;
+    const response = await api.get(`education/packages?provider=${provider}`);
+    const result = response.data; // response.data is the parsed response
 
     return {
       success: true,
-      message: result.message,
-      status: result.status || 'OK',
-      data: result.data
+      data: (result.data !== undefined ? result.data : result) as any[]
     };
   } catch (error: any) {
     return {
       success: false,
-      error: error?.response?.data?.message || error?.message || "Transaction failed. Please try again."
+      error: error?.response?.data?.message || error?.message || 'Failed to fetch packages'
+    };
+  }
+}
+
+export async function buyEducationPin(provider: 'WAEC' | 'JAMB' | 'JAMB_MOCK' | 'NECO' | 'NABTEB' | string, examType: string, phoneNo: string, transactionPin: string, profileId?: string) {
+  try {
+    const body: any = { provider, examType, phoneNo, transactionPin };
+    if (provider === 'JAMB' && profileId) {
+      body.profileId = profileId;
+    }
+
+    const response = await api.post('education/purchase', body);
+    const result = await response.data;
+
+    return {
+      success: true,
+      status: result.status || 'OK',
+      message: result.message,
+      data: result.data // { cardDetails: "...", transactionId: "..." }
+    };
+  } catch (error: any) {
+    if (error?.response?.status === 202) {
+      return {
+        success: true,
+        status: 'PENDING',
+        message: error.response.data.message || 'Transaction Pending',
+        transactionId: error.response.data.transactionId
+      };
+    }
+    return {
+      success: false,
+      error: error?.response?.data?.message || error?.message || 'Transaction failed due to network error'
     };
   }
 }

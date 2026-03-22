@@ -6,6 +6,7 @@ import * as Notifications from "expo-notifications";
 import { useEffect, useRef, useState } from "react";
 import * as Updates from "expo-updates";
 import { registerForPushNotificationsAsync } from "./utils/notifications";
+import NetworkBanner from "./components/NetworkBanner";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -71,6 +72,7 @@ export default function RootLayout() {
       <AuthProvider>
         <SocketProvider>
           <StatusBar style="dark" />
+          <NetworkBanner />
           <Stack>
             <Stack.Screen name="(provider)" options={{ headerShown: false }} />
             <Stack.Screen name="login" options={{ headerShown: false }} />

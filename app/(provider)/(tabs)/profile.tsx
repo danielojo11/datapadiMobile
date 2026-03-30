@@ -8,13 +8,16 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
-  RefreshControl
+  RefreshControl,
+  Switch
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as LocalAuthentication from "expo-local-authentication";
+import * as SecureStore from "expo-secure-store";
 
 import { getProfileData } from "@/app/utils/user";
 import { initializeGatewayFunding } from "@/app/utils/payment";
@@ -44,6 +47,7 @@ export default function ProfileScreen() {
   const [profileData, setProfileData] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [isBiometricEnabled, setIsBiometricEnabled] = useState(false);
 
   const [warningModalVisisbility, setWarningModalVisibility] = useState(false);
   const [transferModalVisible, setTransferModalVisible] = useState(false);
@@ -74,6 +78,50 @@ export default function ProfileScreen() {
   useEffect(() => {
     loadProfile();
   }, []);
+
+  useEffect(() => {
+    const checkBiometricStatus = async () => {
+      const enabled = await AsyncStorage.getItem("biometric_enabled");
+      setIsBiometricEnabled(enabled === "true");
+    };
+    checkBiometricStatus();
+  }, []);
+
+  const handleBiometricToggle = async (value: boolean) => {
+    if (value) {
+      const hasHardware = await LocalAuthentication.hasHardwareAsync();
+      const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+
+      if (!hasHardware || !isEnrolled) {
+        Alert.alert("Error", "Biometrics not supported or not set up on this device.");
+        setIsBiometricEnabled(false);
+        return;
+      }
+
+      const auth = await LocalAuthentication.authenticateAsync({
+        promptMessage: "Authenticate to enable Biometric Login",
+        cancelLabel: "Cancel",
+        disableDeviceFallback: true,
+      });
+
+      if (auth.success) {
+        setIsBiometricEnabled(true);
+        await AsyncStorage.setItem("biometric_enabled", "true");
+
+        const credString = await AsyncStorage.getItem("credentials");
+        if (credString) {
+          await SecureStore.setItemAsync("biometric_credentials", credString);
+        }
+        Alert.alert("Success", "Biometric login enabled successfully!");
+      } else {
+        setIsBiometricEnabled(false);
+      }
+    } else {
+      setIsBiometricEnabled(false);
+      await AsyncStorage.removeItem("biometric_enabled");
+      await SecureStore.deleteItemAsync("biometric_credentials");
+    }
+  };
 
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
@@ -300,6 +348,23 @@ export default function ProfileScreen() {
               </View>
               <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
             </TouchableOpacity>
+
+            <View style={styles.divider} />
+
+            <View style={styles.settingsItem}>
+              <View style={styles.settingsItemLeft}>
+                <View style={styles.settingsIconBox}>
+                  <Ionicons name="finger-print-outline" size={18} color="#475569" />
+                </View>
+                <Text style={styles.settingsItemText}>Enable Biometric Login</Text>
+              </View>
+              <Switch
+                trackColor={{ false: "#CBD5E1", true: "#93C5FD" }}
+                thumbColor={isBiometricEnabled ? "#2563EB" : "#F8FAFC"}
+                onValueChange={handleBiometricToggle}
+                value={isBiometricEnabled}
+              />
+            </View>
 
             <View style={styles.divider} />
 

@@ -14,7 +14,7 @@ import {
   RefreshControl,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { buyData, getDataPlans } from "@/app/utils/vtu";
+import { buyData, getDataPlans, determineCategory } from "@/app/utils/vtu";
 import TransactionPinInput from '../TransactionPinInput';
 
 type Step = 'NETWORK' | 'PLAN' | 'PHONE' | 'CONFIRM' | 'PIN' | 'SUCCESS';
@@ -25,6 +25,7 @@ interface UIPlan {
   name: string;
   price: number;
   groupName: string;
+  category: string;
 }
 
 type BuyDataProps = {
@@ -52,6 +53,8 @@ const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<any>();
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('ALL');
+  const categories = ['ALL', 'DAILY', 'WEEKLY', 'MONTHLY', 'OTHER'];
   const [refreshing, setRefreshing] = useState(false);
   const [transactionPin, setTransactionPin] = useState('');
   const [pinError, setPinError] = useState(false);
@@ -99,6 +102,7 @@ const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
     setPhoneNumber('');
     setIsPurchasing(false);
     setSearchQuery('');
+    setSelectedCategory('ALL');
     setErrorMessage('');
     setTransactionPin('');
     setPinError(false);
@@ -113,6 +117,7 @@ const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
     setSelectedNetwork(networkId);
     setErrorMessage('');
     setSearchQuery('');
+    setSelectedCategory('ALL');
     setStep('PLAN');
   };
 
@@ -148,6 +153,7 @@ const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
             price: Number(p.SELLING_PRICE) || 0,
             groupName: p.PRODUCT_NAME.includes('(SME)') ? 'SME' :
               p.PRODUCT_NAME.includes('(Awoof') ? 'Awoof' : 'Direct',
+            category: determineCategory(p.VALIDITY),
           });
         });
       }
@@ -157,9 +163,11 @@ const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
   };
 
   const currentPlans = getAvailablePlans();
-  const filteredPlans = currentPlans.filter(p =>
-    p.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredPlans = currentPlans.filter(p => {
+    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === 'ALL' || p.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
 
   const handlePurchase = async (pin?: string) => {
     if (!selectedNetwork || !selectedPlan || !phoneNumber) return;
@@ -237,7 +245,7 @@ const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
           {step === 'NETWORK' && (
             <View style={styles.stepContainer}>
               {renderHeader(false)}
-              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
+              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
                 <Text style={styles.sectionTitle}>SELECT NETWORK</Text>
                 {isLoadingPlans ? (
                   <View style={{ padding: 40, alignItems: 'center' }}>
@@ -296,11 +304,34 @@ const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
                 />
               </View>
 
+              <View style={styles.categoriesWrapper}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesScroll} keyboardShouldPersistTaps="handled">
+                  {categories.map((cat) => (
+                    <TouchableOpacity
+                      key={cat}
+                      onPress={() => setSelectedCategory(cat)}
+                      style={[
+                        styles.categoryTab,
+                        selectedCategory === cat && { backgroundColor: activeNetworkObj?.color || '#111827', borderColor: activeNetworkObj?.color || '#111827' }
+                      ]}
+                    >
+                      <Text style={[
+                        styles.categoryTabText,
+                        selectedCategory === cat && styles.categoryTabTextSelected
+                      ]}>
+                        {cat}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+
               <Text style={styles.sectionTitle}>{filteredPlans.length} PLANS AVAILABLE</Text>
 
               <ScrollView
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: 24 }}
+                keyboardShouldPersistTaps="handled"
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
               >
                 {filteredPlans.length > 0 ? (
@@ -337,7 +368,7 @@ const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
             <View style={styles.stepContainer}>
               {renderHeader(true, () => setStep('PLAN'))}
 
-              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
+              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
                 <View style={[styles.selectedPlanCard, { borderColor: activeNetworkObj?.color || '#FFCC00', backgroundColor: activeNetworkObj?.bgColor || '#FFF9E6' }]}>
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <View style={[styles.smallNetworkCircle, { backgroundColor: activeNetworkObj?.color || '#FFCC00', width: 44, height: 44, borderRadius: 22, marginRight: 16 }]}>
@@ -389,7 +420,7 @@ const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
           {step === 'CONFIRM' && (
             <View style={styles.stepContainer}>
               {renderHeader(true, () => setStep('PHONE'))}
-              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
+              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
                 <View style={styles.confirmCard}>
                   <View style={[styles.confirmTopBar, { backgroundColor: activeNetworkObj?.color || '#FFCC00' }]} />
 
@@ -436,7 +467,7 @@ const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
           {step === 'PIN' && (
             <View style={styles.stepContainer}>
               {renderHeader(true, () => { setStep('CONFIRM'); setPinError(false); setErrorMessage(''); })}
-              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24, alignItems: 'center' }}>
+              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24, alignItems: 'center' }} keyboardShouldPersistTaps="handled">
 
                 <View style={styles.lockIconContainer}>
                   <View style={styles.lockIconCircle}>
@@ -685,6 +716,30 @@ const styles = StyleSheet.create({
   planPriceText: {
     fontWeight: "800",
     fontSize: 16,
+  },
+  categoriesWrapper: {
+    marginTop: 16,
+    marginBottom: 4,
+  },
+  categoriesScroll: {
+    paddingRight: 16,
+  },
+  categoryTab: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    backgroundColor: '#fff',
+    marginRight: 8,
+  },
+  categoryTabText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  categoryTabTextSelected: {
+    color: '#fff',
   },
   selectedPlanCard: {
     flexDirection: "row",

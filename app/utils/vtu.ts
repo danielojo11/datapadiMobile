@@ -47,6 +47,43 @@ export interface ProviderDataPlan {
   PRODUCT_NAME: string;
   PRODUCT_AMOUNT: string;
   SELLING_PRICE: number;
+  VALIDITY?: string;
+}
+
+/**
+ * Determines a category (DAILY, WEEKLY, MONTHLY, OTHER) based on a plan's validity string.
+ */
+export function determineCategory(validityStr: string | undefined): string {
+  if (!validityStr || typeof validityStr !== 'string') return 'OTHER';
+
+  const v = validityStr.toLowerCase().trim();
+
+  if (v === 'n/a' || v === 'lifetime' || v === '') return 'OTHER';
+
+  if (v.includes('hour') || v.includes('hr') || v === 'hourly') return 'DAILY';
+  if (v.includes('month') || v.includes('year')) return 'MONTHLY';
+
+  // Extract number
+  const match = v.match(/(\d+)/);
+  let numDays = 0;
+
+  if (match) {
+    const num = parseInt(match[0], 10);
+    if (v.includes('week')) {
+      numDays = num * 7;
+    } else if (v.includes('day')) {
+      numDays = num;
+    }
+  } else {
+    if (v.includes('week') && !v.includes('weeks')) return 'WEEKLY';
+  }
+
+  if (numDays > 0) {
+    if (numDays >= 1 && numDays <= 6) return 'DAILY';
+    if (numDays >= 7 && numDays <= 27) return 'WEEKLY';
+    if (numDays >= 28) return 'MONTHLY';
+  }
+  return 'OTHER';
 }
 
 export interface NetworkGroup {

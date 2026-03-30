@@ -281,7 +281,7 @@ const BuyEducationModal: React.FC<BuyEducationModalProps> = ({ isOpen, onClose }
                             <View style={styles.stepContainer}>
                                 <Text style={styles.sectionTitle}>SELECT SERVICE</Text>
 
-                                <ScrollView style={styles.flex1} showsVerticalScrollIndicator={false}>
+                                <ScrollView style={styles.flex1} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
                                     {isLoadingProducts ? (
                                         <ActivityIndicator size="small" color="#10B981" style={{ marginTop: 24 }} />
                                     ) : (
@@ -329,7 +329,7 @@ const BuyEducationModal: React.FC<BuyEducationModalProps> = ({ isOpen, onClose }
                                     </View>
                                 </View>
 
-                                <ScrollView style={styles.flex1} showsVerticalScrollIndicator={false}>
+                                <ScrollView style={styles.flex1} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
                                     {isJamb && (
                                         <View style={{ marginBottom: 16 }}>
                                             <Text style={styles.sectionTitle}>JAMB PROFILE ID</Text>

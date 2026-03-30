@@ -117,6 +117,8 @@ const CableTV: React.FC<BuyCableModalProps> = ({ isOpen, onClose }) => {
     const handleProviderSelect = (id: string) => {
         setProviderId(id);
         setErrorMessage('');
+        setSearchQuery('');
+        setSelectedPlan(null);
         setStep('DETAILS');
     };
 
@@ -250,6 +252,7 @@ const CableTV: React.FC<BuyCableModalProps> = ({ isOpen, onClose }) => {
                                     <ScrollView
                                         style={styles.flex1}
                                         showsVerticalScrollIndicator={false}
+                                        keyboardShouldPersistTaps="handled"
                                         refreshControl={
                                             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
                                         }
@@ -281,7 +284,7 @@ const CableTV: React.FC<BuyCableModalProps> = ({ isOpen, onClose }) => {
                                     <Text style={[styles.backButtonText, { color: '#9333EA' }]}>Change Provider</Text>
                                 </TouchableOpacity>
 
-                                <ScrollView style={styles.flex1} showsVerticalScrollIndicator={false}>
+                                <ScrollView style={styles.flex1} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
                                     <Text style={styles.inputLabel}>Smartcard / IUC Number</Text>
                                     <View style={styles.inputContainer}>
                                         <TextInput

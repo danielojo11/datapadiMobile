@@ -146,7 +146,7 @@ const BuyAirtime: React.FC<BuyAirtimeProps> = ({ visible, onClose }) => {
           {step === 'DETAILS' && (
             <View style={styles.stepContainer}>
               {renderHeader(false)}
-              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
+              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
                 <Text style={styles.sectionTitle}>SELECT NETWORK</Text>
                 <View style={styles.networkGrid}>
                   {networks.map((network) => {
@@ -268,7 +268,7 @@ const BuyAirtime: React.FC<BuyAirtimeProps> = ({ visible, onClose }) => {
           {step === 'CONFIRM' && (
             <View style={styles.stepContainer}>
               {renderHeader(true, () => setStep('DETAILS'))}
-              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
+              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
                 <View style={styles.confirmCard}>
                   <View style={[styles.confirmTopBar, { backgroundColor: activeNetworkObj?.color || '#F59E0B' }]} />
 
@@ -313,7 +313,7 @@ const BuyAirtime: React.FC<BuyAirtimeProps> = ({ visible, onClose }) => {
           {step === 'PIN' && (
             <View style={styles.stepContainer}>
               {renderHeader(true, () => { setStep('CONFIRM'); setPinError(false); setErrorMessage(''); })}
-              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24, alignItems: 'center' }}>
+              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24, alignItems: 'center' }} keyboardShouldPersistTaps="handled">
 
                 <View style={styles.lockIconContainer}>
                   <View style={styles.lockIconCircle}>

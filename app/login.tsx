@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -12,6 +12,8 @@ import { AuthContext } from "./context/AppContext";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as LocalAuthentication from "expo-local-authentication";
+import * as SecureStore from "expo-secure-store";
 
 const LoginScreen: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -19,11 +21,52 @@ const LoginScreen: React.FC = () => {
   const [secure, setSecure] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [isBiometricEnabled, setIsBiometricEnabled] = useState(false);
 
   const authState = useContext(AuthContext);
   const router = useRouter();
 
+  useEffect(() => {
+    const checkBiometric = async () => {
+      const enabled = await AsyncStorage.getItem("biometric_enabled");
+      setIsBiometricEnabled(enabled === "true");
+    };
+    checkBiometric();
+  }, []);
 
+  const handleBiometricLogin = async () => {
+    try {
+      const hasHardware = await LocalAuthentication.hasHardwareAsync();
+      const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+
+      if (!hasHardware || !isEnrolled) return;
+
+      const auth = await LocalAuthentication.authenticateAsync({
+        promptMessage: "Authenticate to Login",
+        cancelLabel: "Use Password",
+      });
+
+      if (auth.success) {
+        setLoading(true);
+        const credString = await SecureStore.getItemAsync("biometric_credentials");
+        if (credString) {
+          await AsyncStorage.setItem("credentials", credString);
+
+          const response = await authState.login();
+          if (response && response.success === false) {
+            setError(response.error || "Biometric login failed");
+          }
+        } else {
+          setError("Biometric credentials not found.");
+        }
+      }
+    } catch (e: any) {
+      console.log("Biometric Login error:", e);
+      setError(e.message || "An unexpected error occurred during biometric login");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogin = async () => {
     if (!email || !password) return;
@@ -114,6 +157,24 @@ const LoginScreen: React.FC = () => {
             </>
           )}
         </TouchableOpacity>
+
+        {isBiometricEnabled && (
+          <TouchableOpacity
+            style={[styles.button, styles.biometricButton]}
+            onPress={handleBiometricLogin}
+            activeOpacity={0.85}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#1D4ED8" />
+            ) : (
+              <>
+                <Ionicons name="finger-print" size={20} color="#1D4ED8" style={{ marginRight: 8 }} />
+                <Text style={[styles.text, { color: "#1D4ED8" }]}>Login with Biometrics</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        )}
       </View>
 
       <View style={styles.footer}>
@@ -220,6 +281,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 10,
     elevation: 5,
+  },
+
+  biometricButton: {
+    backgroundColor: "#EFF6FF",
+    borderWidth: 1,
+    borderColor: "#BFDBFE",
+    marginTop: 12,
+    shadowOpacity: 0.1,
   },
 
   text: {

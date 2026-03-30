@@ -251,6 +251,7 @@ const BuyElectricityModal: React.FC<BuyElectricityModalProps> = ({ isOpen, onClo
                   <ScrollView
                     style={styles.flex1}
                     showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
                     refreshControl={
                       <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
                     }
@@ -284,7 +285,7 @@ const BuyElectricityModal: React.FC<BuyElectricityModalProps> = ({ isOpen, onClo
                   <Text style={styles.backButtonText}>Change Provider</Text>
                 </TouchableOpacity>
 
-                <ScrollView style={styles.flex1} showsVerticalScrollIndicator={false}>
+                <ScrollView style={styles.flex1} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
                   <View style={styles.toggleContainer}>
                     <TouchableOpacity
                       style={[styles.toggleBtn, meterType === 'PREPAID' && styles.toggleBtnActive]}

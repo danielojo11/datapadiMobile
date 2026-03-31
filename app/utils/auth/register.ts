@@ -7,6 +7,7 @@ export async function registerUser(formData: {
   phoneNumber: string;
   password: string;
   transactionPin: string;
+  referralCode?: string;
 }) {
   // Grab the base URL from your .env file
   const BACKEND_URL = process.env.BACKEND_URL;
@@ -35,6 +36,17 @@ export async function registerUser(formData: {
     return {
       success: false,
       error: error.response.data.message || "Failed to connect to the server. Please try again later.",
+    };
+  }
+}
+export async function validateReferralCode(code: string) {
+  try {
+    const response = await api.get(`auth/validate-referral/${code}`);
+    return { success: true, data: response.data.data };
+  } catch (error: any) {
+    return {
+      success: false,
+      error: error.response?.data?.message || "Invalid referral code",
     };
   }
 }

@@ -11,6 +11,7 @@ import {
     KeyboardAvoidingView,
     Platform,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { resetTransactionPin } from "@/app/utils/auth/resetPin";
 
@@ -20,6 +21,7 @@ interface ResetPinModalProps {
 }
 
 export default function ResetPinModal({ visible, onClose }: ResetPinModalProps) {
+    const insets = useSafeAreaInsets();
     const [password, setPassword] = useState("");
     const [newPin, setNewPin] = useState("");
     const [confirmPin, setConfirmPin] = useState("");
@@ -85,7 +87,7 @@ export default function ResetPinModal({ visible, onClose }: ResetPinModalProps) 
             >
                 <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
                     <View style={styles.overlay}>
-                        <View style={styles.container}>
+                        <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 20) }]}>
                             <View style={styles.handle} />
 
                             <TouchableOpacity style={styles.closeBtn} onPress={handleClose}>
@@ -204,7 +206,6 @@ const styles = StyleSheet.create({
         borderTopLeftRadius: 28,
         borderTopRightRadius: 28,
         paddingHorizontal: 20,
-        paddingBottom: 40,
     },
     handle: {
         width: 45,

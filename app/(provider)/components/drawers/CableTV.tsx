@@ -13,6 +13,7 @@ import {
     DeviceEventEmitter,
     RefreshControl,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import {
     getCablePackages,
@@ -45,6 +46,7 @@ const CABLE_PROVIDERS = [
 const CURRENCY = "₦";
 
 const CableTV: React.FC<BuyCableModalProps> = ({ isOpen, onClose }) => {
+    const insets = useSafeAreaInsets();
     const [step, setStep] = useState<Step>('PROVIDER');
     const [apiPackages, setApiPackages] = useState<CablePackagesResponse | null>(null);
 
@@ -226,7 +228,7 @@ const CableTV: React.FC<BuyCableModalProps> = ({ isOpen, onClose }) => {
             <View style={styles.overlay}>
                 <KeyboardAvoidingView
                     behavior={Platform.OS === "ios" ? "padding" : undefined}
-                    style={styles.drawerContainer}
+                    style={[styles.drawerContainer, { paddingBottom: Math.max(insets.bottom, 20) }]}
                 >
                     <View style={styles.handle} />
                     {renderHeader()}
@@ -517,7 +519,6 @@ const styles = StyleSheet.create({
         borderTopRightRadius: 24,
         paddingHorizontal: 20,
         paddingTop: 12,
-        paddingBottom: Platform.OS === 'ios' ? 40 : 20,
         height: '85%',
     },
     handle: {

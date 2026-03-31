@@ -13,6 +13,7 @@ import {
   DeviceEventEmitter,
   RefreshControl,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import {
   getDiscos,
@@ -32,6 +33,7 @@ interface BuyElectricityModalProps {
 const CURRENCY = "₦";
 
 const BuyElectricityModal: React.FC<BuyElectricityModalProps> = ({ isOpen, onClose }) => {
+  const insets = useSafeAreaInsets();
   const [step, setStep] = useState<Step>('PROVIDER');
   const [discos, setDiscos] = useState<DiscoProvider[]>([]);
   const [providerId, setProviderId] = useState('');
@@ -225,7 +227,7 @@ const BuyElectricityModal: React.FC<BuyElectricityModalProps> = ({ isOpen, onClo
       <View style={styles.overlay}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : undefined}
-          style={styles.drawerContainer}
+          style={[styles.drawerContainer, { paddingBottom: Math.max(insets.bottom, 20) }]}
         >
           <View style={styles.handle} />
           {renderHeader()}
@@ -520,7 +522,7 @@ const BuyElectricityModal: React.FC<BuyElectricityModalProps> = ({ isOpen, onClo
 
 const styles = StyleSheet.create({
   overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" },
-  drawerContainer: { backgroundColor: "white", borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 20, paddingTop: 12, paddingBottom: Platform.OS === 'ios' ? 40 : 20, height: '85%' },
+  drawerContainer: { backgroundColor: "white", borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 20, paddingTop: 12, height: '85%' },
   handle: { width: 40, height: 5, backgroundColor: "#E5E7EB", borderRadius: 3, alignSelf: "center", marginBottom: 16 },
   headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
   drawerTitle: { fontSize: 20, fontWeight: "700", color: "#111827" },

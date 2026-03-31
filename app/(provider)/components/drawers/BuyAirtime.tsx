@@ -12,6 +12,7 @@ import {
   Platform,
   DeviceEventEmitter,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { buyAirtime } from "@/app/utils/vtu";
 import TransactionPinInput from '../TransactionPinInput';
@@ -35,6 +36,7 @@ const quickAmounts = [100, 200, 500, 1000, 2000, 5000];
 const CURRENCY = "₦";
 
 const BuyAirtime: React.FC<BuyAirtimeProps> = ({ visible, onClose }) => {
+  const insets = useSafeAreaInsets();
   const [step, setStep] = useState<Step>('DETAILS');
   const [selectedNetwork, setSelectedNetwork] = useState<NetworkId | null>(null);
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -134,7 +136,7 @@ const BuyAirtime: React.FC<BuyAirtimeProps> = ({ visible, onClose }) => {
       <View style={styles.overlay}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : undefined}
-          style={styles.drawerContainer}
+          style={[styles.drawerContainer, { paddingBottom: Math.max(insets.bottom, 20) }]}
         >
           {errorMessage && step !== 'SUCCESS' ? (
             <View style={styles.errorBox}>
@@ -385,7 +387,6 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 32,
     paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: Platform.OS === 'ios' ? 40 : 20,
     height: '92%',
   },
   stepContainer: {

@@ -14,6 +14,7 @@ SplashScreen.preventAutoHideAsync();
 type AuthState = {
   isAuthenticated: boolean;
   isReady: boolean;
+  userCredentials: { email: string; password: string } | null;
   login: (credentials?: any) => Promise<any>;
   logout: () => Promise<void>;
 };
@@ -21,6 +22,7 @@ type AuthState = {
 export const AuthContext = createContext<AuthState>({
   isAuthenticated: false,
   isReady: false,
+  userCredentials: null,
   login: async () => { return { success: false } },
   logout: async () => { },
 });
@@ -28,6 +30,7 @@ export const AuthContext = createContext<AuthState>({
 export const AuthProvider = ({ children }: PropsWithChildren) => {
   const [isReady, setIsReady] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userCredentials, setUserCredentials] = useState<{ email: string; password: string } | null>(null);
 
   const router = useRouter();
 
@@ -78,6 +81,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
         await storeAuthState(true);
 
         setIsAuthenticated(true);
+        setUserCredentials({ email: emailArg, password: passwordArg });
         await AsyncStorage.removeItem("credentials");
 
         router.replace("/");
@@ -98,8 +102,10 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
   const logout = async () => {
     try {
       await AsyncStorage.removeItem("login_obj");
+      await AsyncStorage.removeItem("credentials");
       await storeAuthState(false);
       setIsAuthenticated(false);
+      setUserCredentials(null);
       router.replace("/login"); // adjust if your login route differs
     } catch (error) {
       console.log("Logout failed:", error);
@@ -142,6 +148,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
       value={{
         isAuthenticated,
         isReady,
+        userCredentials,
         login,
         logout,
       }}

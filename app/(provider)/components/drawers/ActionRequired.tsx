@@ -9,6 +9,7 @@ import {
   ScrollView,
   ActivityIndicator,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { verifyBVN } from "@/app/utils/payment";
 import { useRouter } from "expo-router";
@@ -20,6 +21,7 @@ const IdentityVerification = ({
   visible: boolean;
   onClose: () => void;
 }) => {
+  const insets = useSafeAreaInsets();
   const [bvn, setBvn] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | boolean>(false);
@@ -56,7 +58,7 @@ const IdentityVerification = ({
     <Modal animationType="slide" transparent visible={visible}>
       <ScrollView>
         <View style={styles.overlay}>
-          <View style={styles.container}>
+          <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 40) }]}>
             <View style={styles.handle} />
 
             <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
@@ -202,7 +204,6 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     paddingHorizontal: 20,
-    paddingBottom: 40,
   },
   handle: {
     width: 45,
@@ -311,7 +312,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#EEF4FF",
     padding: 15,
     borderRadius: 14,
-    marginBottom: 100
+    marginBottom: 20
   },
   infoTitle: {
     fontSize: 13,

@@ -13,6 +13,7 @@ import {
   DeviceEventEmitter,
   RefreshControl,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { buyData, getDataPlans, determineCategory } from "@/app/utils/vtu";
 import TransactionPinInput from '../TransactionPinInput';
@@ -43,6 +44,7 @@ const networks: { id: NetworkId; label: string; color: string; bgColor: string }
 const CURRENCY = "₦";
 
 const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
+  const insets = useSafeAreaInsets();
   const [step, setStep] = useState<Step>('NETWORK');
   const [selectedNetwork, setSelectedNetwork] = useState<NetworkId | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<UIPlan | null>(null);
@@ -233,7 +235,7 @@ const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
       <View style={styles.overlay}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : undefined}
-          style={styles.drawerContainer}
+          style={[styles.drawerContainer, { paddingBottom: Math.max(insets.bottom, 20) }]}
         >
           {errorMessage && step !== 'SUCCESS' ? (
             <View style={styles.errorBox}>
@@ -549,7 +551,6 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 36,
     paddingHorizontal: 20,
     paddingTop: 24,
-    paddingBottom: Platform.OS === 'ios' ? 40 : 20,
     height: '92%',
   },
   stepContainer: {

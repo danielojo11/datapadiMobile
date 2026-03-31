@@ -38,6 +38,8 @@ interface Profile {
     bankName?: string;
   };
   walletBalance?: number;
+  referralCode?: string;
+  referralCount?: number;
 }
 
 export default function ProfileScreen() {
@@ -108,9 +110,19 @@ export default function ProfileScreen() {
         setIsBiometricEnabled(true);
         await AsyncStorage.setItem("biometric_enabled", "true");
 
-        const credString = await AsyncStorage.getItem("credentials");
-        if (credString) {
+        if (authState.userCredentials) {
+          const credString = JSON.stringify(authState.userCredentials);
           await SecureStore.setItemAsync("biometric_credentials", credString);
+        } else {
+          // If no credentials in memory, we can't save them. 
+          // This happens if the session was rehydrated without a fresh login.
+          Alert.alert(
+            "Authentication Required",
+            "To enable biometric login, please log out and log back in once with your password."
+          );
+          setIsBiometricEnabled(false);
+          await AsyncStorage.removeItem("biometric_enabled");
+          return;
         }
         Alert.alert("Success", "Biometric login enabled successfully!");
       } else {
@@ -135,6 +147,24 @@ export default function ProfileScreen() {
       await Clipboard.setStringAsync(acc);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
+
+  const handleCopyLink = async () => {
+    const link = `https://muftipay.com/auth/register?code=${profileData?.referralCode}`;
+    await Clipboard.setStringAsync(link);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
+
+  const handleCopyCode = async () => {
+    if (profileData?.referralCode) {
+      await Clipboard.setStringAsync(profileData.referralCode);
+      setCopiedCode(true);
+      setTimeout(() => setCopiedCode(false), 2000);
     }
   };
 
@@ -335,7 +365,61 @@ export default function ProfileScreen() {
               </View>
             )}
           </View>
+          {/* 3. Referral Program Section */}
+          <View style={styles.referralCard}>
+            <View style={styles.referralHeader}>
+              <View style={styles.referralHeaderLeft}>
+                <View style={styles.referralIconBox}>
+                  <Ionicons name="people-outline" size={20} color="#6366F1" />
+                </View>
+                <Text style={styles.referralHeaderText}>REFERRAL PROGRAM</Text>
+              </View>
+              <View style={styles.rewardsBadge}>
+                <Text style={styles.rewardsBadgeText}>EARN REWARDS</Text>
+              </View>
+            </View>
 
+            <View style={styles.referralStatsRow}>
+              <View style={styles.referralStatBox}>
+                <Text style={styles.referralStatLabel}>YOUR CODE</Text>
+                <View style={styles.codeRow}>
+                  <Text style={styles.referralCodeText}>{profileData.referralCode || "------"}</Text>
+                  <TouchableOpacity onPress={handleCopyCode} style={styles.statCopyBtn}>
+                    <Ionicons
+                      name={copiedCode ? "checkmark" : "copy-outline"}
+                      size={18}
+                      color={copiedCode ? "#10B981" : "#6366F1"}
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View style={styles.referralStatBox}>
+                <Text style={styles.referralStatLabel}>TOTAL REFERRALS</Text>
+                <Text style={styles.referralStatValue}>{profileData.referralCount || 0}</Text>
+              </View>
+            </View>
+
+            <View style={styles.referralLinkSection}>
+              <Text style={styles.referralStatLabel}>REFERRAL LINK</Text>
+              <View style={styles.linkRow}>
+                <Text style={styles.referralLinkText} numberOfLines={1} ellipsizeMode="tail">
+                  https://muftipay.com/auth/register?code={profileData.referralCode || "---"}
+                </Text>
+                <TouchableOpacity onPress={handleCopyLink} style={styles.statCopyBtn}>
+                  <Ionicons
+                    name={copiedLink ? "checkmark" : "copy-outline"}
+                    size={18}
+                    color={copiedLink ? "#10B981" : "#6366F1"}
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <Text style={styles.referralFooterText}>
+              Share your link with friends and earn rewards when they join MuftiPay.
+            </Text>
+          </View>
           {/* 3. Settings & Links Menu */}
           <Text style={styles.sectionTitle}>SETTINGS</Text>
           <View style={styles.settingsGroup}>
@@ -725,5 +809,123 @@ const styles = StyleSheet.create({
     color: "#DC2626",
     fontWeight: "700",
     fontSize: 14,
+  },
+
+  // Referral Section Styles
+  referralCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
+    padding: 20,
+    marginBottom: 32,
+    borderWidth: 1,
+    borderColor: "#F3F4F6",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  referralHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 24,
+  },
+  referralHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  referralIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#EEF2FF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  referralHeaderText: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#4F46E5",
+    letterSpacing: 0.5,
+  },
+  rewardsBadge: {
+    backgroundColor: "#EEF2FF",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  rewardsBadgeText: {
+    color: "#4F46E5",
+    fontSize: 10,
+    fontWeight: "800",
+  },
+  referralStatsRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 16,
+  },
+  referralStatBox: {
+    flex: 1,
+    backgroundColor: "#F9FAFB",
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#F3F4F6",
+  },
+  referralStatLabel: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#6B7280",
+    marginBottom: 8,
+    letterSpacing: 0.5,
+  },
+  codeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  referralCodeText: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#111827",
+  },
+  referralStatValue: {
+    fontSize: 24,
+    fontWeight: "800",
+    color: "#111827",
+    textAlign: "center",
+    marginTop: -4,
+  },
+  statCopyBtn: {
+    padding: 4,
+  },
+  referralLinkSection: {
+    backgroundColor: "#F9FAFB",
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#F3F4F6",
+    marginBottom: 16,
+  },
+  linkRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+  },
+  referralLinkText: {
+    flex: 1,
+    fontSize: 12,
+    color: "#4B5563",
+    fontWeight: "500",
+  },
+  referralFooterText: {
+    fontSize: 12,
+    color: "#9CA3AF",
+    textAlign: "center",
+    lineHeight: 18,
+    paddingHorizontal: 20,
   },
 });

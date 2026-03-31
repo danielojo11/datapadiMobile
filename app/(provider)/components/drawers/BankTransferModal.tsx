@@ -7,6 +7,7 @@ import {
     Modal,
     ScrollView,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 
@@ -29,6 +30,7 @@ const BankTransferModal = ({
     accountName,
     reference,
 }: BankTransferModalProps) => {
+    const insets = useSafeAreaInsets();
     const [copied, setCopied] = useState(false);
 
     const handleCopyAccount = async () => {
@@ -48,7 +50,7 @@ const BankTransferModal = ({
     return (
         <Modal animationType="slide" transparent visible={visible} onRequestClose={onClose}>
             <View style={styles.overlay}>
-                <View style={styles.container}>
+                <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 20) }]}>
                     <View style={styles.handle} />
 
                     <View style={styles.header}>
@@ -152,7 +154,6 @@ const styles = StyleSheet.create({
         borderTopRightRadius: 28,
         paddingHorizontal: 20,
         paddingTop: 12,
-        paddingBottom: 40,
         maxHeight: "90%",
     },
     handle: {

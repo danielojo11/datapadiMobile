@@ -7,6 +7,7 @@ import {
     Modal,
     ScrollView,
 } from 'react-native';
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as Print from 'expo-print';
 import * as Clipboard from 'expo-clipboard';
@@ -20,6 +21,7 @@ interface PinBatchModalProps {
 }
 
 const PinBatchModal: React.FC<PinBatchModalProps> = ({ visible, onClose, batch }) => {
+    const insets = useSafeAreaInsets();
     const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
     if (!batch) return null;
@@ -313,7 +315,7 @@ const PinBatchModal: React.FC<PinBatchModalProps> = ({ visible, onClose, batch }
                     </ScrollView>
 
                     {/* Sticky Bottom Area */}
-                    <View style={styles.footer}>
+                    <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 20) }]}>
                         <TouchableOpacity style={styles.printButton} onPress={handlePrint}>
                             <Text style={styles.printButtonText}>
                                 <Ionicons name="print-outline" size={24} style={{ verticalAlign: "middle" }} />{" "}
@@ -594,7 +596,6 @@ const styles = StyleSheet.create({
     footer: {
         backgroundColor: "#FFFFFF",
         padding: 20,
-        paddingBottom: 30, // Safe area
         borderTopWidth: 1,
         borderColor: "#F3F4F6",
     },

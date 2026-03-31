@@ -13,7 +13,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { registerUser } from "./utils/auth/register";
+import { registerUser, validateReferralCode } from "./utils/auth/register";
 import { loginUser } from "./utils/auth/login";
 
 const CreateAccountScreen = () => {
@@ -25,6 +25,10 @@ const CreateAccountScreen = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [transactionPin, setTransactionPin] = useState("");
+  const [referralCode, setReferralCode] = useState("");
+  const [referrerName, setReferrerName] = useState("");
+  const [isValidatingReferral, setIsValidatingReferral] = useState(false);
+  const [referralError, setReferralError] = useState("");
 
   // Password visibility toggles
   const [showPassword, setShowPassword] = useState(false);
@@ -32,6 +36,24 @@ const CreateAccountScreen = () => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const handleValidateReferral = async (code: string) => {
+    setIsValidatingReferral(true);
+    setReferralError("");
+    setReferrerName("");
+    try {
+      const result = await validateReferralCode(code);
+      if (result.success) {
+        setReferrerName(result.data?.referrerName || "a friend");
+      } else {
+        setReferralError(result.error);
+      }
+    } catch (err) {
+      setReferralError("Could not validate code");
+    } finally {
+      setIsValidatingReferral(false);
+    }
+  };
 
   const initialLoginUser = async () => {
     try {
@@ -76,6 +98,7 @@ const CreateAccountScreen = () => {
         phoneNumber: phone.toString(),
         password: password.toString(),
         transactionPin: transactionPin.toString(),
+        referralCode: referralCode.toString(),
       });
 
       setIsLoading(false);
@@ -174,6 +197,46 @@ const CreateAccountScreen = () => {
                     onChangeText={setPhone}
                   />
                 </View>
+              </View>
+
+              {/* Referral Code (Optional) */}
+              <View style={styles.inputGroup}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                  <Text style={styles.label}>Referral Code (Optional)</Text>
+                  {isValidatingReferral && <ActivityIndicator size="small" color="#2563EB" />}
+                </View>
+                <View style={[styles.inputContainer, referralError ? { borderColor: '#EF4444' } : referrerName ? { borderColor: '#10B981' } : {}]}>
+                  <Text style={styles.leftIcon}>
+                    <Ionicons size={18} name="people-outline" />
+                  </Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="ABCDEF"
+                    placeholderTextColor="#9CA3AF"
+                    value={referralCode}
+                    onChangeText={(text) => {
+                      const formatted = text.toUpperCase().trim();
+                      setReferralCode(formatted);
+                      if (formatted.length === 6) {
+                        handleValidateReferral(formatted);
+                      } else {
+                        setReferrerName("");
+                        setReferralError("");
+                      }
+                    }}
+                    autoCapitalize="characters"
+                    maxLength={6}
+                  />
+                </View>
+                {referrerName ? (
+                  <Text style={{ marginTop: 4, fontSize: 12, color: "#10B981", fontWeight: '600' }}>
+                    <Ionicons name="checkmark-circle" size={12} /> Referred by {referrerName}
+                  </Text>
+                ) : referralError ? (
+                  <Text style={{ marginTop: 4, fontSize: 12, color: "#EF4444", fontWeight: '600' }}>
+                    <Ionicons name="alert-circle" size={12} /> {referralError}
+                  </Text>
+                ) : null}
               </View>
 
               {/* Password Input */}

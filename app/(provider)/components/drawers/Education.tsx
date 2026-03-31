@@ -12,6 +12,7 @@ import {
     Platform,
     DeviceEventEmitter,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { verifyJambProfile, buyEducationPin, getEducationPackages } from "../../../utils/vtu";
 import TransactionPinInput from '../TransactionPinInput';
@@ -35,6 +36,7 @@ const EDUCATION_PRODUCTS: Record<Provider, { name: string, price: number, examTy
 const CURRENCY = "₦";
 
 const BuyEducationModal: React.FC<BuyEducationModalProps> = ({ isOpen, onClose }) => {
+    const insets = useSafeAreaInsets();
     const [step, setStep] = useState<Step>('PROVIDER');
     const [provider, setProvider] = useState<Provider | null>(null);
 
@@ -264,7 +266,7 @@ const BuyEducationModal: React.FC<BuyEducationModalProps> = ({ isOpen, onClose }
             <View style={styles.overlay}>
                 <KeyboardAvoidingView
                     behavior={Platform.OS === "ios" ? "padding" : undefined}
-                    style={styles.drawerContainer}
+                    style={[styles.drawerContainer, { paddingBottom: Math.max(insets.bottom, 20) }]}
                 >
                     <View style={styles.handle} />
                     {renderHeader()}
@@ -538,7 +540,6 @@ const styles = StyleSheet.create({
         borderTopRightRadius: 24,
         paddingHorizontal: 20,
         paddingTop: 12,
-        paddingBottom: Platform.OS === 'ios' ? 40 : 20,
         height: '85%',
     },
     handle: {

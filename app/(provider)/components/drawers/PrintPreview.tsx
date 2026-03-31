@@ -1,15 +1,11 @@
 import generatePDF from "@/app/utils/generatepdf";
+import { ScrollView, StyleSheet } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
-import {
-  StyleSheet,
-  View,
-  Text,
-  TouchableOpacity,
-  Modal,
-  ScrollView,
-  SafeAreaView,
-} from "react-native";
+import { Modal } from "react-native";
+import { View } from "react-native";
+import { Text } from "react-native";
+import { TouchableOpacity } from "react-native";
 
 type PrintBatch = any;
 
@@ -20,6 +16,7 @@ interface PrintPreviewModalProps {
 }
 
 const PrintPreview: React.FC<PrintPreviewModalProps> = ({ visible, onClose, batches }) => {
+  const insets = useSafeAreaInsets();
   if (!batches || batches.length === 0) return null;
 
   const allPins = (batches || []).flatMap(batch =>
@@ -158,7 +155,7 @@ const PrintPreview: React.FC<PrintPreviewModalProps> = ({ visible, onClose, batc
           </ScrollView>
 
           {/* Sticky Bottom Button */}
-          <View style={styles.footer}>
+          <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 20) }]}>
             <TouchableOpacity
               style={[
                 styles.printButton,
@@ -393,7 +390,6 @@ const styles = StyleSheet.create({
   },
   footer: {
     padding: 20,
-    paddingBottom: 30, // Extra padding for safe area at the bottom of devices
     borderTopWidth: 1,
     borderColor: "#F3F4F6",
     backgroundColor: "#FFFFFF",

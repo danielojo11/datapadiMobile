@@ -3,9 +3,11 @@ import { AuthProvider } from "./context/AppContext";
 import { SocketProvider } from "./context/SocketContext";
 import { StatusBar } from "expo-status-bar";
 import * as Notifications from "expo-notifications";
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import * as Updates from "expo-updates";
 import { registerForPushNotificationsAsync } from "./utils/notifications";
+import { AuthContext } from "./context/AppContext";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import NetworkBanner from "./components/NetworkBanner";
 
 Notifications.setNotificationHandler({
@@ -18,36 +20,43 @@ Notifications.setNotificationHandler({
   }),
 });
 
+import { handleForegroundNotification, handleNotificationResponse } from "./utils/notificationHandler";
+
 export default function RootLayout() {
   const [expoPushToken, setExpoPushToken] = useState("");
-  const [notification, setNotification] = useState<Notifications.Notification | undefined>(
-    undefined
-  );
-  const notificationListener = useRef<any>(null);
-  const responseListener = useRef<any>(null);
+
+  const { isAuthenticated } = useContext(AuthContext);
 
   useEffect(() => {
-    registerForPushNotificationsAsync()
-      .then((token) => setExpoPushToken(token ?? ""))
-      .catch((error) => console.log("Push token error:", error));
+    async function register() {
+      if (isAuthenticated) {
+        try {
+          const authToken = await AsyncStorage.getItem("accessToken");
+          if (authToken) {
+            const token = await registerForPushNotificationsAsync(authToken);
+            setExpoPushToken(token ?? "");
+          }
+        } catch (error) {
+          console.log("Push token error:", error);
+        }
+      }
+    }
 
-    notificationListener.current = Notifications.addNotificationReceivedListener((notification) => {
-      setNotification(notification);
+    register();
+
+    const notificationListener = Notifications.addNotificationReceivedListener((notification) => {
+      handleForegroundNotification(notification);
     });
 
-    responseListener.current = Notifications.addNotificationResponseReceivedListener((response) => {
-      console.log("Notification response:", response);
+    const responseListener = Notifications.addNotificationResponseReceivedListener((response) => {
+      handleNotificationResponse(response);
     });
 
     return () => {
-      if (notificationListener.current) {
-        notificationListener.current.remove();
-      }
-      if (responseListener.current) {
-        responseListener.current.remove();
-      }
+      notificationListener.remove();
+      responseListener.remove();
     };
-  }, []);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     async function onFetchUpdateAsync() {

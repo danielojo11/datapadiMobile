@@ -1,3 +1,4 @@
+import * as Notifications from "expo-notifications";
 import {
   FlatList,
   ScrollView,
@@ -221,6 +222,24 @@ export default function Index() {
           <Text style={{ fontSize: 18, fontWeight: "bold" }}>
             Recent Activity
           </Text>
+
+          {__DEV__ && (
+            <TouchableOpacity
+              onPress={async () => {
+                await Notifications.scheduleNotificationAsync({
+                  content: {
+                    title: "Wallet Credited",
+                    body: "Your wallet has been credited with ₦1,000",
+                    data: { type: "credit" },
+                  },
+                  trigger: null,
+                });
+              }}
+              style={{ padding: 5, backgroundColor: '#eee', borderRadius: 5 }}
+            >
+              <Text style={{ fontSize: 10, color: '#666' }}>Test Notification</Text>
+            </TouchableOpacity>
+          )}
 
           <TouchableOpacity onPress={() => router.push("/history")}>
             <Text style={{ color: "#2563EB", fontWeight: "bold" }}>

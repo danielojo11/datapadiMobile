@@ -102,6 +102,8 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
   const logout = async () => {
     try {
       await AsyncStorage.removeItem("login_obj");
+      await AsyncStorage.removeItem("accessToken");
+      await AsyncStorage.removeItem("refreshToken");
       await AsyncStorage.removeItem("credentials");
       await storeAuthState(false);
       setIsAuthenticated(false);
@@ -113,25 +115,27 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
   };
 
   /**
-   * Rehydrate auth state on app start
+   * Clear auth on launch (Logged out when app closes/restarts)
    */
   useEffect(() => {
-    const getAuthFromStorage = async () => {
+    const clearAuthOnLaunch = async () => {
       try {
-        const value = await AsyncStorage.getItem("isAuthenticated");
+        // Remove stored auth state and tokens
+        await AsyncStorage.removeItem("isAuthenticated");
+        await AsyncStorage.removeItem("login_obj");
+        await AsyncStorage.removeItem("accessToken");
+        await AsyncStorage.removeItem("refreshToken");
 
-        if (value !== null) {
-          const parsed = JSON.parse(value);
-          setIsAuthenticated(parsed);
-        }
+        // Ensure state is unauthenticated
+        setIsAuthenticated(false);
       } catch (error) {
-        console.log("Error loading auth state:", error);
+        console.log("Error clearing auth state on launch:", error);
       } finally {
         setIsReady(true);
       }
     };
 
-    getAuthFromStorage();
+    clearAuthOnLaunch();
   }, []);
 
   /**

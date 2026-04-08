@@ -48,10 +48,19 @@ export function handleNotificationResponse(response: Notifications.NotificationR
             router.push("/(provider)/(tabs)/profile");
             break;
 
+        case "general":
+        case "announcement":
+        case "broadcast":
+            // Navigate to home screen for general admin notifications
+            router.push("/(provider)/(tabs)");
+            break;
+
         default:
-            // Default to history if type is unknown but likely relevant to transactions
+            // Default to home or history if type is unknown
             if (data.transactionId) {
                 router.push("/(provider)/(tabs)/history");
+            } else {
+                router.push("/(provider)/(tabs)");
             }
             break;
     }

@@ -23,6 +23,10 @@
       "package": "com.daniel_ojo.datapadi",
       "versionCode": 1
     },
+    "notification": {
+      "icon": "./assets/images/mufti-icon.png",
+      "color": "#E6F4FE"
+    },
     "web": {
       "output": "static",
       "favicon": "./assets/images/mufti-icon.png"

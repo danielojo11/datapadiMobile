@@ -419,10 +419,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 1,
-    marginBottom: 20,
+    marginBottom: 120,
   },
   scrollContent: {
-    paddingVertical: 8,
+    paddingTop: 8,
+    paddingBottom: 24,
   },
   transactionCard: {
     flexDirection: 'row',

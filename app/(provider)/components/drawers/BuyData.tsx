@@ -402,20 +402,20 @@ const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
                     <Ionicons name="checkmark-circle-outline" size={24} color="#10B981" style={{ marginRight: 12 }} />
                   )}
                 </View>
-              </ScrollView>
 
-              <View style={styles.bottomAnchoredDetails}>
-                <TouchableOpacity
-                  style={[
-                    styles.primaryBtn,
-                    phoneNumber.length < 10 && styles.disabledBtn
-                  ]}
-                  disabled={phoneNumber.length < 10}
-                  onPress={() => setStep('CONFIRM')}
-                >
-                  <Text style={styles.btnText}>Proceed</Text>
-                </TouchableOpacity>
-              </View>
+                <View style={styles.bottomAnchoredDetails}>
+                  <TouchableOpacity
+                    style={[
+                      styles.primaryBtn,
+                      phoneNumber.length < 10 && styles.disabledBtn
+                    ]}
+                    disabled={phoneNumber.length < 10}
+                    onPress={() => setStep('CONFIRM')}
+                  >
+                    <Text style={styles.btnText}>Proceed</Text>
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
             </View>
           )}
 
@@ -456,13 +456,13 @@ const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
                     <Text style={styles.deliveryText}>Data will be activated instantly</Text>
                   </View>
                 </View>
-              </ScrollView>
 
-              <View style={styles.bottomAnchored}>
-                <TouchableOpacity style={styles.primaryBtn} onPress={() => setStep('PIN')}>
-                  <Text style={styles.btnText}>Proceed to Payment</Text>
-                </TouchableOpacity>
-              </View>
+                <View style={styles.bottomAnchored}>
+                  <TouchableOpacity style={styles.primaryBtn} onPress={() => setStep('PIN')}>
+                    <Text style={styles.btnText}>Proceed to Payment</Text>
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
             </View>
           )}
 
@@ -504,13 +504,13 @@ const BuyData: React.FC<BuyDataProps> = ({ visible, onClose }) => {
                     <Text style={{ marginLeft: 8, color: '#111827', fontWeight: '600' }}>Processing Payment...</Text>
                   </View>
                 )}
-              </ScrollView>
 
-              <View style={styles.bottomAnchored}>
-                <TouchableOpacity style={styles.confirmPinBtn} disabled={true}>
-                  <Text style={styles.confirmPinBtnText}>Confirm Payment</Text>
-                </TouchableOpacity>
-              </View>
+                <View style={[styles.bottomAnchored, { width: '100%', alignItems: 'center' }]}>
+                  <TouchableOpacity style={[styles.confirmPinBtn, { width: '100%' }]} disabled={true}>
+                    <Text style={styles.confirmPinBtnText}>Confirm Payment</Text>
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
             </View>
           )}
 

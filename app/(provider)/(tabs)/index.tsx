@@ -160,6 +160,7 @@ export default function Index() {
       <ScrollView
         style={{ backgroundColor: "#F3F4F6" }}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 120 }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -172,11 +173,16 @@ export default function Index() {
           onFundWallet={() => router.push("/profile")}
         />
 
+        <View style={{ paddingHorizontal: 16, marginTop: 16, marginBottom: 8 }}>
+          <Text style={{ fontSize: 16, fontWeight: "bold", color: "#111827" }}>Quick Actions</Text>
+        </View>
+
         <View
           style={{
             flexDirection: "row",
             flexWrap: "wrap",
-            justifyContent: "center",
+            justifyContent: "flex-start",
+            paddingHorizontal: 10,
           }}
         >
           <QuickActionButton

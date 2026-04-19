@@ -91,41 +91,46 @@ export default function ProfileScreen() {
 
   const handleBiometricToggle = async (value: boolean) => {
     if (value) {
-      const hasHardware = await LocalAuthentication.hasHardwareAsync();
-      const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+      try {
+        const hasHardware = await LocalAuthentication.hasHardwareAsync();
+        const isEnrolled = await LocalAuthentication.isEnrolledAsync();
 
-      if (!hasHardware || !isEnrolled) {
-        Alert.alert("Error", "Biometrics not supported or not set up on this device.");
-        setIsBiometricEnabled(false);
-        return;
-      }
-
-      const auth = await LocalAuthentication.authenticateAsync({
-        promptMessage: "Authenticate to enable Biometric Login",
-        cancelLabel: "Cancel",
-        disableDeviceFallback: true,
-      });
-
-      if (auth.success) {
-        setIsBiometricEnabled(true);
-        await AsyncStorage.setItem("biometric_enabled", "true");
-
-        if (authState.userCredentials) {
-          const credString = JSON.stringify(authState.userCredentials);
-          await SecureStore.setItemAsync("biometric_credentials", credString);
-        } else {
-          // If no credentials in memory, we can't save them. 
-          // This happens if the session was rehydrated without a fresh login.
-          Alert.alert(
-            "Authentication Required",
-            "To enable biometric login, please log out and log back in once with your password."
-          );
+        if (!hasHardware || !isEnrolled) {
+          Alert.alert("Error", "Biometrics not supported or not set up on this device.");
           setIsBiometricEnabled(false);
-          await AsyncStorage.removeItem("biometric_enabled");
           return;
         }
-        Alert.alert("Success", "Biometric login enabled successfully!");
-      } else {
+
+        const auth = await LocalAuthentication.authenticateAsync({
+          promptMessage: "Authenticate to enable Biometric Login",
+          cancelLabel: "Cancel",
+          fallbackLabel: "Use Passcode",
+        });
+
+        if (auth.success) {
+          setIsBiometricEnabled(true);
+          await AsyncStorage.setItem("biometric_enabled", "true");
+
+          if (authState.userCredentials) {
+            const credString = JSON.stringify(authState.userCredentials);
+            await SecureStore.setItemAsync("biometric_credentials", credString);
+            Alert.alert("Success", "Biometric login enabled successfully!");
+          } else {
+            // If no credentials in memory, we can't save them. 
+            // This happens if the session was rehydrated without a fresh login.
+            Alert.alert(
+              "Authentication Required",
+              "To enable biometric login, please log out and log back in once with your password."
+            );
+            setIsBiometricEnabled(false);
+            await AsyncStorage.removeItem("biometric_enabled");
+          }
+        } else {
+          setIsBiometricEnabled(false);
+        }
+      } catch (error) {
+        console.log("Biometric toggle error:", error);
+        Alert.alert("Error", "Biometric authentication failed. Please try again.");
         setIsBiometricEnabled(false);
       }
     } else {

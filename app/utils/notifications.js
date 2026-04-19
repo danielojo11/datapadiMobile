@@ -49,20 +49,15 @@ export async function registerForPushNotificationsAsync(authToken) {
     // Send token to your backend
     if (authToken) {
         try {
-            await fetch('https://api.muftipay.com/api/user/push-token', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${authToken}`,
-                },
-                body: JSON.stringify({ token }),
-            });
-            console.log('Push token successfully sent to backend');
+            // Import the global API client which includes v1 mapping and Bearer headers automatically
+            const api = require('./api').default;
+            const res = await api.post('user/push-token', { token });
+            console.log('Push token successfully sent to backend!', res.data);
         } catch (error) {
-            console.error('Failed to save push token to backend:', error);
+            console.error('Failed to save push token to backend:', error?.response?.data || error?.message || error);
         }
     } else {
-        console.log('No auth token provided, skipping backend token registration');
+        console.log('No auth token provided during register, skipping backend token registration');
     }
 
     // Android needs a notification channel

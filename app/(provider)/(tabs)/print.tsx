@@ -154,7 +154,7 @@ const NewPrint = () => {
 
   }
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView contentContainerStyle={[styles.container, { paddingBottom: 150 }]}>
       <Text style={styles.title}>Recharge Printing</Text>
       {error && (
         <View style={styles.errorBox}>
@@ -508,7 +508,7 @@ const PinInven = ({
             data={filteredBatches}
             keyExtractor={(item) => item.id}
             renderItem={renderBatch}
-            contentContainerStyle={{ paddingBottom: 100 }}
+            contentContainerStyle={{ paddingBottom: 150 }}
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
             }

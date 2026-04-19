@@ -90,102 +90,119 @@ const Forgot: React.FC = () => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                <Ionicons name="arrow-back" size={24} color="#111827" />
-            </TouchableOpacity>
+            <View style={styles.headerContainer}>
 
-            <Text style={styles.title}>
-                {step === 1 && "Forgot Password"}
-                {step === 2 && "Verify OTP"}
-                {step === 3 && "Reset Password"}
-            </Text>
-            <Text style={styles.subtitle}>
-                {step === 1 && "Enter your email address to receive an OTP."}
-                {step === 2 && `Enter the OTP sent to ${email}.`}
-                {step === 3 && "Enter your new password."}
-            </Text>
+                <Text style={styles.title}>
+                    {step === 1 && "Forgot Password"}
+                    {step === 2 && "Verify OTP"}
+                    {step === 3 && "Reset Password"}
+                </Text>
+                <Text style={styles.subtitle}>
+                    {step === 1 && "Enter your email address to receive an OTP."}
+                    {step === 2 && `Enter the OTP sent to ${email}.`}
+                    {step === 3 && "Enter your new password."}
+                </Text>
+            </View>
 
-            {error ? (
-                <View style={styles.errorBox}>
-                    <Ionicons name="alert-circle-outline" size={18} color="#E53935" />
-                    <Text style={styles.errorText}>{error}</Text>
-                </View>
-            ) : null}
+            <View style={styles.cardContainer}>
+                {error ? (
+                    <View style={styles.errorBox}>
+                        <Ionicons name="alert-circle-outline" size={18} color="#E53935" />
+                        <Text style={styles.errorText}>{error}</Text>
+                    </View>
+                ) : null}
 
-            <View style={{ marginTop: error ? 10 : 30 }}>
-                {step === 1 && (
-                    <AuthInput
-                        label="Email Address"
-                        placeholder="you@example.com"
-                        value={email}
-                        onChangeText={setEmail}
-                        icon="mail-outline"
-                        definedKeyboardType="email-address"
-                    />
-                )}
-
-                {step === 2 && (
-                    <AuthInput
-                        label="OTP"
-                        placeholder="Enter OTP"
-                        value={otp}
-                        onChangeText={setOtp}
-                        icon="key-outline"
-                        definedKeyboardType="numeric"
-                    />
-                )}
-
-                {step === 3 && (
-                    <>
-                        <AuthInput
-                            label="New Password"
-                            placeholder="••••••••"
-                            value={password}
-                            onChangeText={setPassword}
-                            icon="lock-closed-outline"
-                            secureTextEntry={secure}
-                            rightIcon={secure ? "eye-off-outline" : "eye-outline"}
-                            onRightIconPress={() => setSecure(!secure)}
-                        />
-
-                        <AuthInput
-                            label="Confirm Password"
-                            placeholder="••••••••"
-                            value={confirmPassword}
-                            onChangeText={setConfirmPassword}
-                            icon="lock-closed-outline"
-                            secureTextEntry={secure}
-                            rightIcon={secure ? "eye-off-outline" : "eye-outline"}
-                            onRightIconPress={() => setSecure(!secure)}
-                        />
-                    </>
-
-                )}
-
-                <TouchableOpacity
-                    style={styles.button}
-                    onPress={step === 1 ? handleGenerateOTP : step === 2 ? handleVerifyOTP : handleResetPassword}
-                    activeOpacity={0.85}
-                    disabled={loading}
-                >
-                    {loading ? (
-                        <ActivityIndicator color="#FFF" />
-                    ) : (
-                        <>
-                            <Text style={styles.text}>
-                                {step === 1 && "Verify Email"}
-                                {step === 2 && "Verify OTP"}
-                                {step === 3 && "Reset Password"}
-                            </Text>
-                            <Ionicons
-                                name="arrow-forward"
-                                size={18}
-                                color="#FFF"
-                                style={{ marginLeft: 6 }}
+                <View style={{ marginTop: error ? 10 : 0 }}>
+                    {step === 1 && (
+                        <View style={{ marginBottom: 12 }}>
+                            <AuthInput
+                                label="Email Address"
+                                placeholder="you@example.com"
+                                value={email}
+                                onChangeText={setEmail}
+                                icon="mail-outline"
+                                definedKeyboardType="email-address"
                             />
+                        </View>
+                    )}
+
+                    {step === 2 && (
+                        <View style={{ marginBottom: 12 }}>
+                            <AuthInput
+                                label="OTP"
+                                placeholder="Enter OTP"
+                                value={otp}
+                                onChangeText={setOtp}
+                                icon="key-outline"
+                                definedKeyboardType="numeric"
+                            />
+                        </View>
+                    )}
+
+                    {step === 3 && (
+                        <>
+                            <View style={{ marginBottom: 12 }}>
+                                <AuthInput
+                                    label="New Password"
+                                    placeholder="••••••••"
+                                    value={password}
+                                    onChangeText={setPassword}
+                                    icon="lock-closed-outline"
+                                    secureTextEntry={secure}
+                                    rightIcon={secure ? "eye-off-outline" : "eye-outline"}
+                                    onRightIconPress={() => setSecure(!secure)}
+                                />
+                            </View>
+                            <View style={{ marginBottom: 12 }}>
+                                <AuthInput
+                                    label="Confirm Password"
+                                    placeholder="••••••••"
+                                    value={confirmPassword}
+                                    onChangeText={setConfirmPassword}
+                                    icon="lock-closed-outline"
+                                    secureTextEntry={secure}
+                                    rightIcon={secure ? "eye-off-outline" : "eye-outline"}
+                                    onRightIconPress={() => setSecure(!secure)}
+                                />
+                            </View>
                         </>
                     )}
-                </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={styles.button}
+                        onPress={step === 1 ? handleGenerateOTP : step === 2 ? handleVerifyOTP : handleResetPassword}
+                        activeOpacity={0.85}
+                        disabled={loading}
+                    >
+                        {loading ? (
+                            <ActivityIndicator color="#FFF" />
+                        ) : (
+                            <>
+                                <Text style={styles.text}>
+                                    {step === 1 && "Send OTP"}
+                                    {step === 2 && "Verify OTP"}
+                                    {step === 3 && "Reset Password"}
+                                </Text>
+                                <Ionicons
+                                    name="arrow-forward"
+                                    size={20}
+                                    color="#FFF"
+                                    style={{ marginLeft: 8 }}
+                                />
+                            </>
+                        )}
+                    </TouchableOpacity>
+                </View>
+
+                <View style={styles.footer}>
+                    <TouchableOpacity
+                        onPress={() => { step === 1 ? router.replace("/login") : setStep((prev) => (prev - 1) as any) }}
+                        style={{ flexDirection: "row", alignItems: "center" }}
+                    >
+                        <Ionicons name="arrow-back" size={16} color="#64748b" style={{ marginRight: 4 }} />
+                        <Text style={styles.footerText}>{step === 1 ? "BACK TO SIGN IN" : "BACK"}</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
         </SafeAreaView>
     );
@@ -194,27 +211,57 @@ const Forgot: React.FC = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#FFFFFF",
-        paddingHorizontal: 24,
-        marginTop: 48
-    },
-    backButton: {
-        marginBottom: 20,
-        width: 40,
-        height: 40,
+        backgroundColor: "#F8FAFC",
         justifyContent: "center",
     },
-    title: {
+    headerContainer: {
+        alignItems: "center",
+        marginBottom: 40,
+        paddingHorizontal: 24,
+    },
+    brandContainer: {
+        marginBottom: 24,
+    },
+    brandText: {
         fontSize: 24,
-        fontWeight: "800",
-        color: "#111827",
+        fontWeight: "bold",
+        color: "#1e293b",
+    },
+    title: {
+        fontSize: 32,
+        fontWeight: "900",
+        color: "#0f172a",
+        letterSpacing: -0.5,
+        marginBottom: 8,
+        textAlign: "center",
+    },
+    subtitle: {
+        fontSize: 12,
+        fontWeight: "700",
+        color: "#64748b",
+        textTransform: "uppercase",
+        letterSpacing: 1.5,
+        textAlign: "center",
+    },
+    cardContainer: {
+        backgroundColor: "#FFFFFF",
+        marginHorizontal: 16,
+        borderRadius: 40,
+        padding: 30,
+        shadowColor: "#e2e8f0",
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 1,
+        shadowRadius: 20,
+        elevation: 10,
+        borderWidth: 1,
+        borderColor: "#f1f5f9",
     },
     errorBox: {
         flexDirection: "row",
         backgroundColor: "#FEF2F2",
         padding: 14,
-        borderRadius: 12,
-        marginTop: 20,
+        borderRadius: 16,
+        marginBottom: 20,
         alignItems: "center",
         borderWidth: 1,
         borderColor: "#FEE2E2",
@@ -222,32 +269,44 @@ const styles = StyleSheet.create({
     errorText: {
         color: "#DC2626",
         fontSize: 13,
-        fontWeight: "600",
+        fontWeight: "700",
         flex: 1,
         marginLeft: 10,
     },
-    subtitle: {
-        fontSize: 14,
-        color: "#6B7280",
-        marginTop: 6,
-    },
     button: {
-        height: 54,
-        backgroundColor: "#1D4ED8",
-        borderRadius: 14,
+        height: 56,
+        backgroundColor: "#2563eb",
+        borderRadius: 24,
         justifyContent: "center",
         alignItems: "center",
         flexDirection: "row",
-        marginTop: 10,
-        shadowColor: "#1D4ED8",
-        shadowOpacity: 0.3,
+        shadowColor: "#2563eb",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
         shadowRadius: 10,
-        elevation: 5,
+        elevation: 4,
+        marginTop: 8,
     },
     text: {
         color: "#FFF",
         fontWeight: "700",
-        fontSize: 15,
+        fontSize: 18,
+    },
+    footer: {
+        flexDirection: "row",
+        justifyContent: "center",
+        alignItems: "center",
+        marginTop: 32,
+        paddingTop: 24,
+        borderTopWidth: 1,
+        borderTopColor: "#f8fafc",
+    },
+    footerText: {
+        fontSize: 12,
+        color: "#64748b",
+        fontWeight: "800",
+        textTransform: "uppercase",
+        letterSpacing: 1,
     },
 });
 

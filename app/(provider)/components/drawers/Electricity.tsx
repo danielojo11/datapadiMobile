@@ -486,25 +486,29 @@ const BuyElectricityModal: React.FC<BuyElectricityModalProps> = ({ isOpen, onClo
                 <Text style={styles.successTitle}>Purchase Successful</Text>
                 <Text style={styles.successDesc}>Your electricity payment has been processed.</Text>
 
-                {generatedToken ? (
-                  <View style={styles.tokenBox}>
-                    <Text style={styles.tokenLabel}>DETAILS</Text>
+                <View style={styles.tokenBox}>
+                  <Text style={styles.tokenLabel}>DETAILS</Text>
+                  {generatedToken ? (
                     <View style={styles.receiptRow}>
                       <Text style={styles.receiptLabel}>Token</Text>
                       <Text style={styles.receiptValueMax}>{formatToken(generatedToken)}</Text>
                     </View>
-                    {purchasedUnits ? (
-                      <View style={styles.receiptRow}>
-                        <Text style={styles.receiptLabel}>Units</Text>
-                        <Text style={styles.receiptValueMax}>{purchasedUnits}</Text>
-                      </View>
-                    ) : null}
+                  ) : null}
+                  {purchasedUnits ? (
                     <View style={styles.receiptRow}>
-                      <Text style={styles.receiptLabel}>Meter No</Text>
-                      <Text style={styles.receiptValueMax}>{meterNumber}</Text>
+                      <Text style={styles.receiptLabel}>Units</Text>
+                      <Text style={styles.receiptValueMax}>{purchasedUnits}</Text>
                     </View>
+                  ) : null}
+                  <View style={styles.receiptRow}>
+                    <Text style={styles.receiptLabel}>Meter No</Text>
+                    <Text style={styles.receiptValueMax}>{meterNumber}</Text>
                   </View>
-                ) : null}
+                  <View style={styles.receiptRow}>
+                    <Text style={styles.receiptLabel}>Name</Text>
+                    <Text style={[styles.receiptValueMax, { textAlign: 'right', flex: 1, marginLeft: 16 }]} numberOfLines={2}>{customerName}</Text>
+                  </View>
+                </View>
 
                 <View style={[styles.bottomAnchored, { width: '100%' }]}>
                   <TouchableOpacity style={styles.secondaryBtn} onPress={handleClose}>

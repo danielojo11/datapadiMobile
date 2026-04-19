@@ -12,15 +12,7 @@ import { AuthContext } from "./context/AppContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import NetworkBanner from "./components/NetworkBanner";
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: false,
-  }),
-});
+// Notification handler is configured in app/utils/notifications.js
 
 import { handleForegroundNotification, handleNotificationResponse } from "./utils/notificationHandler";
 
@@ -33,10 +25,21 @@ export default function RootLayout() {
     async function register() {
       if (isAuthenticated) {
         try {
-          const authToken = await AsyncStorage.getItem("accessToken");
+          let authToken = await AsyncStorage.getItem("accessToken");
+
+          if (!authToken) {
+            const loginObjStr = await AsyncStorage.getItem("login_obj");
+            if (loginObjStr) {
+              const parsed = JSON.parse(loginObjStr);
+              authToken = parsed.data?.accessToken || parsed.accessToken;
+            }
+          }
+
           if (authToken) {
             const token = await registerForPushNotificationsAsync(authToken);
             setExpoPushToken(token ?? "");
+          } else {
+            console.log("No auth token resolved, skipping push registration in layout.");
           }
         } catch (error) {
           console.log("Push token error:", error);
@@ -45,7 +48,9 @@ export default function RootLayout() {
     }
 
     register();
+  }, [isAuthenticated]);
 
+  useEffect(() => {
     const notificationListener = Notifications.addNotificationReceivedListener((notification) => {
       handleForegroundNotification(notification);
     });
@@ -58,7 +63,7 @@ export default function RootLayout() {
       notificationListener.remove();
       responseListener.remove();
     };
-  }, [isAuthenticated]);
+  }, []);
 
   useEffect(() => {
     async function onFetchUpdateAsync() {

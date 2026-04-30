@@ -12,6 +12,7 @@ import {
   Platform,
   DeviceEventEmitter,
   RefreshControl,
+  Switch,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -21,6 +22,7 @@ import {
   payElectricity,
   DiscoProvider,
 } from "../../../utils/electricity";
+import { getBeneficiaries, Beneficiary } from "@/app/utils/beneficiary";
 import TransactionPinInput from '../TransactionPinInput';
 
 type Step = 'PROVIDER' | 'DETAILS' | 'CONFIRM' | 'PIN' | 'SUCCESS';
@@ -52,12 +54,20 @@ const BuyElectricityModal: React.FC<BuyElectricityModalProps> = ({ isOpen, onClo
   const [refreshing, setRefreshing] = useState(false);
   const [transactionPin, setTransactionPin] = useState('');
   const [pinError, setPinError] = useState(false);
+  const [saveBeneficiary, setSaveBeneficiary] = useState(false);
+  const [beneficiaryName, setBeneficiaryName] = useState('');
+  const [beneficiaries, setBeneficiaries] = useState<Beneficiary[]>([]);
 
   const selectedProvider = discos.find(p => p.id === providerId);
 
   useEffect(() => {
     if (isOpen && discos.length === 0) {
       fetchDiscos();
+    }
+    if (isOpen) {
+      getBeneficiaries('ELECTRICITY').then(res => {
+        if (res.success) setBeneficiaries(res.data);
+      });
     }
   }, [isOpen]);
 
@@ -99,6 +109,8 @@ const BuyElectricityModal: React.FC<BuyElectricityModalProps> = ({ isOpen, onClo
     setErrorMessage('');
     setTransactionPin('');
     setPinError(false);
+    setSaveBeneficiary(false);
+    setBeneficiaryName('');
   };
 
   const handleClose = () => {
@@ -174,7 +186,9 @@ const BuyElectricityModal: React.FC<BuyElectricityModalProps> = ({ isOpen, onClo
         meterNo: meterNumber,
         meterType: meterType === 'PREPAID' ? '01' : '02',
         amount: purchaseAmount,
-        transactionPin: pinToUse
+        transactionPin: pinToUse,
+        saveBeneficiary,
+        beneficiaryName
       });
 
       if (res.success) {
@@ -307,6 +321,26 @@ const BuyElectricityModal: React.FC<BuyElectricityModalProps> = ({ isOpen, onClo
                     </TouchableOpacity>
                   </View>
 
+                  {beneficiaries.length > 0 && (
+                    <View style={{ marginBottom: 16 }}>
+                      <Text style={styles.inputLabel}>Saved Beneficiaries</Text>
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 20 }}>
+                        {beneficiaries.map(ben => (
+                          <TouchableOpacity
+                            key={ben.id}
+                            style={[styles.beneficiaryPill, meterNumber === ben.identifier && styles.beneficiaryPillSelected]}
+                            onPress={() => setMeterNumber(ben.identifier)}
+                          >
+                            <Ionicons name="person-circle" size={16} color={meterNumber === ben.identifier ? '#FFF' : '#6B7280'} style={{ marginRight: 6 }} />
+                            <Text style={[styles.beneficiaryPillText, meterNumber === ben.identifier && styles.beneficiaryPillTextSelected]}>
+                              {ben.name || ben.identifier}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </ScrollView>
+                    </View>
+                  )}
+
                   <View style={styles.inputWrapper}>
                     <Text style={styles.inputLabel}>Meter Number</Text>
                     <View style={styles.inputContainer}>
@@ -340,9 +374,30 @@ const BuyElectricityModal: React.FC<BuyElectricityModalProps> = ({ isOpen, onClo
                         <Text style={styles.verifyBtnTextOutline}>Verify Meter</Text>
                       </TouchableOpacity>
                     ) : null}
+
+                    <View style={styles.switchContainer}>
+                      <Text style={styles.switchLabel}>Save as Beneficiary</Text>
+                      <Switch
+                        value={saveBeneficiary}
+                        onValueChange={setSaveBeneficiary}
+                        trackColor={{ false: "#E5E7EB", true: "#10B981" }}
+                        thumbColor={Platform.OS === 'ios' ? "#FFFFFF" : saveBeneficiary ? "#FFFFFF" : "#F9FAFB"}
+                      />
+                    </View>
+
+                    {saveBeneficiary && (
+                      <View style={[styles.inputContainer, styles.aliasInputContainer, { marginTop: 8, marginBottom: 16 }]}>
+                        <Ionicons name="bookmark" size={16} color="#9CA3AF" style={{ marginRight: 12 }} />
+                        <TextInput
+                          style={styles.input}
+                          placeholder="Alias / Name (Optional)"
+                          value={beneficiaryName}
+                          placeholderTextColor="#9CA3AF"
+                          onChangeText={setBeneficiaryName}
+                        />
+                      </View>
+                    )}
                   </View>
-
-
 
                   <View style={styles.inputWrapper}>
                     <Text style={styles.inputLabel}>Amount</Text>
@@ -590,6 +645,13 @@ const styles = StyleSheet.create({
   receiptValueMax: { fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace", fontSize: 15, fontWeight: "700", color: "#111827" },
   secondaryBtn: { backgroundColor: "#F3F4F6", width: "100%", height: 56, borderRadius: 16, justifyContent: "center", alignItems: "center" },
   secondaryBtnText: { color: "#374151", fontWeight: "600", fontSize: 16 },
+  beneficiaryPill: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F3F4F6', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, marginRight: 10, borderWidth: 1, borderColor: '#E5E7EB' },
+  beneficiaryPillSelected: { backgroundColor: '#111827', borderColor: '#111827' },
+  beneficiaryPillText: { fontSize: 14, color: '#4B5563', fontWeight: '600' },
+  beneficiaryPillTextSelected: { color: '#FFFFFF' },
+  switchContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, marginBottom: 8, backgroundColor: '#FFFFFF', paddingHorizontal: 16, paddingVertical: 14, borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 20 },
+  switchLabel: { fontSize: 15, color: '#111827', fontWeight: '600' },
+  aliasInputContainer: { height: 56, borderWidth: 1, borderColor: '#E5E7EB' },
 });
 
 export default BuyElectricityModal;

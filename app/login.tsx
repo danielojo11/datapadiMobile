@@ -15,6 +15,7 @@ import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as LocalAuthentication from "expo-local-authentication";
 import * as SecureStore from "expo-secure-store";
+import LoginPinModal from "./(provider)/components/drawers/LoginPinModal";
 
 const LoginScreen: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -23,15 +24,20 @@ const LoginScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [isBiometricEnabled, setIsBiometricEnabled] = useState(false);
+  const [isPinEnabled, setIsPinEnabled] = useState(false);
+  const [loginPinModalVisible, setLoginPinModalVisible] = useState(false);
   const [biometricType, setBiometricType] = useState<number | null>(null);
 
   const authState = useContext(AuthContext);
   const router = useRouter();
 
   useEffect(() => {
-    const checkBiometric = async () => {
-      const enabled = await AsyncStorage.getItem("biometric_enabled");
-      setIsBiometricEnabled(enabled === "true");
+    const checkSecurityOptions = async () => {
+      const bioEnabled = await AsyncStorage.getItem("biometric_enabled");
+      setIsBiometricEnabled(bioEnabled === "true");
+
+      const pinEnabled = await AsyncStorage.getItem("pin_enabled");
+      setIsPinEnabled(pinEnabled === "true");
 
       const hasHardware = await LocalAuthentication.hasHardwareAsync();
       if (hasHardware) {
@@ -43,7 +49,7 @@ const LoginScreen: React.FC = () => {
         }
       }
     };
-    checkBiometric();
+    checkSecurityOptions();
   }, []);
 
   const handleBiometricLogin = async () => {
@@ -79,6 +85,37 @@ const LoginScreen: React.FC = () => {
     } catch (e: any) {
       console.log("Biometric Login error:", e);
       setError(e.message || "An unexpected error occurred during biometric login");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePinLogin = async (pin: string) => {
+    try {
+      setError("");
+      setLoading(true);
+      const savedPin = await SecureStore.getItemAsync("app_login_pin");
+      if (pin !== savedPin) {
+        setLoading(false);
+        setLoginPinModalVisible(false);
+        setError("Incorrect PIN. Please try again.");
+        return;
+      }
+
+      setLoginPinModalVisible(false);
+      const credString = await SecureStore.getItemAsync("pin_credentials");
+      if (credString) {
+        await AsyncStorage.setItem("credentials", credString);
+        const response = await authState.login();
+        if (response && response.success === false) {
+          setError(response.error || "PIN login failed");
+        }
+      } else {
+        setError("PIN credentials not found.");
+      }
+    } catch (e: any) {
+      setLoginPinModalVisible(false);
+      setError(e.message || "An error occurred during PIN login");
     } finally {
       setLoading(false);
     }
@@ -206,7 +243,25 @@ const LoginScreen: React.FC = () => {
               )}
             </TouchableOpacity>
           )}
+
+          {isPinEnabled && (
+            <TouchableOpacity
+              style={[styles.button, styles.biometricButton]}
+              onPress={() => setLoginPinModalVisible(true)}
+              activeOpacity={0.85}
+              disabled={loading}
+            >
+              <Ionicons name="keypad" size={20} color="#2563eb" style={{ marginRight: 8 }} />
+              <Text style={[styles.text, { color: "#2563eb", fontSize: 16 }]}>Sign in with PIN</Text>
+            </TouchableOpacity>
+          )}
         </View>
+
+        <LoginPinModal
+          visible={loginPinModalVisible}
+          onClose={() => setLoginPinModalVisible(false)}
+          onSubmit={handlePinLogin}
+        />
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>New to Mufti Pay? </Text>

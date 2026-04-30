@@ -24,6 +24,8 @@ export interface CablePaymentPayload {
     packageCode: string;
     smartCardNo: string;
     transactionPin: string;
+    saveBeneficiary?: boolean;
+    beneficiaryName?: string;
 }
 
 export interface CablePaymentResponse {

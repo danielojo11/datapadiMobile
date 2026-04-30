@@ -11,10 +11,12 @@ import {
     KeyboardAvoidingView,
     Platform,
     DeviceEventEmitter,
+    Switch,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { verifyJambProfile, buyEducationPin, getEducationPackages } from "../../../utils/vtu";
+import { getBeneficiaries, Beneficiary } from "@/app/utils/beneficiary";
 import TransactionPinInput from '../TransactionPinInput';
 
 type Provider = 'WAEC' | 'JAMB' | 'JAMB_MOCK' | 'NECO' | 'NABTEB';
@@ -55,9 +57,16 @@ const BuyEducationModal: React.FC<BuyEducationModalProps> = ({ isOpen, onClose }
     const [products, setProducts] = useState<any[]>([]);
     const [isLoadingProducts, setIsLoadingProducts] = useState(false);
 
+    const [saveBeneficiary, setSaveBeneficiary] = useState(false);
+    const [beneficiaryName, setBeneficiaryName] = useState('');
+    const [beneficiaries, setBeneficiaries] = useState<Beneficiary[]>([]);
+
     React.useEffect(() => {
         if (isOpen) {
             fetchProducts();
+            getBeneficiaries('EDUCATION').then(res => {
+                if (res.success) setBeneficiaries(res.data);
+            });
         }
     }, [isOpen]);
 
@@ -161,6 +170,8 @@ const BuyEducationModal: React.FC<BuyEducationModalProps> = ({ isOpen, onClose }
         setTransactionData(null);
         setTransactionPin('');
         setPinError(false);
+        setSaveBeneficiary(false);
+        setBeneficiaryName('');
     };
 
     const handleClose = () => {
@@ -217,7 +228,9 @@ const BuyEducationModal: React.FC<BuyEducationModalProps> = ({ isOpen, onClose }
                 activeProduct?.PRODUCT_CODE || EDUCATION_PRODUCTS[provider].examType,
                 phoneNo,
                 pinToUse,
-                passedProfileId
+                passedProfileId,
+                saveBeneficiary,
+                beneficiaryName
             );
 
             if (result.success) {
@@ -373,6 +386,26 @@ const BuyEducationModal: React.FC<BuyEducationModalProps> = ({ isOpen, onClose }
                                         </View>
                                     )}
 
+                                    {beneficiaries.length > 0 && (
+                                        <View style={{ marginBottom: 16 }}>
+                                            <Text style={styles.sectionTitle}>SAVED BENEFICIARIES</Text>
+                                            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 20 }}>
+                                                {beneficiaries.map(ben => (
+                                                    <TouchableOpacity
+                                                        key={ben.id}
+                                                        style={[styles.beneficiaryPill, phoneNo === ben.identifier && styles.beneficiaryPillSelected]}
+                                                        onPress={() => setPhoneNo(ben.identifier)}
+                                                    >
+                                                        <Ionicons name="person-circle" size={16} color={phoneNo === ben.identifier ? '#FFF' : '#6B7280'} style={{ marginRight: 6 }} />
+                                                        <Text style={[styles.beneficiaryPillText, phoneNo === ben.identifier && styles.beneficiaryPillTextSelected]}>
+                                                            {ben.name || ben.identifier}
+                                                        </Text>
+                                                    </TouchableOpacity>
+                                                ))}
+                                            </ScrollView>
+                                        </View>
+                                    )}
+
                                     <Text style={styles.sectionTitle}>PHONE NUMBER</Text>
                                     <View style={[styles.inputContainer, phoneNo.length >= 10 && styles.inputContainerSuccess]}>
                                         <View style={styles.phoneIconCircle}>
@@ -394,6 +427,29 @@ const BuyEducationModal: React.FC<BuyEducationModalProps> = ({ isOpen, onClose }
                                             <Ionicons name="checkmark-circle-outline" size={24} color="#10B981" style={{ marginRight: 14 }} />
                                         )}
                                     </View>
+
+                                    <View style={styles.switchContainer}>
+                                        <Text style={styles.switchLabel}>Save as Beneficiary</Text>
+                                        <Switch
+                                            value={saveBeneficiary}
+                                            onValueChange={setSaveBeneficiary}
+                                            trackColor={{ false: "#E5E7EB", true: "#10B981" }}
+                                            thumbColor={Platform.OS === 'ios' ? "#FFFFFF" : saveBeneficiary ? "#FFFFFF" : "#F9FAFB"}
+                                        />
+                                    </View>
+
+                                    {saveBeneficiary && (
+                                        <View style={[styles.inputContainer, styles.aliasInputContainer, { marginTop: 8, marginBottom: 16 }]}>
+                                            <Ionicons name="bookmark" size={16} color="#9CA3AF" style={{ marginRight: 12 }} />
+                                            <TextInput
+                                                style={styles.input}
+                                                placeholder="Alias / Name (Optional)"
+                                                value={beneficiaryName}
+                                                placeholderTextColor="#9CA3AF"
+                                                onChangeText={setBeneficiaryName}
+                                            />
+                                        </View>
+                                    )}
                                 </ScrollView>
 
                                 <View style={styles.bottomAnchored}>
@@ -798,6 +854,13 @@ const styles = StyleSheet.create({
         borderRadius: 50,
         padding: 4,
     },
+    beneficiaryPill: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F3F4F6', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, marginRight: 10, borderWidth: 1, borderColor: '#E5E7EB' },
+    beneficiaryPillSelected: { backgroundColor: '#111827', borderColor: '#111827' },
+    beneficiaryPillText: { fontSize: 14, color: '#4B5563', fontWeight: '600' },
+    beneficiaryPillTextSelected: { color: '#FFFFFF' },
+    switchContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, marginBottom: 8, backgroundColor: '#FFFFFF', paddingHorizontal: 16, paddingVertical: 14, borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 20 },
+    switchLabel: { fontSize: 15, color: '#111827', fontWeight: '600' },
+    aliasInputContainer: { height: 56, borderWidth: 1, borderColor: '#E5E7EB' },
     successTitle: {
         fontSize: 24,
         fontWeight: "800",

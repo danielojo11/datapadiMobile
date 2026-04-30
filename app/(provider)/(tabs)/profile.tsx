@@ -25,6 +25,7 @@ import { AuthContext } from "@/app/context/AppContext";
 import ActionRequired from "../components/drawers/ActionRequired";
 import BankTransferModal from "../components/drawers/BankTransferModal";
 import ResetPinModal from "../components/drawers/ResetPinModal";
+import PinCreationModal from "../components/drawers/PinCreationModal";
 
 const CURRENCY = "₦";
 
@@ -61,6 +62,8 @@ export default function ProfileScreen() {
   const [error, setError] = useState("");
 
   const [resetPinModalVisible, setResetPinModalVisible] = useState(false);
+  const [isPinEnabled, setIsPinEnabled] = useState(false);
+  const [pinCreationVisible, setPinCreationVisible] = useState(false);
 
   const loadProfile = async () => {
     try {
@@ -82,15 +85,23 @@ export default function ProfileScreen() {
   }, []);
 
   useEffect(() => {
-    const checkBiometricStatus = async () => {
-      const enabled = await AsyncStorage.getItem("biometric_enabled");
-      setIsBiometricEnabled(enabled === "true");
+    const checkSecurityOptions = async () => {
+      const bioEnabled = await AsyncStorage.getItem("biometric_enabled");
+      const pinEnabled = await AsyncStorage.getItem("pin_enabled");
+      setIsBiometricEnabled(bioEnabled === "true");
+      setIsPinEnabled(pinEnabled === "true");
     };
-    checkBiometricStatus();
+    checkSecurityOptions();
   }, []);
 
   const handleBiometricToggle = async (value: boolean) => {
     if (value) {
+      if (isPinEnabled) {
+        setIsPinEnabled(false);
+        await AsyncStorage.removeItem("pin_enabled");
+        await SecureStore.deleteItemAsync("pin_credentials");
+        await SecureStore.deleteItemAsync("app_login_pin");
+      }
       try {
         const hasHardware = await LocalAuthentication.hasHardwareAsync();
         const isEnrolled = await LocalAuthentication.isEnrolledAsync();
@@ -137,6 +148,58 @@ export default function ProfileScreen() {
       setIsBiometricEnabled(false);
       await AsyncStorage.removeItem("biometric_enabled");
       await SecureStore.deleteItemAsync("biometric_credentials");
+    }
+  };
+
+  const handlePinToggle = async (value: boolean) => {
+    if (value) {
+      if (isBiometricEnabled) {
+        setIsBiometricEnabled(false);
+        await AsyncStorage.removeItem("biometric_enabled");
+        await SecureStore.deleteItemAsync("biometric_credentials");
+      }
+      if (!authState.userCredentials) {
+        Alert.alert(
+          "Authentication Required",
+          "To enable PIN login, please log out and log back in once with your password."
+        );
+        setIsPinEnabled(false);
+        return;
+      }
+
+      const existingPin = await SecureStore.getItemAsync("app_login_pin");
+      if (existingPin) {
+        const credString = JSON.stringify(authState.userCredentials);
+        await SecureStore.setItemAsync("pin_credentials", credString);
+        await AsyncStorage.setItem("pin_enabled", "true");
+        setIsPinEnabled(true);
+        Alert.alert("Success", "App PIN login re-enabled using your existing PIN!");
+        return;
+      }
+
+      setPinCreationVisible(true);
+    } else {
+      setIsPinEnabled(false);
+      await AsyncStorage.removeItem("pin_enabled");
+      await SecureStore.deleteItemAsync("pin_credentials");
+      await SecureStore.deleteItemAsync("app_login_pin");
+    }
+  };
+
+  const handlePinCreationSuccess = async (pin: string) => {
+    try {
+      await SecureStore.setItemAsync("app_login_pin", pin);
+      if (authState.userCredentials) {
+        const credString = JSON.stringify(authState.userCredentials);
+        await SecureStore.setItemAsync("pin_credentials", credString);
+      }
+      await AsyncStorage.setItem("pin_enabled", "true");
+      setIsPinEnabled(true);
+      setPinCreationVisible(false);
+      Alert.alert("Success", "App PIN login enabled successfully!");
+    } catch (e) {
+      Alert.alert("Error", "Failed to save PIN.");
+      setIsPinEnabled(false);
     }
   };
 
@@ -255,6 +318,11 @@ export default function ProfileScreen() {
         <ResetPinModal
           visible={resetPinModalVisible}
           onClose={() => setResetPinModalVisible(false)}
+        />
+        <PinCreationModal
+          visible={pinCreationVisible}
+          onClose={() => { setPinCreationVisible(false); setIsPinEnabled(false); }}
+          onSuccess={handlePinCreationSuccess}
         />
 
         <ScrollView
@@ -428,6 +496,29 @@ export default function ProfileScreen() {
           {/* 3. Settings & Links Menu */}
           <Text style={styles.sectionTitle}>SETTINGS</Text>
           <View style={styles.settingsGroup}>
+            <TouchableOpacity style={styles.settingsItem} onPress={() => router.push("/(provider)/beneficiaries")}>
+              <View style={styles.settingsItemLeft}>
+                <View style={styles.settingsIconBox}>
+                  <Ionicons name="bookmarks-outline" size={18} color="#475569" />
+                </View>
+                <Text style={styles.settingsItemText}>My Beneficiaries</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
+            </TouchableOpacity>
+
+            <View style={styles.divider} />
+
+            <TouchableOpacity style={styles.settingsItem} onPress={() => router.push("/(provider)/referrals")}>
+              <View style={styles.settingsItemLeft}>
+                <View style={styles.settingsIconBox}>
+                  <Ionicons name="gift-outline" size={18} color="#475569" />
+                </View>
+                <Text style={styles.settingsItemText}>My Rewards & Referrals</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
+            </TouchableOpacity>
+
+            <View style={styles.divider} />
             <TouchableOpacity style={styles.settingsItem} onPress={() => setResetPinModalVisible(true)}>
               <View style={styles.settingsItemLeft}>
                 <View style={styles.settingsIconBox}>
@@ -452,6 +543,23 @@ export default function ProfileScreen() {
                 thumbColor={isBiometricEnabled ? "#2563EB" : "#F8FAFC"}
                 onValueChange={handleBiometricToggle}
                 value={isBiometricEnabled}
+              />
+            </View>
+
+            <View style={styles.divider} />
+
+            <View style={styles.settingsItem}>
+              <View style={styles.settingsItemLeft}>
+                <View style={styles.settingsIconBox}>
+                  <Ionicons name="keypad-outline" size={18} color="#475569" />
+                </View>
+                <Text style={styles.settingsItemText}>Enable PIN Login</Text>
+              </View>
+              <Switch
+                trackColor={{ false: "#CBD5E1", true: "#93C5FD" }}
+                thumbColor={isPinEnabled ? "#2563EB" : "#F8FAFC"}
+                onValueChange={handlePinToggle}
+                value={isPinEnabled}
               />
             </View>
 

@@ -42,6 +42,20 @@ const ProviderLayout = () => {
           presentation: "card",
         }}
       />
+      <Stack.Screen
+        name="referrals"
+        options={{
+          headerShown: false,
+          presentation: "card",
+        }}
+      />
+      <Stack.Screen
+        name="beneficiaries"
+        options={{
+          headerShown: false,
+          presentation: "card",
+        }}
+      />
     </Stack>
   );
 };

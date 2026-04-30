@@ -115,6 +115,8 @@ export async function buyData(
   planId: string,
   phoneNumber: string,
   transactionPin: string,
+  saveBeneficiary?: boolean,
+  beneficiaryName?: string,
 ) {
   try {
     const response = await api.post("vtu/data", {
@@ -122,6 +124,8 @@ export async function buyData(
       planId,
       phoneNumber,
       transactionPin,
+      saveBeneficiary,
+      beneficiaryName,
     });
 
     console.log("Network: ", network);
@@ -173,6 +177,8 @@ export async function buyAirtime(
   amount: number,
   phoneNumber: string,
   transactionPin: string,
+  saveBeneficiary?: boolean,
+  beneficiaryName?: string,
 ): Promise<VtuResponse> {
   try {
     const response = await api.post("vtu/airtime", {
@@ -181,6 +187,8 @@ export async function buyAirtime(
       amount,
       phoneNumber,
       transactionPin,
+      saveBeneficiary,
+      beneficiaryName,
     });
 
     const result = await response.data;
@@ -326,9 +334,9 @@ export async function getEducationPackages(provider: 'WAEC' | 'JAMB' | 'JAMB_MOC
   }
 }
 
-export async function buyEducationPin(provider: 'WAEC' | 'JAMB' | 'JAMB_MOCK' | 'NECO' | 'NABTEB' | string, examType: string, phoneNo: string, transactionPin: string, profileId?: string) {
+export async function buyEducationPin(provider: 'WAEC' | 'JAMB' | 'JAMB_MOCK' | 'NECO' | 'NABTEB' | string, examType: string, phoneNo: string, transactionPin: string, profileId?: string, saveBeneficiary?: boolean, beneficiaryName?: string) {
   try {
-    const body: any = { provider, examType, phoneNo, transactionPin };
+    const body: any = { provider, examType, phoneNo, transactionPin, saveBeneficiary, beneficiaryName };
     if (provider === 'JAMB' && profileId) {
       body.profileId = profileId;
     }

@@ -25,6 +25,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getDashboardData, DashboardData } from "@/app/utils/dashboard";
 import { AuthContext } from "@/app/context/AppContext";
 import TransactionDetailsModal from "../components/modals/TransactionDetailsModal";
+import WhatsAppModal from "../components/modals/WhatsAppModal";
 
 interface StoredUser {
   userName: string;
@@ -54,6 +55,7 @@ export default function Index() {
   >(null);
   const [refreshing, setRefreshing] = useState(false);
   const [loadingRecentTransactions, setLoadingRecentTransactions] = useState(false)
+  const [whatsappModalVisible, setWhatsappModalVisible] = useState(false);
 
   const loadAll = async () => {
     try {
@@ -114,6 +116,35 @@ export default function Index() {
       subscription.remove();
     };
   }, []);
+
+  useEffect(() => {
+    const checkWhatsAppModal = async () => {
+      try {
+        const dismissed = await AsyncStorage.getItem("whatsapp_modal_dismissed");
+        const today = new Date().toDateString();
+
+        if (dismissed !== today) {
+          // Show modal after a small delay for better UX
+          setTimeout(() => {
+            setWhatsappModalVisible(true);
+          }, 2000);
+        }
+      } catch (error) {
+        console.log("Error checking WhatsApp modal status:", error);
+      }
+    };
+    checkWhatsAppModal();
+  }, []);
+
+  const handleCloseWhatsAppModal = async () => {
+    setWhatsappModalVisible(false);
+    try {
+      const today = new Date().toDateString();
+      await AsyncStorage.setItem("whatsapp_modal_dismissed", today);
+    } catch (error) {
+      console.log("Error saving WhatsApp modal status:", error);
+    }
+  };
 
   // Safe derived values
   const user_name = loadedUser?.userName ?? "";
@@ -333,6 +364,12 @@ export default function Index() {
           transaction={selectedTransaction}
         />
       )}
+
+      {/* WhatsApp Channel Modal */}
+      <WhatsAppModal
+        visible={whatsappModalVisible}
+        onClose={handleCloseWhatsAppModal}
+      />
     </SafeAreaView>
   );
 }

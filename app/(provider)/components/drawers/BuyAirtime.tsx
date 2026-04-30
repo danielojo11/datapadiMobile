@@ -11,10 +11,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   DeviceEventEmitter,
+  Switch,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { buyAirtime } from "@/app/utils/vtu";
+import { getBeneficiaries, Beneficiary } from "@/app/utils/beneficiary";
+import { pickContactPhone } from "@/app/utils/contacts";
 import TransactionPinInput from '../TransactionPinInput';
 
 type Step = 'DETAILS' | 'CONFIRM' | 'PIN' | 'SUCCESS';
@@ -45,6 +48,17 @@ const BuyAirtime: React.FC<BuyAirtimeProps> = ({ visible, onClose }) => {
   const [errorMessage, setErrorMessage] = useState('');
   const [transactionPin, setTransactionPin] = useState('');
   const [pinError, setPinError] = useState(false);
+  const [saveBeneficiary, setSaveBeneficiary] = useState(false);
+  const [beneficiaryName, setBeneficiaryName] = useState('');
+  const [beneficiaries, setBeneficiaries] = useState<Beneficiary[]>([]);
+
+  useEffect(() => {
+    if (visible) {
+      getBeneficiaries('AIRTIME').then(res => {
+        if (res.success) setBeneficiaries(res.data);
+      });
+    }
+  }, [visible]);
 
   useEffect(() => {
     if (!visible) {
@@ -67,6 +81,8 @@ const BuyAirtime: React.FC<BuyAirtimeProps> = ({ visible, onClose }) => {
     setErrorMessage('');
     setTransactionPin('');
     setPinError(false);
+    setSaveBeneficiary(false);
+    setBeneficiaryName('');
   };
 
   const handleClose = () => {
@@ -90,7 +106,9 @@ const BuyAirtime: React.FC<BuyAirtimeProps> = ({ visible, onClose }) => {
         networkLabel,
         Number(amount),
         phoneNumber,
-        pinToUse
+        pinToUse,
+        saveBeneficiary,
+        beneficiaryName
       );
 
       if (result && result.success) {
@@ -177,6 +195,30 @@ const BuyAirtime: React.FC<BuyAirtimeProps> = ({ visible, onClose }) => {
                   })}
                 </View>
 
+                {beneficiaries.length > 0 && (
+                  <View style={{ marginBottom: 16 }}>
+                    <Text style={styles.sectionTitle}>SAVED BENEFICIARIES</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 20 }}>
+                      {beneficiaries.map(ben => (
+                        <TouchableOpacity
+                          key={ben.id}
+                          style={[styles.beneficiaryPill, phoneNumber === ben.identifier && styles.beneficiaryPillSelected]}
+                          onPress={() => {
+                            setPhoneNumber(ben.identifier);
+                            const ntwk = networks.find(n => n.label.toUpperCase() === ben.provider?.toUpperCase());
+                            if (ntwk) setSelectedNetwork(ntwk.id);
+                          }}
+                        >
+                          <Ionicons name="person-circle" size={16} color={phoneNumber === ben.identifier ? '#FFF' : '#6B7280'} style={{ marginRight: 6 }} />
+                          <Text style={[styles.beneficiaryPillText, phoneNumber === ben.identifier && styles.beneficiaryPillTextSelected]}>
+                            {ben.name || ben.identifier}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
+                )}
+
                 <Text style={styles.sectionTitle}>PHONE NUMBER</Text>
                 <View style={[styles.inputContainer, phoneNumber.length >= 10 && styles.inputContainerSuccess]}>
                   <View style={[styles.inputIconCircle, { backgroundColor: activeNetworkObj ? activeNetworkObj.bgColor : '#F3F4F6' }]}>
@@ -195,6 +237,19 @@ const BuyAirtime: React.FC<BuyAirtimeProps> = ({ visible, onClose }) => {
                     <Ionicons name="checkmark-circle" size={24} color="#10B981" />
                   )}
                 </View>
+
+                <TouchableOpacity
+                  onPress={async () => {
+                    const phone = await pickContactPhone();
+                    if (phone) {
+                      setPhoneNumber(phone.slice(0, 11));
+                    }
+                  }}
+                  style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, marginBottom: 12 }}
+                >
+                  <Ionicons name="book-outline" size={16} color="#3B82F6" style={{ marginRight: 6 }} />
+                  <Text style={{ fontSize: 13, color: '#3B82F6', fontWeight: '600' }}>Select from contacts</Text>
+                </TouchableOpacity>
 
                 <Text style={styles.sectionTitle}>AMOUNT</Text>
                 <View style={[styles.inputContainer, amount && Number(amount) >= 50 ? styles.inputContainerSuccess : {}]}>
@@ -232,6 +287,30 @@ const BuyAirtime: React.FC<BuyAirtimeProps> = ({ visible, onClose }) => {
                     );
                   })}
                 </View>
+
+                <View style={styles.switchContainer}>
+                  <Text style={styles.switchLabel}>Save as Beneficiary</Text>
+                  <Switch
+                    value={saveBeneficiary}
+                    onValueChange={setSaveBeneficiary}
+                    trackColor={{ false: "#E5E7EB", true: "#10B981" }}
+                    thumbColor={Platform.OS === 'ios' ? "#FFFFFF" : saveBeneficiary ? "#FFFFFF" : "#F9FAFB"}
+                  />
+                </View>
+
+                {saveBeneficiary && (
+                  <View style={[styles.inputContainer, styles.aliasInputContainer]}>
+                    <Ionicons name="bookmark" size={16} color="#9CA3AF" style={{ marginRight: 12 }} />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Alias / Name (Optional)"
+                      value={beneficiaryName}
+                      placeholderTextColor="#9CA3AF"
+                      onChangeText={setBeneficiaryName}
+                    />
+                  </View>
+                )}
+
               </ScrollView>
 
               <View style={styles.bottomBarDetails}>
@@ -571,6 +650,51 @@ const styles = StyleSheet.create({
   },
   quickAmountTextSelected: {
     color: '#2563EB',
+  },
+  beneficiaryPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    marginRight: 10,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  beneficiaryPillSelected: {
+    backgroundColor: '#111827',
+    borderColor: '#111827',
+  },
+  beneficiaryPillText: {
+    fontSize: 14,
+    color: '#4B5563',
+    fontWeight: '600',
+  },
+  beneficiaryPillTextSelected: {
+    color: '#FFFFFF',
+  },
+  switchContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 8,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 20,
+  },
+  switchLabel: {
+    fontSize: 15,
+    color: '#111827',
+    fontWeight: '600',
+  },
+  aliasInputContainer: {
+    marginTop: 4,
+    marginBottom: 16,
   },
   bottomBarDetails: {
     marginTop: 'auto',

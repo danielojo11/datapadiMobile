@@ -12,6 +12,7 @@ import {
     Platform,
     DeviceEventEmitter,
     RefreshControl,
+    Switch,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -22,6 +23,7 @@ import {
     CablePackagesResponse,
     CablePackage,
 } from "../../../utils/cable";
+import { getBeneficiaries, Beneficiary } from "@/app/utils/beneficiary";
 import TransactionPinInput from '../TransactionPinInput';
 
 interface BuyCableModalProps {
@@ -66,12 +68,20 @@ const CableTV: React.FC<BuyCableModalProps> = ({ isOpen, onClose }) => {
     const [refreshing, setRefreshing] = useState(false);
     const [transactionPin, setTransactionPin] = useState('');
     const [pinError, setPinError] = useState(false);
+    const [saveBeneficiary, setSaveBeneficiary] = useState(false);
+    const [beneficiaryName, setBeneficiaryName] = useState('');
+    const [beneficiaries, setBeneficiaries] = useState<Beneficiary[]>([]);
 
     const selectedProvider = CABLE_PROVIDERS.find(p => p.id === providerId);
 
     useEffect(() => {
         if (isOpen && !apiPackages) {
             fetchPackages();
+        }
+        if (isOpen) {
+            getBeneficiaries('CABLE').then(res => {
+                if (res.success) setBeneficiaries(res.data);
+            });
         }
     }, [isOpen]);
 
@@ -109,6 +119,8 @@ const CableTV: React.FC<BuyCableModalProps> = ({ isOpen, onClose }) => {
         setErrorMessage('');
         setTransactionPin('');
         setPinError(false);
+        setSaveBeneficiary(false);
+        setBeneficiaryName('');
     };
 
     const handleClose = () => {
@@ -193,7 +205,9 @@ const CableTV: React.FC<BuyCableModalProps> = ({ isOpen, onClose }) => {
             cableTV: providerId,
             packageCode: selectedPlan.id,
             smartCardNo: smartCardNumber,
-            transactionPin: pinToUse
+            transactionPin: pinToUse,
+            saveBeneficiary,
+            beneficiaryName
         });
 
         setIsProcessing(false);
@@ -287,6 +301,26 @@ const CableTV: React.FC<BuyCableModalProps> = ({ isOpen, onClose }) => {
                                 </TouchableOpacity>
 
                                 <ScrollView style={styles.flex1} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                                    {beneficiaries.length > 0 && (
+                                        <View style={{ marginBottom: 16 }}>
+                                            <Text style={styles.inputLabel}>Saved Beneficiaries</Text>
+                                            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 20 }}>
+                                                {beneficiaries.map(ben => (
+                                                    <TouchableOpacity
+                                                        key={ben.id}
+                                                        style={[styles.beneficiaryPill, smartCardNumber === ben.identifier && styles.beneficiaryPillSelected]}
+                                                        onPress={() => setSmartCardNumber(ben.identifier)}
+                                                    >
+                                                        <Ionicons name="person-circle" size={16} color={smartCardNumber === ben.identifier ? '#FFF' : '#6B7280'} style={{ marginRight: 6 }} />
+                                                        <Text style={[styles.beneficiaryPillText, smartCardNumber === ben.identifier && styles.beneficiaryPillTextSelected]}>
+                                                            {ben.name || ben.identifier}
+                                                        </Text>
+                                                    </TouchableOpacity>
+                                                ))}
+                                            </ScrollView>
+                                        </View>
+                                    )}
+
                                     <Text style={styles.inputLabel}>Smartcard / IUC Number</Text>
                                     <View style={styles.inputContainer}>
                                         <TextInput
@@ -303,6 +337,29 @@ const CableTV: React.FC<BuyCableModalProps> = ({ isOpen, onClose }) => {
                                             editable={!isValidating}
                                         />
                                     </View>
+
+                                    <View style={styles.switchContainer}>
+                                        <Text style={styles.switchLabel}>Save as Beneficiary</Text>
+                                        <Switch
+                                            value={saveBeneficiary}
+                                            onValueChange={setSaveBeneficiary}
+                                            trackColor={{ false: "#E5E7EB", true: "#10B981" }}
+                                            thumbColor={Platform.OS === 'ios' ? "#FFFFFF" : saveBeneficiary ? "#FFFFFF" : "#F9FAFB"}
+                                        />
+                                    </View>
+
+                                    {saveBeneficiary && (
+                                        <View style={[styles.inputContainer, styles.aliasInputContainer, { marginTop: 8, marginBottom: 16 }]}>
+                                            <Ionicons name="bookmark" size={16} color="#9CA3AF" style={{ marginRight: 12 }} />
+                                            <TextInput
+                                                style={styles.input}
+                                                placeholder="Alias / Name (Optional)"
+                                                value={beneficiaryName}
+                                                placeholderTextColor="#9CA3AF"
+                                                onChangeText={setBeneficiaryName}
+                                            />
+                                        </View>
+                                    )}
 
                                     {!isValidated ? (
                                         <TouchableOpacity
@@ -798,54 +855,49 @@ const styles = StyleSheet.create({
         marginBottom: 4,
     },
     receiptTitle: {
-        fontSize: 18,
+        fontSize: 20,
         fontWeight: "700",
         color: "#111827",
-        textAlign: "center",
         marginBottom: 8,
     },
     receiptAmount: {
         fontSize: 32,
-        fontWeight: "900",
-        color: "#9333EA",
-        marginBottom: 24,
+        fontWeight: "800",
+        color: "#A855F7",
+        marginBottom: 20,
     },
     receiptDividerContainer: {
         flexDirection: "row",
         alignItems: "center",
-        width: "100%",
+        width: "120%",
         marginBottom: 24,
+    },
+    receiptDividerCutoutLeft: {
+        width: 20,
+        height: 20,
+        borderRadius: 10,
+        backgroundColor: "rgba(0,0,0,0.5)",
+        marginLeft: -10,
+    },
+    receiptDividerCutoutRight: {
+        width: 20,
+        height: 20,
+        borderRadius: 10,
+        backgroundColor: "rgba(0,0,0,0.5)",
+        marginRight: -10,
     },
     receiptDividerBorder: {
         flex: 1,
         height: 1,
         borderWidth: 1,
-        borderColor: "#F3F4F6",
+        borderColor: "#E5E7EB",
         borderStyle: "dashed",
-    },
-    receiptDividerCutoutLeft: {
-        position: "absolute",
-        left: -32,
-        width: 20,
-        height: 20,
-        borderRadius: 10,
-        backgroundColor: "#F9FAFB",
-        zIndex: 1,
-    },
-    receiptDividerCutoutRight: {
-        position: "absolute",
-        right: -32,
-        width: 20,
-        height: 20,
-        borderRadius: 10,
-        backgroundColor: "#F9FAFB",
-        zIndex: 1,
     },
     receiptRow: {
         flexDirection: "row",
         justifyContent: "space-between",
         width: "100%",
-        marginBottom: 12,
+        marginBottom: 16,
     },
     receiptLabel: {
         fontSize: 14,
@@ -857,11 +909,18 @@ const styles = StyleSheet.create({
         color: "#111827",
     },
     receiptValueMono: {
-        fontSize: 14,
-        fontWeight: "600",
-        color: "#111827",
         fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+        fontSize: 14,
+        fontWeight: "700",
+        color: "#111827",
     },
+    beneficiaryPill: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F3F4F6', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, marginRight: 10, borderWidth: 1, borderColor: '#E5E7EB' },
+    beneficiaryPillSelected: { backgroundColor: '#111827', borderColor: '#111827' },
+    beneficiaryPillText: { fontSize: 14, color: '#4B5563', fontWeight: '600' },
+    beneficiaryPillTextSelected: { color: '#FFFFFF' },
+    switchContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, marginBottom: 8, backgroundColor: '#FFFFFF', paddingHorizontal: 16, paddingVertical: 14, borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 20 },
+    switchLabel: { fontSize: 15, color: '#111827', fontWeight: '600' },
+    aliasInputContainer: { height: 56, borderWidth: 1, borderColor: '#E5E7EB' },
     successContainer: {
         flex: 1,
         justifyContent: "center",

@@ -59,7 +59,7 @@ const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => 
               key={route.key}
               accessibilityState={isFocused ? { selected: true } : {}}
               accessibilityLabel={options.tabBarAccessibilityLabel}
-              testID={options.tabBarTestID}
+              testID={options.tabBarButtonTestID}
               onPress={onPress}
               onLongPress={onLongPress}
               style={styles.tabItem}

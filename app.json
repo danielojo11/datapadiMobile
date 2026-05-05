@@ -49,7 +49,6 @@
         "expo-build-properties",
         {
           "android": {
-            "minSdkVersion": 23,
             "enableProguardInReleaseBuilds": true,
             "enableR8": true
           }

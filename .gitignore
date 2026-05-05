@@ -41,3 +41,9 @@ app-example
 # generated native folders
 /ios
 /android
+
+
+# others
+openjdk-17.0.2_linux-x64_bin.tar.gz
+build_log.txt
+/jdk-17.0.2

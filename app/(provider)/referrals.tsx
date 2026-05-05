@@ -13,30 +13,63 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import * as Clipboard from "expo-clipboard";
 import { getReferralStats, ReferralStatsData, Commission, Cashback, ReferralReward } from "@/app/utils/referral";
+import { getRewardsDashboard, getMilestones, claimMilestone, RewardsDashboardData, MilestoneData } from "@/app/utils/rewards";
+import ConvertRewardsModal from "./components/modals/ConvertRewardsModal";
 
 const CURRENCY = "₦";
 
-type TabType = 'REWARDS' | 'COMMISSIONS' | 'CASHBACK';
+type TabType = 'REWARDS' | 'COMMISSIONS' | 'CASHBACK' | 'MILESTONES';
 
 export default function ReferralsScreen() {
     const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [statsData, setStatsData] = useState<ReferralStatsData | null>(null);
+    const [dashboardData, setDashboardData] = useState<RewardsDashboardData | null>(null);
+    const [milestones, setMilestones] = useState<MilestoneData[]>([]);
     const [activeTab, setActiveTab] = useState<TabType>('REWARDS');
     const [copiedCode, setCopiedCode] = useState(false);
     const [copiedLink, setCopiedLink] = useState(false);
+    const [isConvertModalVisible, setConvertModalVisible] = useState(false);
+    const [claimingId, setClaimingId] = useState<string | null>(null);
 
     const loadStats = async () => {
         try {
-            const response = await getReferralStats();
-            if (response && response.success && response.data) {
-                setStatsData(response.data);
+            const [statsRes, dashboardRes, milestonesRes] = await Promise.all([
+                getReferralStats(),
+                getRewardsDashboard(),
+                getMilestones()
+            ]);
+
+            if (statsRes.success && statsRes.data) {
+                setStatsData(statsRes.data);
+            }
+            if (dashboardRes.success && dashboardRes.data) {
+                setDashboardData(dashboardRes.data);
+            }
+            if (milestonesRes.success && milestonesRes.data) {
+                setMilestones(milestonesRes.data);
             }
         } catch (error) {
             console.log("Error loading referral stats:", error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleClaimMilestone = async (key: string) => {
+        setClaimingId(key);
+        try {
+            const response = await claimMilestone(key);
+            if (response.success) {
+                await loadStats();
+            } else {
+                alert(response.error || "Failed to claim milestone");
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setClaimingId(null);
         }
     };
 
@@ -75,7 +108,6 @@ export default function ReferralsScreen() {
     );
 
     const renderHistoryItem = (item: any, isReward: boolean) => {
-        console.log(item)
         const formattedDate = new Date(item.createdAt).toLocaleDateString(undefined, {
             year: 'numeric', month: 'short', day: 'numeric'
         });
@@ -87,7 +119,7 @@ export default function ReferralsScreen() {
                     </View>
                     <View>
                         <Text style={styles.historyTitle} >
-                            {item.note.split(" ")[0]}
+                            {item.note?.split(" ")[0] || "Reward"}
                         </Text>
                         <Text style={styles.historyDate}>{formattedDate}</Text>
                     </View>
@@ -95,6 +127,51 @@ export default function ReferralsScreen() {
                 <Text style={[styles.historyAmount, isReward ? styles.amountReward : styles.amountCommission]}>
                     +{CURRENCY}{item.amount?.toLocaleString() || "0"}
                 </Text>
+            </View>
+        );
+    };
+
+    const renderMilestoneItem = (item: MilestoneData) => {
+        const progressPercent = Math.min(100, Math.max(0, (item.progress / item.target) * 100));
+        
+        return (
+            <View key={item.key} style={styles.historyCard}>
+                <View style={{ flex: 1, paddingRight: 12 }}>
+                    <Text style={styles.historyTitle}>{item.title}</Text>
+                    <Text style={[styles.historyDate, { marginBottom: 8 }]}>{item.description}</Text>
+                    
+                    <View style={styles.progressBarBg}>
+                        <View style={[styles.progressBarFill, { width: `${progressPercent}%` }]} />
+                    </View>
+                    <Text style={styles.progressText}>{item.progress} / {item.target} completed</Text>
+                </View>
+                
+                <View style={{ alignItems: 'flex-end' }}>
+                    <Text style={styles.milestoneAmount}>+{CURRENCY}{item.amount}</Text>
+                    {item.isClaimed ? (
+                        <View style={styles.claimedBadge}>
+                            <Ionicons name="checkmark-circle" size={14} color="#059669" />
+                            <Text style={styles.claimedText}>Claimed</Text>
+                        </View>
+                    ) : item.isEligible ? (
+                        <TouchableOpacity 
+                            style={styles.claimBtn}
+                            onPress={() => handleClaimMilestone(item.key)}
+                            disabled={claimingId === item.key}
+                        >
+                            {claimingId === item.key ? (
+                                <ActivityIndicator size="small" color="#FFF" />
+                            ) : (
+                                <Text style={styles.claimBtnText}>Claim</Text>
+                            )}
+                        </TouchableOpacity>
+                    ) : (
+                        <View style={styles.lockedBadge}>
+                            <Ionicons name="lock-closed" size={14} color="#9CA3AF" />
+                            <Text style={styles.lockedText}>Locked</Text>
+                        </View>
+                    )}
+                </View>
             </View>
         );
     };
@@ -116,6 +193,9 @@ export default function ReferralsScreen() {
         totalBonusEarned: 0,
     };
 
+    const displayBonusBalance = dashboardData?.bonusBalance ?? overview.bonusBalance;
+    const displayTotalEarned = dashboardData?.totalEarned ?? overview.totalBonusEarned;
+
     return (
         <SafeAreaView style={styles.safeArea}>
             <View style={styles.header}>
@@ -135,11 +215,11 @@ export default function ReferralsScreen() {
                 {/* Balances Section */}
                 <View style={styles.balanceGrid}>
                     <View style={styles.balanceCard}>
-                        <TouchableOpacity style={styles.withdrawBtn}>
+                        <TouchableOpacity style={styles.withdrawBtn} onPress={() => setConvertModalVisible(true)}>
                             <Text style={styles.withdrawText}>Withdraw</Text>
                         </TouchableOpacity>
                         <Text style={styles.balanceLabel}>BONUS BALANCE</Text>
-                        <Text style={styles.balanceAmount}>{CURRENCY}{overview.bonusBalance?.toLocaleString() || "0"}</Text>
+                        <Text style={styles.balanceAmount}>{CURRENCY}{displayBonusBalance?.toLocaleString() || "0"}</Text>
                     </View>
 
                     <View style={[styles.balanceCard, styles.totalEarnedCard]}>
@@ -147,7 +227,7 @@ export default function ReferralsScreen() {
                             <Ionicons name="trending-up" size={14} color="#047857" />
                         </View>
                         <Text style={[styles.balanceLabel, styles.textGreen]}>TOTAL EARNED</Text>
-                        <Text style={[styles.balanceAmount, styles.textGreen]}>{CURRENCY}{overview.totalBonusEarned?.toLocaleString() || "0"}</Text>
+                        <Text style={[styles.balanceAmount, styles.textGreen]}>{CURRENCY}{displayTotalEarned?.toLocaleString() || "0"}</Text>
                     </View>
                 </View>
 
@@ -188,26 +268,34 @@ export default function ReferralsScreen() {
                 </View>
 
                 {/* History Tabs */}
-                <View style={styles.tabsContainer}>
-                    <TouchableOpacity
-                        style={[styles.tab, activeTab === 'REWARDS' && styles.activeTab]}
-                        onPress={() => setActiveTab('REWARDS')}
-                    >
-                        <Text style={[styles.tabText, activeTab === 'REWARDS' && styles.activeTabText]}>Rewards</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[styles.tab, activeTab === 'COMMISSIONS' && styles.activeTab]}
-                        onPress={() => setActiveTab('COMMISSIONS')}
-                    >
-                        <Text style={[styles.tabText, activeTab === 'COMMISSIONS' && styles.activeTabText]}>Commissions</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[styles.tab, activeTab === 'CASHBACK' && styles.activeTab]}
-                        onPress={() => setActiveTab('CASHBACK')}
-                    >
-                        <Text style={[styles.tabText, activeTab === 'CASHBACK' && styles.activeTabText]}>Cashback</Text>
-                    </TouchableOpacity>
-                </View>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
+                    <View style={styles.tabsContainer}>
+                        <TouchableOpacity
+                            style={[styles.tab, activeTab === 'REWARDS' && styles.activeTab]}
+                            onPress={() => setActiveTab('REWARDS')}
+                        >
+                            <Text style={[styles.tabText, activeTab === 'REWARDS' && styles.activeTabText]}>Rewards</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.tab, activeTab === 'COMMISSIONS' && styles.activeTab]}
+                            onPress={() => setActiveTab('COMMISSIONS')}
+                        >
+                            <Text style={[styles.tabText, activeTab === 'COMMISSIONS' && styles.activeTabText]}>Commissions</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.tab, activeTab === 'CASHBACK' && styles.activeTab]}
+                            onPress={() => setActiveTab('CASHBACK')}
+                        >
+                            <Text style={[styles.tabText, activeTab === 'CASHBACK' && styles.activeTabText]}>Cashback</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.tab, activeTab === 'MILESTONES' && styles.activeTab]}
+                            onPress={() => setActiveTab('MILESTONES')}
+                        >
+                            <Text style={[styles.tabText, activeTab === 'MILESTONES' && styles.activeTabText]}>Milestones</Text>
+                        </TouchableOpacity>
+                    </View>
+                </ScrollView>
 
                 {/* History List */}
                 <View style={styles.historyList}>
@@ -228,9 +316,22 @@ export default function ReferralsScreen() {
                             statsData.cashbacks.map(item => renderHistoryItem(item, false))
                         ) : renderEmptyState("No cashbacks earned yet")
                     )}
+
+                    {activeTab === 'MILESTONES' && (
+                        milestones?.length ? (
+                            milestones.map(item => renderMilestoneItem(item))
+                        ) : renderEmptyState("No milestones available")
+                    )}
                 </View>
 
             </ScrollView>
+
+            <ConvertRewardsModal 
+                visible={isConvertModalVisible}
+                onClose={() => setConvertModalVisible(false)}
+                bonusBalance={displayBonusBalance}
+                onSuccess={() => loadStats()}
+            />
         </SafeAreaView>
     );
 }
@@ -451,7 +552,7 @@ const styles = StyleSheet.create({
         marginBottom: 16,
     },
     tab: {
-        flex: 1,
+        paddingHorizontal: 16,
         paddingVertical: 10,
         alignItems: 'center',
         borderRadius: 8,
@@ -538,5 +639,65 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: "#6B7280",
         fontWeight: "500",
+    },
+    progressBarBg: {
+        height: 6,
+        backgroundColor: "#E2E8F0",
+        borderRadius: 3,
+        overflow: "hidden",
+        marginBottom: 4,
+    },
+    progressBarFill: {
+        height: "100%",
+        backgroundColor: "#4F46E5",
+    },
+    progressText: {
+        fontSize: 11,
+        color: "#64748B",
+    },
+    milestoneAmount: {
+        fontSize: 16,
+        fontWeight: "700",
+        color: "#F59E0B",
+        marginBottom: 8,
+    },
+    claimBtn: {
+        backgroundColor: "#4F46E5",
+        paddingHorizontal: 16,
+        paddingVertical: 6,
+        borderRadius: 20,
+    },
+    claimBtnText: {
+        color: "#FFF",
+        fontSize: 12,
+        fontWeight: "600",
+    },
+    claimedBadge: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "#D1FAE5",
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 20,
+        gap: 4,
+    },
+    claimedText: {
+        color: "#059669",
+        fontSize: 12,
+        fontWeight: "600",
+    },
+    lockedBadge: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "#F1F5F9",
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 20,
+        gap: 4,
+    },
+    lockedText: {
+        color: "#64748B",
+        fontSize: 12,
+        fontWeight: "600",
     }
 });

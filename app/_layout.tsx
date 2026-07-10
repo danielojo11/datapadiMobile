@@ -11,6 +11,7 @@ import { registerForPushNotificationsAsync } from "./utils/notifications";
 import { AuthContext } from "./context/AppContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import NetworkBanner from "./components/NetworkBanner";
+import firebase from "@react-native-firebase/app";
 
 // Notification handler is configured in app/utils/notifications.js
 
@@ -20,6 +21,14 @@ export default function RootLayout() {
   const [expoPushToken, setExpoPushToken] = useState("");
 
   const { isAuthenticated } = useContext(AuthContext);
+
+  useEffect(() => {
+    try {
+      console.log("Firebase App Name:", firebase.app().name);
+    } catch (error) {
+      console.warn("Firebase initialization error:", error);
+    }
+  }, []);
 
   useEffect(() => {
     async function register() {

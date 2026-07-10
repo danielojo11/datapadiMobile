@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "821789318044",
+    "project_id": "muftipay-c41b6",
+    "storage_bucket": "muftipay-c41b6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:821789318044:android:a569a1bdbaf3e6f2644659",
+        "android_client_info": {
+          "package_name": "com.daniel_ojo.datapadi"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDiutkEPjHMHvXykTRWg70jKs4ERTH2tlI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

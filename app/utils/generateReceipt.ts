@@ -1,18 +1,18 @@
-import * as Print from 'expo-print';
+import { Asset } from 'expo-asset';
 import * as FileSystem from 'expo-file-system/legacy';
+import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
-import { Asset } from 'expo-asset';
 
 const generateReceipt = async (transaction: any) => {
-    const isFunding = transaction.type === 'WALLET_FUNDING';
-    const amountStr = Number(transaction.amount).toLocaleString();
-    const dateObj = new Date(transaction.date || transaction.createdAt || new Date());
-    const formattedDate = dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ', ' + dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const isFunding = transaction.type === 'WALLET_FUNDING';
+  const amountStr = Number(transaction.amount).toLocaleString();
+  const dateObj = new Date(transaction.date || transaction.createdAt || new Date());
+  const formattedDate = dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ', ' + dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    let detailsHtml = '';
+  let detailsHtml = '';
 
-    detailsHtml += `
+  detailsHtml += `
         <div class="row">
             <span class="label">Date</span>
             <span class="value">${formattedDate}</span>
@@ -26,31 +26,31 @@ const generateReceipt = async (transaction: any) => {
             <span class="value">${transaction.type.replace('_', ' ')}</span>
         </div>
     `;
-    const addressStr = transaction.address || transaction.metadata?.address;
-    if (addressStr) {
-        detailsHtml += `
+  const addressStr = transaction.address || transaction.metadata?.address;
+  if (addressStr) {
+    detailsHtml += `
             <div class="row">
                 <span class="label">Address</span>
                 <span class="value" style="font-size: 13px; line-height: 1.4; word-break: break-word;">${addressStr}</span>
             </div>
         `;
-    }
+  }
 
-    if (transaction.type === 'ELECTRICITY') {
-        const token = transaction.token || transaction.metadata?.token || transaction.pin || transaction.metadata?.pin;
-        const units = transaction.units || transaction.metadata?.units;
-        const meterNumber = transaction.meterNumber || transaction.metadata?.meterNumber || transaction.metadata?.meterNo;
+  if (transaction.type === 'ELECTRICITY') {
+    const token = transaction.token || transaction.metadata?.token || transaction.pin || transaction.metadata?.pin;
+    const units = transaction.units || transaction.metadata?.units;
+    const meterNumber = transaction.meterNumber || transaction.metadata?.meterNumber || transaction.metadata?.meterNo;
 
-        if (token || units || meterNumber) {
-            detailsHtml += `
+    if (token || units || meterNumber) {
+      detailsHtml += `
                 <div style="margin-top: 16px; margin-bottom: 16px; padding: 20px; background-color: #F8FAFC; border: 1px solid #F1F5F9; border-radius: 16px;">
                     <div style="font-size: 12px; color: #94A3B8; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 16px;">
                         DETAILS
                     </div>
             `;
 
-            if (token) {
-                detailsHtml += `
+      if (token) {
+        detailsHtml += `
                     <div class="row" style="padding: 8px 0; border-bottom: none;">
                         <span class="label" style="color: #64748B;">Token</span>
                         <span class="value" style="font-family: 'Courier New', Courier, monospace; font-size: 16px; font-weight: 800; color: #0F172A; letter-spacing: 0.5px;">
@@ -58,9 +58,9 @@ const generateReceipt = async (transaction: any) => {
                         </span>
                     </div>
                 `;
-            }
-            if (units) {
-                detailsHtml += `
+      }
+      if (units) {
+        detailsHtml += `
                     <div class="row" style="padding: 8px 0; border-bottom: none;">
                         <span class="label" style="color: #64748B;">Units</span>
                         <span class="value" style="font-family: 'Courier New', Courier, monospace; font-size: 15px; font-weight: 800; color: #0F172A;">
@@ -68,9 +68,9 @@ const generateReceipt = async (transaction: any) => {
                         </span>
                     </div>
                 `;
-            }
-            if (meterNumber) {
-                detailsHtml += `
+      }
+      if (meterNumber) {
+        detailsHtml += `
                     <div class="row" style="padding: 8px 0; border-bottom: none;">
                         <span class="label" style="color: #64748B;">Meter No</span>
                         <span class="value" style="font-family: 'Courier New', Courier, monospace; font-size: 15px; font-weight: 800; color: #0F172A;">
@@ -78,45 +78,55 @@ const generateReceipt = async (transaction: any) => {
                         </span>
                     </div>
                 `;
-            }
+      }
 
-            detailsHtml += `</div>`;
-        }
+      detailsHtml += `</div>`;
     }
+  }
 
-    if (transaction.metadata?.planName) {
-        detailsHtml += `
+  if (transaction.metadata?.planName) {
+    detailsHtml += `
             <div class="row">
                 <span class="label">Plan</span>
                 <span class="value">${transaction.metadata.planName}</span>
             </div>
         `;
-    }
+  }
 
-    if (transaction.metadata?.network) {
-        detailsHtml += `
+  if (transaction.metadata?.network) {
+    detailsHtml += `
             <div class="row">
                 <span class="label">Network</span>
                 <span class="value">${transaction.metadata.network}</span>
             </div>
         `;
+  }
+
+  if (transaction.metadata?.phoneNumber || transaction.metadata?.recipient) {
+    const phoneToDisplay = transaction.metadata?.phoneNumber || transaction.metadata?.recipient;
+    detailsHtml += `
+            <div class="row">
+                <span class="label">Beneficiary</span>
+                <span class="value">${phoneToDisplay}</span>
+            </div>
+        `;
+  }
+
+
+
+  let base64Logo = '';
+  try {
+    const asset = Asset.fromModule(require('../../assets/images/splash-screen.png'));
+    await asset.downloadAsync();
+    const localUri = asset.localUri || asset.uri;
+    if (localUri) {
+      base64Logo = await FileSystem.readAsStringAsync(localUri, { encoding: FileSystem.EncodingType.Base64 });
     }
+  } catch (e) {
+    console.warn('Could not load logo for receipt', e);
+  }
 
-
-
-    let base64Logo = '';
-    try {
-        const asset = Asset.fromModule(require('../../assets/images/splash-screen.png'));
-        await asset.downloadAsync();
-        const localUri = asset.localUri || asset.uri;
-        if (localUri) {
-            base64Logo = await FileSystem.readAsStringAsync(localUri, { encoding: FileSystem.EncodingType.Base64 });
-        }
-    } catch (e) {
-        console.warn('Could not load logo for receipt', e);
-    }
-
-    const html = `
+  const html = `
     <html>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
@@ -336,42 +346,42 @@ const generateReceipt = async (transaction: any) => {
     </html>
     `;
 
-    try {
-        const { uri } = await Print.printToFileAsync({ html });
+  try {
+    const { uri } = await Print.printToFileAsync({ html });
 
-        if (Platform.OS === 'android') {
-            const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
-            if (!permissions.granted) {
-                // Fallback to sharing if permission denied or user cancelled
-                if (await Sharing.isAvailableAsync()) {
-                    await Sharing.shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf' });
-                }
-                return;
-            }
-
-            const fileName = `Receipt_${transaction.reference || transaction.id}_${Date.now()}.pdf`;
-            const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
-
-            const newFileUri = await FileSystem.StorageAccessFramework.createFileAsync(
-                permissions.directoryUri,
-                fileName,
-                'application/pdf'
-            );
-
-            await FileSystem.writeAsStringAsync(newFileUri, base64, { encoding: FileSystem.EncodingType.Base64 });
-            alert('Receipt saved successfully!');
-        } else {
-            // iOS: use sharing dialogue to let user save to Files or share
-            if (await Sharing.isAvailableAsync()) {
-                await Sharing.shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf' });
-            } else {
-                alert('Sharing is not available on this device');
-            }
+    if (Platform.OS === 'android') {
+      const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+      if (!permissions.granted) {
+        // Fallback to sharing if permission denied or user cancelled
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf' });
         }
-    } catch (error) {
-        console.error('Error generating receipt:', error);
-        alert('Failed to save receipt. Please try again.');
+        return;
+      }
+
+      const fileName = `Receipt_${transaction.reference || transaction.id}_${Date.now()}.pdf`;
+      const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+
+      const newFileUri = await FileSystem.StorageAccessFramework.createFileAsync(
+        permissions.directoryUri,
+        fileName,
+        'application/pdf'
+      );
+
+      await FileSystem.writeAsStringAsync(newFileUri, base64, { encoding: FileSystem.EncodingType.Base64 });
+      alert('Receipt saved successfully!');
+    } else {
+      // iOS: use sharing dialogue to let user save to Files or share
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf' });
+      } else {
+        alert('Sharing is not available on this device');
+      }
     }
+  } catch (error) {
+    console.error('Error generating receipt:', error);
+    alert('Failed to save receipt. Please try again.');
+  }
 };
 
 export default generateReceipt;

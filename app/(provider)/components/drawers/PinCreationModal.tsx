@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import GestureModal from '../GestureModal';
 
 interface Props {
     visible: boolean;
@@ -47,12 +48,7 @@ export default function PinCreationModal({ visible, onClose, onSuccess }: Props)
     };
 
     return (
-        <Modal visible={visible} transparent animationType="slide">
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                style={{ flex: 1 }}
-            >
-                <View style={styles.overlay}>
+        <GestureModal visible={visible} onClose={handleCancel}>
                     <View style={styles.container}>
                         <View style={styles.header}>
                             <Text style={styles.title}>
@@ -94,9 +90,7 @@ export default function PinCreationModal({ visible, onClose, onSuccess }: Props)
                             </Text>
                         </TouchableOpacity>
                     </View>
-                </View>
-            </KeyboardAvoidingView>
-        </Modal>
+        </GestureModal>
     );
 }
 

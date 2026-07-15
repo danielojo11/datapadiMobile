@@ -115,3 +115,6 @@ export async function claimMilestone(rewardKey: string): Promise<RewardsResponse
         };
     }
 }
+
+
+export default function DummyRoute() { return null; }

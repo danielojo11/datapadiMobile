@@ -200,3 +200,5 @@ export const HtmlTemp = ({ batches, pins, currency = '₦' }: TemplateParams) =>
   </html>
   `;
 };
+
+export default function DummyRoute() { return null; }

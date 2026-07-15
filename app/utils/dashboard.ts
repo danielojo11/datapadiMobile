@@ -32,3 +32,6 @@ export async function getDashboardData() {
     return { error: error, success: false };
   }
 }
+
+
+export default function DummyRoute() { return null; }

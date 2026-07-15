@@ -1,98 +1,126 @@
-import { View, Text } from "react-native";
-import React from "react";
-import { Stack, Tabs } from "expo-router";
+import { View, TouchableOpacity, Platform } from "react-native";
+import React, { useEffect } from "react";
+import { Tabs } from "expo-router";
+import { BlurView } from "expo-blur";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
-import { TouchableOpacity, StyleSheet, Platform } from "react-native";
+import Animated, { useAnimatedStyle, withSpring, useSharedValue, withTiming } from "react-native-reanimated";
+
+const TabBarItem = ({ route, options, isFocused, onPress, onLongPress, isProfile }: any) => {
+  const scale = useSharedValue(isFocused ? 1 : 1);
+
+  useEffect(() => {
+    scale.value = withSpring(isFocused ? 1.15 : 1, { damping: 12, stiffness: 150 });
+  }, [isFocused]);
+
+  const animatedIconStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const iconName = route.name === "index" ? "home"
+      : route.name === "flight" ? "airplane"
+      : route.name === "print" ? "print"
+      : route.name === "history" ? "time"
+      : route.name === "profile" ? "person"
+      : "alert";
+      
+  const outlineIconName = route.name === "index" ? "home-outline"
+      : route.name === "flight" ? "airplane-outline"
+      : route.name === "print" ? "print-outline"
+      : route.name === "history" ? "time-outline"
+      : route.name === "profile" ? "person-outline"
+      : "alert-outline";
+
+  // Determine icon color based on its location and state
+  let iconColor = "#94A3B8"; // Inactive
+  if (isProfile) {
+    iconColor = "#2563EB"; // Always blue in the profile circle
+  } else if (isFocused) {
+    iconColor = "#FFFFFF"; // White when active inside the dark pill
+  }
+
+  return (
+    <TouchableOpacity
+      accessibilityState={isFocused ? { selected: true } : {}}
+      accessibilityLabel={options.tabBarAccessibilityLabel}
+      testID={options.tabBarButtonTestID}
+      onPress={onPress}
+      onLongPress={onLongPress}
+      activeOpacity={0.8}
+      className={`items-center justify-center ${isProfile ? 'flex-1' : 'flex-1 h-[56px]'}`}
+    >
+      <Animated.View style={animatedIconStyle} className="items-center justify-center">
+        <Ionicons
+          name={isFocused ? iconName : outlineIconName}
+          size={isProfile ? 24 : 20}
+          color={iconColor}
+          style={[route.name === "flight" && { transform: [{ rotate: "-45deg" }] }]}
+        />
+      </Animated.View>
+    </TouchableOpacity>
+  );
+};
 
 const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
+  const mainRoutes = state.routes.slice(0, 4);
+  const profileRoute = state.routes[4];
+
+  const renderTab = (route: any, index: number, isProfile: boolean) => {
+    const { options } = descriptors[route.key];
+    const isFocused = state.index === index;
+
+    const onPress = () => {
+      const event = navigation.emit({
+        type: "tabPress",
+        target: route.key,
+        canPreventDefault: true,
+      });
+
+      if (!isFocused && !event.defaultPrevented) {
+        navigation.navigate(route.name, route.params);
+      }
+    };
+
+    const onLongPress = () => {
+      navigation.emit({
+        type: "tabLongPress",
+        target: route.key,
+      });
+    };
+
+    return (
+      <TabBarItem 
+        key={route.key}
+        route={route} 
+        options={options} 
+        isFocused={isFocused} 
+        onPress={onPress} 
+        onLongPress={onLongPress} 
+        isProfile={isProfile}
+      />
+    );
+  };
+
   return (
-    <View style={styles.tabBarContainer}>
-      <View style={styles.tabBar}>
-        {state.routes.map((route, index) => {
-          const { options } = descriptors[route.key];
-          const label =
-            options.tabBarLabel !== undefined
-              ? options.tabBarLabel
-              : options.title !== undefined
-                ? options.title
-                : route.name;
+    <View className={`absolute left-5 right-5 z-50 flex-row justify-between items-center ${Platform.OS === 'ios' ? 'bottom-8' : 'bottom-6'}`}>
+      {/* Main Routes Pill */}
+      <View className="flex-1 rounded-full mr-3 h-[56px] overflow-hidden shadow-2xl shadow-black/30 border border-white/20" style={{ elevation: 15 }}>
+        <BlurView tint="dark" intensity={80} style={{ position: 'absolute', width: '100%', height: '100%' }} />
+        <View className="flex-1 flex-row items-center justify-around px-1 w-full h-full">
+          {mainRoutes.map((route, index) => renderTab(route, index, false))}
+        </View>
+      </View>
 
-          const isFocused = state.index === index;
-
-          const onPress = () => {
-            const event = navigation.emit({
-              type: "tabPress",
-              target: route.key,
-              canPreventDefault: true,
-            });
-
-            if (!isFocused && !event.defaultPrevented) {
-              navigation.navigate(route.name, route.params);
-            }
-          };
-
-          const onLongPress = () => {
-            navigation.emit({
-              type: "tabLongPress",
-              target: route.key,
-            });
-          };
-
-          const iconName =
-            route.name === "index"
-              ? "home-outline"
-              : route.name === "flight"
-                ? "airplane-outline"
-                : route.name === "print"
-                  ? "print-outline"
-                  : route.name === "history"
-                    ? "time-outline"
-                    : route.name === "profile"
-                      ? "person-outline"
-                      : "alert-outline";
-
-          return (
-            <TouchableOpacity
-              key={route.key}
-              accessibilityState={isFocused ? { selected: true } : {}}
-              accessibilityLabel={options.tabBarAccessibilityLabel}
-              testID={options.tabBarButtonTestID}
-              onPress={onPress}
-              onLongPress={onLongPress}
-              style={styles.tabItem}
-              activeOpacity={0.8}
-            >
-              {/* Background Pill */}
-              {isFocused && <View style={styles.activePill} />}
-
-              <View style={styles.contentContainer}>
-                <Ionicons
-                  name={iconName}
-                  size={22}
-                  color={isFocused ? "#2563eb" : "#64748b"}
-                  style={[route.name === "flight" && { transform: [{ rotate: "-45deg" }] }]}
-                />
-                <Text
-                  style={[
-                    styles.tabLabel,
-                    { color: isFocused ? "#2563eb" : "#64748b" },
-                  ]}
-                >
-                  {label as string}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          );
-        })}
+      {/* Profile Circle */}
+      <View className="w-[56px] h-[56px] rounded-full bg-white dark:bg-card items-center justify-center shadow-[0_0_20px_rgba(37,99,235,0.2)] border border-slate-100 dark:border-slate-800" style={{ elevation: 15 }}>
+        {profileRoute && renderTab(profileRoute, 4, true)}
       </View>
     </View>
   );
 };
 
-const _layout = () => {
+export default function TabsLayout() {
   return (
     <SafeAreaProvider>
       <Tabs
@@ -109,64 +137,4 @@ const _layout = () => {
       </Tabs>
     </SafeAreaProvider>
   );
-};
-
-const styles = StyleSheet.create({
-  tabBarContainer: {
-    position: "absolute",
-    bottom: Platform.OS === "ios" ? 32 : 24,
-    left: 16,
-    right: 16,
-    zIndex: 50,
-  },
-  tabBar: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.96)",
-    borderRadius: 32,
-    padding: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    elevation: 10,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.4)",
-  },
-  tabItem: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    height: 56,
-    position: "relative",
-  },
-  activePill: {
-    position: "absolute",
-    top: 2,
-    bottom: 2,
-    left: 4,
-    right: 4,
-    backgroundColor: "#F8FAFC",
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  contentContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 2,
-  },
-  tabLabel: {
-    fontSize: 10,
-    fontWeight: "bold",
-    marginTop: 4,
-  },
-});
-
-export default _layout;
+}

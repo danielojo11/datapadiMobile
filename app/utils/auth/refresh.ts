@@ -44,3 +44,6 @@ export async function refreshUser(refreshToken: string) {
     return { success: false, error: "Failed to connect to the server" };
   }
 }
+
+
+export default function DummyRoute() { return null; }

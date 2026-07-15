@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text } from "react-native";
 import React from "react";
 
 const BalanceCard = ({
@@ -14,69 +14,19 @@ const BalanceCard = ({
   const formattedTier = tier ? tier.replace(/_/g, " ").toUpperCase() : "USER";
 
   return (
-    <View style={styles.container}>
-      <View style={styles.avatar}>
-        <Text style={styles.avatarText}>{initial}</Text>
+    <View className="flex-row items-center mb-6 mt-2 px-2">
+      <View className="w-14 h-14 rounded-full bg-slate-900 justify-center items-center mr-4 shadow-xl shadow-black/20 border border-slate-800">
+        <Text className="text-white text-xl font-black">{initial}</Text>
       </View>
 
-      <View style={styles.infoContainer}>
-        <Text style={styles.greetingText}>Hi, {firstName} 👋</Text>
-        <View style={styles.tierBadge}>
-          <Text style={styles.tierText}>{formattedTier}</Text>
+      <View className="justify-center">
+        <Text className="text-2xl font-black text-text tracking-tighter mb-1">Hi, {firstName} 👋</Text>
+        <View className="bg-primary/10 px-2.5 py-1 rounded-md self-start border border-primary/20">
+          <Text className="text-primary text-[10px] font-black tracking-widest uppercase">{formattedTier}</Text>
         </View>
       </View>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 20,
-    marginTop: 10,
-  },
-  avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: "#1A1A1A",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  avatarText: {
-    color: "#FFFFFF",
-    fontSize: 22,
-    fontWeight: "600",
-  },
-  infoContainer: {
-    justifyContent: "center",
-  },
-  greetingText: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#0f172a",
-    marginBottom: 6,
-  },
-  tierBadge: {
-    backgroundColor: "#E0E7FF",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    alignSelf: "flex-start",
-  },
-  tierText: {
-    color: "#1D4ED8",
-    fontSize: 10,
-    fontWeight: "800",
-    letterSpacing: 0.8,
-  },
-});
 
 export default BalanceCard;

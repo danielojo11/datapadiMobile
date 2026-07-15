@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { verifyBVN } from "@/app/utils/payment";
 import { useRouter } from "expo-router";
+import GestureModal from '../GestureModal';
 
 const IdentityVerification = ({
   visible,
@@ -55,9 +56,7 @@ const IdentityVerification = ({
   };
 
   return (
-    <Modal animationType="slide" transparent visible={visible}>
-      <ScrollView>
-        <View style={styles.overlay}>
+    <GestureModal visible={visible} onClose={onClose}>
           <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 40) }]}>
             <View style={styles.handle} />
 
@@ -184,9 +183,7 @@ const IdentityVerification = ({
               <Text style={styles.laterText}>I’ll do this later</Text>
             </TouchableOpacity>
           </View>
-        </View>
-      </ScrollView>
-    </Modal>
+    </GestureModal>
   );
 };
 

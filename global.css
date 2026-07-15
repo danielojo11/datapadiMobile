@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 248 250 252;
+    --card: 255 255 255;
+    --text: 15 23 42;
+    --text-muted: 100 116 139;
+    --border: 226 232 240;
+    --primary: 37 99 235;
+    --error: 239 68 68;
+  }
+}

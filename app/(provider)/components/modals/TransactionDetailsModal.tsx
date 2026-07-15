@@ -187,14 +187,14 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
                 <>
                     <DetailRow label="Network" value={details?.network} boldValue />
                     <DetailRow label="Plan" value={details?.plan} boldValue />
-                    <DetailRow label="Beneficiary" value={details?.phoneNumber} boldValue isLast />
+                    <DetailRow label="Phone Number" value={details?.phoneNumber} boldValue isLast />
                 </>
             );
         } else if (type === 'AIRTIME') {
             content = (
                 <>
                     <DetailRow label="Network" value={details?.network} boldValue />
-                    <DetailRow label="Beneficiary" value={details?.phoneNumber} boldValue isLast />
+                    <DetailRow label="Phone Number" value={details?.phoneNumber} boldValue isLast />
                 </>
             );
         } else if (type === 'FLIGHT') {

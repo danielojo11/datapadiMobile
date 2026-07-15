@@ -1,3 +1,5 @@
+import "../global.css";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Stack } from "expo-router";
 import { AuthProvider } from "./context/AppContext";
 import { SocketProvider } from "./context/SocketContext";
@@ -7,48 +9,43 @@ import Constants from "expo-constants";
 import * as Notifications from "expo-notifications";
 import { useContext, useEffect, useRef, useState } from "react";
 import * as Updates from "expo-updates";
-import { registerForPushNotificationsAsync } from "./utils/notifications";
 import { AuthContext } from "./context/AppContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import NetworkBanner from "./components/NetworkBanner";
-import firebase from "@react-native-firebase/app";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-// Notification handler is configured in app/utils/notifications.js
+import PushNotificationModal from "./(provider)/components/drawers/PushNotificationModal";
+import { usePushNotifications } from "./hooks/usePushNotifications";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { cssInterop } from "nativewind";
+import Animated from "react-native-reanimated";
 
-import { handleForegroundNotification, handleNotificationResponse } from "./utils/notificationHandler";
+cssInterop(SafeAreaView, { className: "style" });
+cssInterop(Animated.View, { className: "style" });
+cssInterop(Animated.Text, { className: "style" });
+
+const queryClient = new QueryClient();
 
 export default function RootLayout() {
-  const [expoPushToken, setExpoPushToken] = useState("");
-
   const { isAuthenticated } = useContext(AuthContext);
 
-  useEffect(() => {
-    try {
-      console.log("Firebase App Name:", firebase.app().name);
-    } catch (error) {
-      console.warn("Firebase initialization error:", error);
-    }
-  }, []);
+  const [showPushModal, setShowPushModal] = useState(false);
+  const { registerAndSaveToken } = usePushNotifications();
 
   useEffect(() => {
-    async function register() {
+    async function checkPermissions() {
       if (isAuthenticated) {
         try {
-          let authToken = await AsyncStorage.getItem("accessToken");
-
-          if (!authToken) {
-            const loginObjStr = await AsyncStorage.getItem("login_obj");
-            if (loginObjStr) {
-              const parsed = JSON.parse(loginObjStr);
-              authToken = parsed.data?.accessToken || parsed.accessToken;
-            }
-          }
-
-          if (authToken) {
-            const token = await registerForPushNotificationsAsync(authToken);
-            setExpoPushToken(token ?? "");
+          const { status } = await Notifications.getPermissionsAsync();
+          if (status === "granted") {
+            // Already granted, silently register and sync token
+            await registerAndSaveToken();
           } else {
-            console.log("No auth token resolved, skipping push registration in layout.");
+            // Not granted, check if we've softly prompted before
+            const hasPrompted = await AsyncStorage.getItem("hasPromptedForPush");
+            if (hasPrompted !== "true") {
+              setShowPushModal(true);
+            }
           }
         } catch (error) {
           console.log("Push token error:", error);
@@ -56,23 +53,19 @@ export default function RootLayout() {
       }
     }
 
-    register();
-  }, [isAuthenticated]);
+    checkPermissions();
+  }, [isAuthenticated, registerAndSaveToken]);
 
-  useEffect(() => {
-    const notificationListener = Notifications.addNotificationReceivedListener((notification) => {
-      handleForegroundNotification(notification);
-    });
+  const handleAllowPush = async () => {
+    setShowPushModal(false);
+    await AsyncStorage.setItem("hasPromptedForPush", "true");
+    await registerAndSaveToken();
+  };
 
-    const responseListener = Notifications.addNotificationResponseReceivedListener((response) => {
-      handleNotificationResponse(response);
-    });
-
-    return () => {
-      notificationListener.remove();
-      responseListener.remove();
-    };
-  }, []);
+  const handleSkipPush = async () => {
+    setShowPushModal(false);
+    await AsyncStorage.setItem("hasPromptedForPush", "true");
+  };
 
   useEffect(() => {
     async function onFetchUpdateAsync() {
@@ -133,19 +126,27 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <>
-      <AuthProvider>
-        <SocketProvider>
-          <StatusBar style="dark" />
-          <NetworkBanner />
-          <Stack>
-            <Stack.Screen name="(provider)" options={{ headerShown: false }} />
-            <Stack.Screen name="login" options={{ headerShown: false }} />
-            <Stack.Screen name="signup" options={{ headerShown: false }} />
-            <Stack.Screen name="forgot" options={{ headerShown: false }} />
-          </Stack>
-        </SocketProvider>
-      </AuthProvider>
-    </>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <SocketProvider>
+            <StatusBar style="dark" />
+            <NetworkBanner />
+            <PushNotificationModal 
+              visible={showPushModal} 
+              onClose={handleSkipPush} 
+              onAllow={handleAllowPush} 
+            />
+            <Stack>
+              <Stack.Screen name="index" options={{ headerShown: false }} />
+              <Stack.Screen name="(provider)" options={{ headerShown: false }} />
+              <Stack.Screen name="login" options={{ headerShown: false }} />
+              <Stack.Screen name="signup" options={{ headerShown: false }} />
+              <Stack.Screen name="forgot" options={{ headerShown: false }} />
+            </Stack>
+          </SocketProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </GestureHandlerRootView>
   );
 }

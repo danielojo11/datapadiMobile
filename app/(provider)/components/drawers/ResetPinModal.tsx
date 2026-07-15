@@ -14,6 +14,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { resetTransactionPin } from "@/app/utils/auth/resetPin";
+import GestureModal from '../GestureModal';
 
 interface ResetPinModalProps {
     visible: boolean;
@@ -80,13 +81,8 @@ export default function ResetPinModal({ visible, onClose }: ResetPinModalProps) 
     const isFormValid = password.length > 0 && newPin.length === 4 && confirmPin.length === 4;
 
     return (
-        <Modal animationType="slide" transparent visible={visible} onRequestClose={handleClose}>
-            <KeyboardAvoidingView
-                behavior={Platform.OS === "ios" ? "padding" : "height"}
-                style={{ flex: 1 }}
-            >
+        <GestureModal visible={visible} onClose={handleClose}>
                 <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
-                    <View style={styles.overlay}>
                         <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 20) }]}>
                             <View style={styles.handle} />
 
@@ -187,10 +183,8 @@ export default function ResetPinModal({ visible, onClose }: ResetPinModalProps) 
                                 )}
                             </TouchableOpacity>
                         </View>
-                    </View>
                 </ScrollView>
-            </KeyboardAvoidingView>
-        </Modal>
+        </GestureModal>
     );
 }
 

@@ -230,3 +230,6 @@ export async function getFlightLink(): Promise<{ success: boolean; url?: string;
         };
     }
 }
+
+
+export default function DummyRoute() { return null; }

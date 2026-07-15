@@ -37,49 +37,56 @@ export function handleForegroundNotification(notification: Notifications.Notific
 /**
  * Handles interaction with a notification (e.g., when the user taps it).
  */
+
 export function handleNotificationResponse(response: Notifications.NotificationResponse) {
     const data = response.notification.request.content.data as NotificationData | null | undefined;
     console.log("Notification response received:", data);
 
     const type = data?.type?.toUpperCase() || data?.type;
 
-    switch (type) {
-        case "CREDIT":
-        case "DEBIT":
-        case "TRANSACTION":
-        case "AIRTIME_PURCHASE":
-        case "DATA_PURCHASE":
-        case "ELECTRICITY_PURCHASE":
-        case "CABLE_PURCHASE":
-        case "WALLET_FUNDING":
-        case "DATA":
-        case "AIRTIME":
-        case "RECHARGE_PIN":
-        case "CABLE_TV":
-        case "ELECTRICITY":
-        case "EDUCATION":
-            // Navigate to transaction history
-            router.push("/(provider)/(tabs)/history");
-            break;
-
-        case "PROFILE":
-            router.push("/(provider)/(tabs)/profile");
-            break;
-
-        case "GENERAL":
-        case "ANNOUNCEMENT":
-        case "BROADCAST":
-            // Navigate to home screen for general admin notifications
-            router.push("/(provider)/(tabs)");
-            break;
-
-        default:
-            // Default to home or history if type is unknown
-            if (data?.transactionId) {
+    // Defer routing to ensure expo-router has finished mounting (crucial for killed-state launches)
+    setTimeout(() => {
+        switch (type) {
+            case "CREDIT":
+            case "DEBIT":
+            case "TRANSACTION":
+            case "AIRTIME_PURCHASE":
+            case "DATA_PURCHASE":
+            case "ELECTRICITY_PURCHASE":
+            case "CABLE_PURCHASE":
+            case "WALLET_FUNDING":
+            case "DATA":
+            case "AIRTIME":
+            case "RECHARGE_PIN":
+            case "CABLE_TV":
+            case "ELECTRICITY":
+            case "EDUCATION":
+                // Navigate to transaction history
                 router.push("/(provider)/(tabs)/history");
-            } else {
+                break;
+
+            case "PROFILE":
+                router.push("/(provider)/(tabs)/profile");
+                break;
+
+            case "GENERAL":
+            case "ANNOUNCEMENT":
+            case "BROADCAST":
+                // Navigate to home screen for general admin notifications
                 router.push("/(provider)/(tabs)");
-            }
-            break;
-    }
+                break;
+
+            default:
+                // Default to home or history if type is unknown
+                if (data?.transactionId) {
+                    router.push("/(provider)/(tabs)/history");
+                } else {
+                    router.push("/(provider)/(tabs)");
+                }
+                break;
+        }
+    }, 1500);
 }
+
+
+export default function DummyRoute() { return null; }

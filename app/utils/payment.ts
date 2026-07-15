@@ -51,3 +51,6 @@ export async function verifyBVN(
     return { success: false, error: error.message };
   }
 }
+
+
+export default function DummyRoute() { return null; }

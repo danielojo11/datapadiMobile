@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { Ionicons, Feather } from "@expo/vector-icons";
 
 type RecentActivityItemProps = {
@@ -15,22 +15,14 @@ type RecentActivityItemProps = {
 
 const getTransactionConfig = (type: string) => {
   switch (type) {
-    case 'DATA':
-      return { icon: <Ionicons name="wifi" size={20} color="#2563EB" />, bg: '#EFF6FF' };
-    case 'AIRTIME':
-      return { icon: <Feather name="smartphone" size={20} color="#059669" />, bg: '#ECFDF5' };
-    case 'CABLE_TV':
-      return { icon: <Ionicons name="tv-outline" size={20} color="#7C3AED" />, bg: '#F5F3FF' };
-    case 'ELECTRICITY':
-      return { icon: <Ionicons name="flash-outline" size={20} color="#D97706" />, bg: '#FFFBEB' };
-    case 'WALLET_FUNDING':
-      return { icon: <Ionicons name="card-outline" size={20} color="#4F46E5" />, bg: '#EEF2FF' };
-    case 'RECHARGE_PIN':
-      return { icon: <Ionicons name="print-outline" size={20} color="#0891B2" />, bg: '#ECFEFF' };
-    case 'EDUCATION':
-      return { icon: <Ionicons name="school-outline" size={20} color="#10B981" />, bg: '#D1FAE5' };
-    default:
-      return { icon: <Ionicons name="receipt-outline" size={20} color="#4B5563" />, bg: '#F3F4F6' };
+    case 'DATA': return { icon: <Ionicons name="wifi" size={20} color="#2563EB" />, bg: 'bg-blue-500/10' };
+    case 'AIRTIME': return { icon: <Feather name="smartphone" size={20} color="#059669" />, bg: 'bg-emerald-500/10' };
+    case 'CABLE_TV': return { icon: <Ionicons name="tv-outline" size={20} color="#7C3AED" />, bg: 'bg-violet-500/10' };
+    case 'ELECTRICITY': return { icon: <Ionicons name="flash-outline" size={20} color="#D97706" />, bg: 'bg-amber-500/10' };
+    case 'WALLET_FUNDING': return { icon: <Ionicons name="card-outline" size={20} color="#4F46E5" />, bg: 'bg-indigo-500/10' };
+    case 'RECHARGE_PIN': return { icon: <Ionicons name="print-outline" size={20} color="#0891B2" />, bg: 'bg-cyan-500/10' };
+    case 'EDUCATION': return { icon: <Ionicons name="school-outline" size={20} color="#10B981" />, bg: 'bg-emerald-400/10' };
+    default: return { icon: <Ionicons name="receipt-outline" size={20} color="#4B5563" />, bg: 'bg-slate-500/10' };
   }
 };
 
@@ -38,34 +30,28 @@ const getStatusBadge = (status: string) => {
   switch (status?.toUpperCase()) {
     case 'SUCCESS':
       return (
-        <View style={[styles.badgeContainer, { backgroundColor: '#DCFCE7' }]}>
-          <Text style={[styles.badgeText, { color: '#15803D' }]}>SUCCESS</Text>
+        <View className="px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20">
+          <Text className="text-[9px] font-black text-emerald-600 tracking-widest">SUCCESS</Text>
         </View>
       );
     case 'PENDING':
       return (
-        <View style={[styles.badgeContainer, { backgroundColor: '#FEF3C7' }]}>
-          <Text style={[styles.badgeText, { color: '#B45309' }]}>PENDING</Text>
+        <View className="px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20">
+          <Text className="text-[9px] font-black text-amber-600 tracking-widest">PENDING</Text>
         </View>
       );
     case 'FAILED':
       return (
-        <View style={[styles.badgeContainer, { backgroundColor: '#FEE2E2' }]}>
-          <Text style={[styles.badgeText, { color: '#B91C1C' }]}>FAILED</Text>
+        <View className="px-2 py-0.5 rounded-md bg-rose-500/10 border border-rose-500/20">
+          <Text className="text-[9px] font-black text-rose-600 tracking-widest">FAILED</Text>
         </View>
       );
-    default:
-      return null;
+    default: return null;
   }
 };
 
 export default function RecentActivityItem({
-  title,
-  subtitle,
-  amount,
-  type,
-  status,
-  onPress
+  title, subtitle, amount, type, status, onPress
 }: RecentActivityItemProps) {
   const config = getTransactionConfig(type);
   const isFunding = type === "WALLET_FUNDING";
@@ -73,126 +59,36 @@ export default function RecentActivityItem({
   return (
     <TouchableOpacity
       activeOpacity={0.7}
-      style={styles.transactionCard}
+      className="flex-row justify-between items-center p-4 border-b border-border bg-card"
       onPress={onPress}
     >
-      <View style={styles.cardLeft}>
-        {/* Dynamic Icon */}
-        <View style={[styles.iconWrapper, { backgroundColor: config.bg }]}>
+      <View className="flex-row items-center flex-1 mr-3">
+        <View className={`w-12 h-12 rounded-full justify-center items-center mr-4 ${config.bg}`}>
           {config.icon}
         </View>
-
-        {/* Details */}
-        <View style={styles.detailsCol}>
-          <Text style={styles.txTitle} numberOfLines={1}>
+        <View className="flex-1 justify-center">
+          <Text className="text-sm font-extrabold text-text mb-1" numberOfLines={1}>
             {title === "MONNIFY" ? "WALLET FUNDING" : title || (type ? type.replace('_', ' ') : "Transaction")}
           </Text>
-          <View style={styles.dateRow}>
-            <Text style={styles.txDate}>{subtitle}</Text>
+          <View className="flex-row items-center gap-2">
+            <Text className="text-xs font-semibold text-textMuted">{subtitle}</Text>
             {type === 'RECHARGE_PIN' && (
-              <View style={styles.pinsTag}>
-                <Text style={styles.pinsTagText}>PINS</Text>
+              <View className="bg-slate-100 px-1.5 py-0.5 rounded">
+                <Text className="text-[9px] font-black text-slate-600 tracking-wider">PINS</Text>
               </View>
             )}
           </View>
         </View>
       </View>
 
-      {/* Amount & Status */}
-      <View style={styles.cardRight}>
-        <Text style={[styles.txAmount, isFunding ? styles.txAmountCredit : styles.txAmountDebit]}>
+      <View className="items-end justify-center">
+        <Text className={`text-sm font-black mb-1.5 ${isFunding ? 'text-emerald-600' : 'text-text'}`}>
           {isFunding ? '+' : '-'}{amount?.toString().startsWith('₦') ? '' : '₦'}{Number(amount?.toString().replace('₦', '') || 0).toLocaleString()}
         </Text>
-        <View style={styles.statusWrapper}>
+        <View className="items-end">
           {getStatusBadge(status)}
         </View>
       </View>
     </TouchableOpacity>
   );
 }
-
-const styles = StyleSheet.create({
-  transactionCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F9FAFB',
-    backgroundColor: '#fff',
-  },
-  cardLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    marginRight: 12,
-  },
-  iconWrapper: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  detailsCol: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  txTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#111827',
-    marginBottom: 4,
-  },
-  dateRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  txDate: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#6B7280',
-  },
-  pinsTag: {
-    backgroundColor: '#F3F4F6',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  pinsTagText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#4B5563',
-    letterSpacing: 0.5,
-  },
-  cardRight: {
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-  },
-  txAmount: {
-    fontSize: 14,
-    fontWeight: '700',
-    marginBottom: 6,
-  },
-  txAmountCredit: {
-    color: '#059669',
-  },
-  txAmountDebit: {
-    color: '#111827',
-  },
-  statusWrapper: {
-    alignItems: 'flex-end',
-  },
-  badgeContainer: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  badgeText: {
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-});

@@ -52,3 +52,6 @@ export async function authorizedFetch(
 
   return response;
 }
+
+
+export default function DummyRoute() { return null; }

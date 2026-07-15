@@ -63,3 +63,6 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 };
 
 export const useSocket = () => useContext(SocketContext);
+
+
+export default function DummyRoute() { return null; }

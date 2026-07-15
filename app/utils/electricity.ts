@@ -141,3 +141,6 @@ export async function payElectricity(
     return { success: false, error: "Transaction failed due to network error" };
   }
 }
+
+
+export default function DummyRoute() { return null; }

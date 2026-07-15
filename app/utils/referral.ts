@@ -61,3 +61,6 @@ export async function getReferralStats(): Promise<ReferralResponse> {
         };
     }
 }
+
+
+export default function DummyRoute() { return null; }

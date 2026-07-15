@@ -18,10 +18,13 @@ import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as LocalAuthentication from "expo-local-authentication";
 import * as SecureStore from "expo-secure-store";
-
+import * as Notifications from "expo-notifications";
 import { getProfileData } from "@/app/utils/user";
 import { initializeGatewayFunding } from "@/app/utils/payment";
 import { AuthContext } from "@/app/context/AppContext";
+import Constants from "expo-constants";
+import { Platform } from "react-native";
+import { registerPushToken } from "@/app/utils/user";
 import ActionRequired from "../components/drawers/ActionRequired";
 import BankTransferModal from "../components/drawers/BankTransferModal";
 import ResetPinModal from "../components/drawers/ResetPinModal";
@@ -51,6 +54,7 @@ export default function ProfileScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [isBiometricEnabled, setIsBiometricEnabled] = useState(false);
+  const [isNotificationsEnabled, setIsNotificationsEnabled] = useState(false);
 
   const [warningModalVisisbility, setWarningModalVisibility] = useState(false);
   const [transferModalVisible, setTransferModalVisible] = useState(false);
@@ -88,8 +92,24 @@ export default function ProfileScreen() {
     const checkSecurityOptions = async () => {
       const bioEnabled = await AsyncStorage.getItem("biometric_enabled");
       const pinEnabled = await AsyncStorage.getItem("pin_enabled");
+      const notifEnabled = await AsyncStorage.getItem("notifications_enabled");
+      
       setIsBiometricEnabled(bioEnabled === "true");
       setIsPinEnabled(pinEnabled === "true");
+      
+      let actualNotifEnabled = notifEnabled === "true";
+      if (actualNotifEnabled) {
+        try {
+          const { status } = await Notifications.getPermissionsAsync();
+          if (status !== 'granted') {
+            actualNotifEnabled = false;
+            await AsyncStorage.setItem("notifications_enabled", "false");
+          }
+        } catch (e) {
+          console.log("Failed to check notification permissions", e);
+        }
+      }
+      setIsNotificationsEnabled(actualNotifEnabled);
     };
     checkSecurityOptions();
   }, []);
@@ -200,6 +220,36 @@ export default function ProfileScreen() {
     } catch (e) {
       Alert.alert("Error", "Failed to save PIN.");
       setIsPinEnabled(false);
+    }
+  };
+
+  const handleNotificationsToggle = async (value: boolean) => {
+    if (value) {
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+      if (existingStatus !== 'granted') {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+      if (finalStatus !== 'granted') {
+        Alert.alert('Permission required', 'Please enable notifications in your device settings.');
+        setIsNotificationsEnabled(false);
+        return;
+      }
+      setIsNotificationsEnabled(true);
+      await AsyncStorage.setItem("notifications_enabled", "true");
+      try {
+        const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
+        const pushTokenData = await Notifications.getExpoPushTokenAsync(projectId ? { projectId } : undefined);
+        if (pushTokenData && pushTokenData.data) {
+          await registerPushToken(pushTokenData.data, Platform.OS);
+        }
+      } catch (e) {
+        console.log("Failed to register push token", e);
+      }
+    } else {
+      setIsNotificationsEnabled(false);
+      await AsyncStorage.setItem("notifications_enabled", "false");
     }
   };
 
@@ -565,15 +615,20 @@ export default function ProfileScreen() {
 
             <View style={styles.divider} />
 
-            {/* <TouchableOpacity style={styles.settingsItem}>
+            <View style={styles.settingsItem}>
               <View style={styles.settingsItemLeft}>
                 <View style={styles.settingsIconBox}>
                   <Ionicons name="notifications-outline" size={18} color="#475569" />
                 </View>
-                <Text style={styles.settingsItemText}>Notifications</Text>
+                <Text style={styles.settingsItemText}>Push Notifications</Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
-            </TouchableOpacity> */}
+              <Switch
+                trackColor={{ false: "#CBD5E1", true: "#93C5FD" }}
+                thumbColor={isNotificationsEnabled ? "#2563EB" : "#F8FAFC"}
+                onValueChange={handleNotificationsToggle}
+                value={isNotificationsEnabled}
+              />
+            </View>
 
             <View style={styles.divider} />
 

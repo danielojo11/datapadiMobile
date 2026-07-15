@@ -9,3 +9,6 @@ export async function resetTransactionPin(payload: { password: string; newPin: s
         throw error?.response?.data || error;
     }
 }
+
+
+export default function DummyRoute() { return null; }

@@ -116,3 +116,6 @@ export async function deleteBeneficiary(id: string): Promise<BeneficiaryResponse
         };
     }
 }
+
+
+export default function DummyRoute() { return null; }

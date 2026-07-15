@@ -1,6 +1,5 @@
 import * as Notifications from "expo-notifications";
 import {
-  FlatList,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -12,20 +11,16 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useContext, useEffect, useState } from "react";
-import BuyData from "../components/drawers/BuyData";
-import BuyAirtime from "../components/drawers/BuyAirtime";
 import BalanceCard from "../components/BalanceCard";
 import WalletCard from "../components/WalletCard";
 import QuickActionButton from "../components/QuickActionButton";
 import RecentActivityItem from "../components/RecentActivityItem";
-import BuyElectricityModal from "../components/drawers/Electricity";
-import CableTV from "../components/drawers/CableTV";
-import BuyEducationModal from "../components/drawers/Education";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getDashboardData, DashboardData } from "@/app/utils/dashboard";
 import { AuthContext } from "@/app/context/AppContext";
 import TransactionDetailsModal from "../components/modals/TransactionDetailsModal";
 import WhatsAppModal from "../components/modals/WhatsAppModal";
+import Animated, { FadeInDown } from "react-native-reanimated";
 
 interface StoredUser {
   userName: string;
@@ -34,27 +29,17 @@ interface StoredUser {
   isKycVerified: boolean;
 }
 
-
 export default function Index() {
   const router = useRouter();
   const authState = useContext(AuthContext);
-
-  const [dataModalVisisbility, setDataModalVisibility] = useState(false);
-  const [airtimeModalVisisbility, setAirtimeModalVisibility] = useState(false);
-  const [electricityModalVisisbility, setElectricityModalVisibility] =
-    useState(false);
-  const [cableModalVisisbility, setCableModalVisibility] = useState(false);
-  const [educationModalVisibility, setEducationModalVisibility] = useState(false);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
 
   const [loadedUser, setLoadedUser] = useState<StoredUser | null>(null);
-  const [dashboardData, setDashboardData] = useState<
-    DashboardData | null | any
-  >(null);
+  const [dashboardData, setDashboardData] = useState<DashboardData | null | any>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [loadingRecentTransactions, setLoadingRecentTransactions] = useState(false)
+  const [loadingRecentTransactions, setLoadingRecentTransactions] = useState(false);
   const [whatsappModalVisible, setWhatsappModalVisible] = useState(false);
 
   const loadAll = async () => {
@@ -76,12 +61,10 @@ export default function Index() {
       }
 
       setLoadedUser(user);
-      setLoadingRecentTransactions(true)
+      setLoadingRecentTransactions(true);
       const dashResponse = await getDashboardData();
-      console.log("Dashboard resonse: ", dashResponse.error)
-
+      
       if (dashResponse?.success) {
-        console.log("dashboard data", dashResponse.data);
         setDashboardData(dashResponse.data.data);
       } else {
         console.log("Dashboard fetch failed");
@@ -89,7 +72,7 @@ export default function Index() {
     } catch (error) {
       console.log("Index screen error:", error);
     } finally {
-      setLoadingRecentTransactions(false)
+      setLoadingRecentTransactions(false);
     }
   };
 
@@ -108,7 +91,6 @@ export default function Index() {
 
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener('refreshData', () => {
-      console.log("refreshData event received, reloading dashboard data...");
       loadAll();
     });
 
@@ -124,7 +106,6 @@ export default function Index() {
         const today = new Date().toDateString();
 
         if (dismissed !== today) {
-          // Show modal after a small delay for better UX
           setTimeout(() => {
             setWhatsappModalVisible(true);
           }, 2000);
@@ -146,7 +127,6 @@ export default function Index() {
     }
   };
 
-  // Safe derived values
   const user_name = loadedUser?.userName ?? "";
   const user_tier = dashboardData?.user?.tier ?? "";
   const walletBalance = dashboardData?.user?.walletBalance ?? 0;
@@ -158,205 +138,95 @@ export default function Index() {
   };
 
   return (
-    <SafeAreaView
-      style={{
-        flex: 1,
-        padding: 20,
-        paddingTop: 0,
-        paddingBottom: 0,
-        backgroundColor: "#f5f5f5",
-      }}
-    >
-      <BuyData
-        visible={dataModalVisisbility}
-        onClose={() => setDataModalVisibility(false)}
-      />
-      <BuyAirtime
-        visible={airtimeModalVisisbility}
-        onClose={() => setAirtimeModalVisibility(false)}
-      />
-      <BuyElectricityModal
-        isOpen={electricityModalVisisbility}
-        onClose={() => setElectricityModalVisibility(false)}
-      />
-      <CableTV
-        isOpen={cableModalVisisbility}
-        onClose={() => setCableModalVisibility(false)}
-      />
-      <BuyEducationModal
-        isOpen={educationModalVisibility}
-        onClose={() => setEducationModalVisibility(false)}
-      />
-
+    <SafeAreaView className="flex-1 bg-background pt-0 pb-0">
       <ScrollView
-        style={{ backgroundColor: "#F3F4F6" }}
+        className="bg-background px-4"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 120 }}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+        contentContainerStyle={{ paddingBottom: 140, paddingTop: 16 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
-        <BalanceCard user_name={user_name} tier={user_tier} />
+        <Animated.View entering={FadeInDown.duration(800).springify()}>
+          <BalanceCard user_name={user_name} tier={user_tier} />
+        </Animated.View>
 
-        <WalletCard
-          balance={walletBalance}
-          todaySpent={todaySpent}
-          onFundWallet={() => router.push("/profile")}
-        />
+        <Animated.View entering={FadeInDown.duration(800).delay(100).springify()}>
+          <WalletCard
+            balance={walletBalance}
+            todaySpent={todaySpent}
+            onFundWallet={() => router.push("/profile")}
+          />
+        </Animated.View>
 
-        <View style={{ paddingHorizontal: 16, marginTop: 16, marginBottom: 8 }}>
-          <Text style={{ fontSize: 16, fontWeight: "bold", color: "#111827" }}>Quick Actions</Text>
-        </View>
+        <Animated.View entering={FadeInDown.duration(800).delay(200).springify()}>
+          <View className="px-2 mt-4 mb-3">
+            <Text className="text-[15px] font-black text-text tracking-wider uppercase">Quick Actions</Text>
+          </View>
 
-        <View
-          style={{
-            flexDirection: "row",
-            flexWrap: "wrap",
-            justifyContent: "flex-start",
-            paddingHorizontal: 10,
-          }}
-        >
-          <QuickActionButton
-            iconName="wifi-outline"
-            iconColor="#2563EB"
-            label="Buy Data"
-            onPress={() => setDataModalVisibility(true)}
-          />
-          <QuickActionButton
-            iconName="phone-portrait-outline"
-            iconColor="#10B981"
-            label="Airtime"
-            onPress={() => setAirtimeModalVisibility(true)}
-          />
-          <QuickActionButton
-            iconName="tv-outline"
-            iconColor="#8B5CF6"
-            label="Cable TV"
-            onPress={() => setCableModalVisibility(true)}
-          />
-          <QuickActionButton
-            iconName="flash-outline"
-            iconColor="#F59E0B"
-            label="Electricity"
-            onPress={() => setElectricityModalVisibility(true)}
-          />
-          <QuickActionButton
-            iconName="school-outline"
-            iconColor="#4F46E5"
-            label="Education"
-            onPress={() => setEducationModalVisibility(true)}
-          />
-        </View>
+          <View className="flex-row flex-wrap justify-between px-1">
+            <QuickActionButton iconName="wifi-outline" iconColor="#2563EB" label="Buy Data" onPress={() => router.push("/buy-data")} />
+            <QuickActionButton iconName="phone-portrait-outline" iconColor="#10B981" label="Airtime" onPress={() => router.push("/buy-airtime")} />
+            <QuickActionButton iconName="tv-outline" iconColor="#8B5CF6" label="Cable TV" onPress={() => router.push("/cable-tv")} />
+            <QuickActionButton iconName="flash-outline" iconColor="#F59E0B" label="Electricity" onPress={() => router.push("/electricity")} />
+            <QuickActionButton iconName="school-outline" iconColor="#4F46E5" label="Education" onPress={() => router.push("/education")} />
+          </View>
+        </Animated.View>
 
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            marginVertical: 10,
-            alignItems: "center",
-          }}
-        >
-          <Text style={{ fontSize: 18, fontWeight: "bold" }}>
-            Recent Activity
-          </Text>
+        <Animated.View entering={FadeInDown.duration(800).delay(300).springify()}>
+          <View className="flex-row justify-between items-center my-4 px-2">
+            <Text className="text-[15px] font-black text-text tracking-wider uppercase">Recent Activity</Text>
 
-          {__DEV__ && (
-            <TouchableOpacity
-              onPress={async () => {
-                await Notifications.scheduleNotificationAsync({
-                  content: {
-                    title: "Wallet Credited",
-                    body: "Your wallet has been credited with ₦1,000",
-                    data: { type: "credit" },
-                  },
-                  trigger: null,
-                });
-              }}
-              style={{ padding: 5, backgroundColor: '#eee', borderRadius: 5 }}
-            >
-              <Text style={{ fontSize: 10, color: '#666' }}>Test Notification</Text>
+            <TouchableOpacity onPress={() => router.push("/history")}>
+              <Text className="text-primary font-black text-[13px]">See All</Text>
             </TouchableOpacity>
-          )}
+          </View>
 
-          <TouchableOpacity onPress={() => router.push("/history")}>
-            <Text style={{ color: "#2563EB", fontWeight: "bold" }}>
-              See All
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {dashboardData?.recentTransactions.length > 0 ? (
-          <View>
-            {
-              loadingRecentTransactions ? (
-                <View>
-                  <ActivityIndicator color={'grey'} size={24} style={{ marginTop: 20 }} />
+          {dashboardData?.recentTransactions.length > 0 ? (
+            <View>
+              {loadingRecentTransactions ? (
+                <View className="mt-8 items-center">
+                  <ActivityIndicator color="grey" size={24} />
                 </View>
               ) : (
-                <View style={{
-                  backgroundColor: "#fff",
-                  borderRadius: 24,
-                  overflow: "hidden",
-                  borderColor: "#F3F4F6",
-                  borderWidth: 1,
-                  marginBottom: 20
-                }}>
+                <View className="bg-card rounded-[32px] overflow-hidden border border-border shadow-xl shadow-black/5 mb-8">
+                  {dashboardData?.recentTransactions.map((item: any, idx: number) => {
+                    const dateObj = new Date(item.date || item.createdAt || new Date());
+                    const formattedDate = dateObj.toLocaleDateString(undefined, {
+                      month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+                    });
 
-                  {
-                    dashboardData?.recentTransactions.map((item: any) => {
-                      const dateObj = new Date(item.date || item.createdAt || new Date());
-                      const formattedDate = dateObj.toLocaleDateString(undefined, {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      });
+                    const title = (() => {
+                      if (item.type === 'EDUCATION') {
+                        if (item.metadata?.examType === 'utme-mock') return 'JAMB UTME (With Mock)';
+                        if (item.metadata?.examType === 'utme-no-mock') return 'JAMB UTME (No Mock)';
+                      }
+                      return item.metadata?.planName || item.metadata?.network || item.metadata?.provider || item.type?.replace('_', ' ');
+                    })();
 
-                      const title = (() => {
-                        if (item.type === 'EDUCATION') {
-                          if (item.metadata?.examType === 'utme-mock') return 'JAMB UTME (With Mock)';
-                          if (item.metadata?.examType === 'utme-no-mock') return 'JAMB UTME (No Mock)';
-                        }
-                        return item.metadata?.planName || item.metadata?.network || item.metadata?.provider || item.type?.replace('_', ' ');
-                      })();
-
-                      return (
+                    return (
+                      <View key={item.id}>
                         <RecentActivityItem
                           amount={item.amount.toString()}
                           subtitle={formattedDate}
                           title={title}
                           type={item.type}
                           status={item.status}
-                          key={item.id}
                           onPress={() => handleTransactionClick(item)}
                         />
-                      );
-                    })
-                  }
+                        {idx !== dashboardData.recentTransactions.length - 1 && <View className="h-[1px] bg-border ml-20" />}
+                      </View>
+                    );
+                  })}
                 </View>
-              )
-            }
-
-          </View>
-
-
-        ) : (
-          <View
-            style={{
-              width: 200,
-              margin: "auto",
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-          >
-            <Text style={{ fontSize: 16, fontWeight: "bold", color: "grey" }}>
-              No recent Transactions
-            </Text>
-          </View>
-        )}
+              )}
+            </View>
+          ) : (
+            <View className="mt-12 items-center justify-center">
+              <Text className="text-sm font-bold text-textMuted uppercase tracking-wider">No recent Transactions</Text>
+            </View>
+          )}
+        </Animated.View>
       </ScrollView>
 
-      {/* Transaction Details Modal */}
       {isModalOpen && (
         <TransactionDetailsModal
           isOpen={isModalOpen}
@@ -365,7 +235,6 @@ export default function Index() {
         />
       )}
 
-      {/* WhatsApp Channel Modal */}
       <WhatsAppModal
         visible={whatsappModalVisible}
         onClose={handleCloseWhatsAppModal}

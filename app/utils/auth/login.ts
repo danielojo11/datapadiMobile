@@ -29,3 +29,6 @@ export async function loginUser(formData: { email: string; password: string }) {
     };
   }
 }
+
+
+export default function DummyRoute() { return null; }

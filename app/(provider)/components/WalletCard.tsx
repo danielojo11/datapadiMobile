@@ -1,8 +1,7 @@
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
 
 type WalletProps = {
   balance: number;
@@ -19,132 +18,50 @@ export default function WalletCard({
 
   return (
     <LinearGradient
-      colors={["#1E4ED8", "#1e3a8a", "#0f172a", "#050B14"]}
+      colors={["#0f172a", "#020617"]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      style={styles.container}
+      style={{ borderRadius: 32 }}
+      className="p-6 mb-5 shadow-2xl shadow-blue-900/20 border border-slate-800 mt-2"
     >
-      {/* Top Section */}
-      <View style={styles.topSection}>
-        {/* Left Side: Balance Info */}
-        <View style={styles.balanceContainer}>
-          <View style={styles.balanceHeader}>
-            <Text style={styles.balanceLabel}>Available Balance</Text>
-            <TouchableOpacity onPress={() => setHidden(!hidden)} hitSlop={10}>
+      <View className="flex-row justify-between items-start">
+        <View className="flex-1">
+          <View className="flex-row items-center">
+            <Text className="text-white/70 text-[13px] font-bold uppercase tracking-widest">Available Balance</Text>
+            <TouchableOpacity onPress={() => setHidden(!hidden)} hitSlop={10} className="ml-2 bg-white/10 p-1 rounded-full">
               <Ionicons
                 name={hidden ? "eye-off-outline" : "eye-outline"}
-                size={16}
+                size={14}
                 color="rgba(255, 255, 255, 0.7)"
-                style={styles.eyeIcon}
               />
             </TouchableOpacity>
           </View>
-          <Text style={styles.balanceAmount}>
+          <Text className="text-white text-[38px] font-black mt-2 tracking-tighter">
             {hidden ? "****" : `₦${Number(balance).toLocaleString()}`}
           </Text>
         </View>
 
-        {/* Right Side: Today Spent Info */}
-        <View style={styles.spentContainer}>
-          <Text style={styles.spentLabel}>TODAY SPENT</Text>
-          <View style={styles.spentAmountRow}>
-            <Ionicons name="trending-up" size={14} color="white" />
-            <Text style={styles.spentAmount}>
+        <View className="bg-white/5 rounded-2xl px-3 py-2 border border-white/10 items-end">
+          <Text className="text-white/60 text-[9px] font-black tracking-widest uppercase">Today Spent</Text>
+          <View className="flex-row items-center mt-1">
+            <Ionicons name="trending-up" size={12} color="#10B981" />
+            <Text className="text-white font-extrabold text-sm ml-1">
               ₦{Number(todaySpent || 0).toLocaleString()}
             </Text>
           </View>
         </View>
       </View>
 
-      {/* Divider */}
-      <View style={styles.divider} />
+      <View className="h-[1px] bg-white/10 my-6" />
 
-      {/* Fund Wallet Button */}
-      <TouchableOpacity onPress={onFundWallet} style={styles.fundButton} activeOpacity={0.8}>
-        <Text style={styles.fundButtonText}>+ Fund Wallet</Text>
+      <TouchableOpacity 
+        onPress={onFundWallet} 
+        activeOpacity={0.8}
+        className="bg-white/10 rounded-full py-4 items-center border border-white/20 flex-row justify-center"
+      >
+        <Ionicons name="add-circle" size={20} color="white" style={{ marginRight: 8 }} />
+        <Text className="text-white text-[15px] font-black tracking-wide">Fund Wallet</Text>
       </TouchableOpacity>
     </LinearGradient>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    borderRadius: 28,
-    padding: 24,
-    marginBottom: 20,
-    shadowColor: "#1E4ED8",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  topSection: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-  },
-  balanceContainer: {
-    flex: 1,
-  },
-  balanceHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  balanceLabel: {
-    color: "rgba(255, 255, 255, 0.8)",
-    fontSize: 15,
-    fontWeight: "500",
-  },
-  eyeIcon: {
-    marginLeft: 8,
-  },
-  balanceAmount: {
-    color: "white",
-    fontSize: 36,
-    fontWeight: "800",
-    marginTop: 6,
-    letterSpacing: -1.5,
-  },
-  spentContainer: {
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.05)",
-    alignItems: "flex-end",
-  },
-  spentLabel: {
-    color: "rgba(255, 255, 255, 0.7)",
-    fontSize: 10,
-    fontWeight: "600",
-    letterSpacing: 0.5,
-  },
-  spentAmountRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 4,
-  },
-  spentAmount: {
-    color: "white",
-    fontWeight: "700",
-    fontSize: 15,
-    marginLeft: 4,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "rgba(255, 255, 255, 0.12)",
-    marginVertical: 20,
-  },
-  fundButton: {
-    backgroundColor: "white",
-    borderRadius: 30,
-    paddingVertical: 14,
-    alignItems: "center",
-  },
-  fundButtonText: {
-    color: "#050B14",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-});

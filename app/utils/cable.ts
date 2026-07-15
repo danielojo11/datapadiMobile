@@ -108,3 +108,6 @@ export async function payCableSubscription(
         return { success: false, error: error?.response?.data?.message || "Transaction failed due to network error" };
     }
 }
+
+
+export default function DummyRoute() { return null; }

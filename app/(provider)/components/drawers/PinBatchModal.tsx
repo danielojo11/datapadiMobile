@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as Print from 'expo-print';
 import * as Clipboard from 'expo-clipboard';
+import GestureModal from '../GestureModal';
 
 type PrintBatch = any;
 
@@ -197,13 +198,7 @@ const PinBatchModal: React.FC<PinBatchModalProps> = ({ visible, onClose, batch }
     };
 
     return (
-        <Modal
-            animationType="slide"
-            transparent={true}
-            visible={visible}
-            onRequestClose={onClose}
-        >
-            <View style={styles.overlay}>
+        <GestureModal visible={visible} onClose={onClose}>
                 <View style={styles.modalContainer}>
                     {/* Handle */}
                     <View style={styles.handle} />
@@ -327,8 +322,7 @@ const PinBatchModal: React.FC<PinBatchModalProps> = ({ visible, onClose, batch }
                         </Text>
                     </View>
                 </View>
-            </View>
-        </Modal>
+        </GestureModal>
     );
 };
 

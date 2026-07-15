@@ -50,3 +50,6 @@ export async function validateReferralCode(code: string) {
     };
   }
 }
+
+
+export default function DummyRoute() { return null; }

@@ -29,3 +29,6 @@ export async function resetPassword(payload: { email: string; otp: string; passw
         throw error.response?.data || error;
     }
 }
+
+
+export default function DummyRoute() { return null; }

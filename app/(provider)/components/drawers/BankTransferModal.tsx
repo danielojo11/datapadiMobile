@@ -10,6 +10,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
+import GestureModal from '../GestureModal';
 
 interface BankTransferModalProps {
     visible: boolean;
@@ -48,8 +49,7 @@ const BankTransferModal = ({
     });
 
     return (
-        <Modal animationType="slide" transparent visible={visible} onRequestClose={onClose}>
-            <View style={styles.overlay}>
+        <GestureModal visible={visible} onClose={onClose}>
                 <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 20) }]}>
                     <View style={styles.handle} />
 
@@ -135,8 +135,7 @@ const BankTransferModal = ({
                         </View>
                     </ScrollView>
                 </View>
-            </View>
-        </Modal>
+        </GestureModal>
     );
 };
 

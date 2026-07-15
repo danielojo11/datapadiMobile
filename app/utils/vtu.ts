@@ -365,3 +365,6 @@ export async function buyEducationPin(provider: 'WAEC' | 'JAMB' | 'JAMB_MOCK' | 
     };
   }
 }
+
+
+export default function DummyRoute() { return null; }

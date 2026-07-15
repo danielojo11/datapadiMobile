@@ -104,9 +104,11 @@ const generateReceipt = async (transaction: any) => {
 
   if (transaction.metadata?.phoneNumber || transaction.metadata?.recipient) {
     const phoneToDisplay = transaction.metadata?.phoneNumber || transaction.metadata?.recipient;
+    const isAirtimeOrData = transaction.type === 'AIRTIME' || transaction.type === 'DATA';
+    const labelToDisplay = isAirtimeOrData ? 'Phone Number' : 'Beneficiary';
     detailsHtml += `
             <div class="row">
-                <span class="label">Beneficiary</span>
+                <span class="label">${labelToDisplay}</span>
                 <span class="value">${phoneToDisplay}</span>
             </div>
         `;

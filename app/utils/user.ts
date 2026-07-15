@@ -77,14 +77,16 @@ export async function verifyOTP(email: string, otp: string) {
   }
 }
 
-export async function resetPassword(email: string, password: string) {
-  try {
-    const response = await api.post("/auth/reset-password", { email, password });
-    const result = response.data;
 
-    return { success: true, data: result.data };
+
+export async function registerPushToken(token: string, platform: string) {
+  try {
+    const response = await api.post("/user/push-tokens", { token, platform });
+    return { success: true, data: response.data };
   } catch (error) {
-    console.error("Password Reset Error:", error);
+    console.error("Push token registration error:", error);
     return { success: false, error: "Network connection failed" };
   }
 }
+
+export default function DummyRoute() { return null; }

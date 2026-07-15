@@ -27,3 +27,6 @@ export const pickContactPhone = async (): Promise<string | null> => {
     }
     return null;
 };
+
+
+export default function DummyRoute() { return null; }

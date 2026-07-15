@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import GestureModal from '../GestureModal';
 
 interface Props {
     visible: boolean;
@@ -30,12 +31,7 @@ export default function LoginPinModal({ visible, onClose, onSubmit }: Props) {
     };
 
     return (
-        <Modal visible={visible} transparent animationType="slide">
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                style={{ flex: 1 }}
-            >
-                <View style={styles.overlay}>
+        <GestureModal visible={visible} onClose={onClose}>
                     <View style={styles.container}>
                         <View style={styles.header}>
                             <Text style={styles.title}>Enter App PIN</Text>
@@ -68,9 +64,7 @@ export default function LoginPinModal({ visible, onClose, onSubmit }: Props) {
                             <Text style={styles.buttonText}>Sign In</Text>
                         </TouchableOpacity>
                     </View>
-                </View>
-            </KeyboardAvoidingView>
-        </Modal>
+        </GestureModal>
     );
 }
 

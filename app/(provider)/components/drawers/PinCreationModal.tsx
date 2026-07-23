@@ -49,47 +49,50 @@ export default function PinCreationModal({ visible, onClose, onSuccess }: Props)
 
     return (
         <GestureModal visible={visible} onClose={handleCancel}>
-                    <View style={styles.container}>
-                        <View style={styles.header}>
-                            <Text style={styles.title}>
-                                {step === 'create' ? 'Create App PIN' : 'Confirm App PIN'}
-                            </Text>
-                            <TouchableOpacity onPress={handleCancel}>
-                                <Ionicons name="close" size={24} color="#6B7280" />
-                            </TouchableOpacity>
-                        </View>
+            <View style={styles.container}>
+                <View style={styles.header}>
+                    <Text style={styles.title}>
+                        {step === 'create' ? 'Create App PIN' : 'Confirm App PIN'}
+                    </Text>
+                    <TouchableOpacity onPress={handleCancel}>
+                        <Ionicons name="close" size={24} color="#6B7280" />
+                    </TouchableOpacity>
+                </View>
 
-                        <Text style={styles.subtitle}>
-                            {step === 'create'
-                                ? 'Enter a 6-digit PIN to secure your MuftiPay app.'
-                                : 'Re-enter your 6-digit PIN to confirm.'}
-                        </Text>
+                <Text style={styles.subtitle}>
+                    {step === 'create'
+                        ? 'Enter a 6-digit PIN to secure your MuftiPay app.'
+                        : 'Re-enter your 6-digit PIN to confirm.'}
+                </Text>
 
-                        {!!error && (
-                            <Text style={styles.errorText}>{error}</Text>
-                        )}
+                {!!error && (
+                    <Text style={styles.errorText}>{error}</Text>
+                )}
 
-                        <TextInput
-                            style={styles.input}
-                            value={step === 'create' ? pin : confirmPin}
-                            onChangeText={step === 'create' ? setPin : setConfirmPin}
-                            keyboardType="number-pad"
-                            secureTextEntry
-                            maxLength={6}
-                            autoFocus
-                            placeholder="••••••"
-                            placeholderTextColor="#9CA3AF"
-                        />
+                <TextInput
+                    style={styles.input}
+                    value={step === 'create' ? pin : confirmPin}
+                    onChangeText={step === 'create' ? setPin : setConfirmPin}
+                    keyboardType="number-pad"
+                    secureTextEntry
+                    maxLength={6}
+                    autoFocus
+                    placeholder="••••••"
+                    placeholderTextColor="#9CA3AF"
+                    autoComplete="off"
+                    textContentType="oneTimeCode"
+                    importantForAutofill="no"
+                />
 
-                        <TouchableOpacity
-                            style={styles.button}
-                            onPress={step === 'create' ? handleNext : handleConfirm}
-                        >
-                            <Text style={styles.buttonText}>
-                                {step === 'create' ? 'Next' : 'Confirm & Save'}
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
+                <TouchableOpacity
+                    style={styles.button}
+                    onPress={step === 'create' ? handleNext : handleConfirm}
+                >
+                    <Text style={styles.buttonText}>
+                        {step === 'create' ? 'Next' : 'Confirm & Save'}
+                    </Text>
+                </TouchableOpacity>
+            </View>
         </GestureModal>
     );
 }

@@ -129,7 +129,7 @@ export default function CableTVScreen() {
     };
 
     const handleClose = () => {
-        onClose();
+        router.back();
         setTimeout(resetState, 300);
     };
 
@@ -240,8 +240,8 @@ export default function CableTVScreen() {
     );
 
     return (
-    <SafeAreaView className="flex-1 bg-slate-50 dark:bg-slate-950" edges={["top", "bottom"]}>
-      <View className="flex-1 px-5 pt-4">
+        <SafeAreaView style={{ flex: 1, backgroundColor: isDark ? '#020617' : '#f8fafc' }} edges={["top", "bottom"]}>
+            <View className="flex-1 px-5 pt-1">
           {errorMessage && step !== 'SUCCESS' ? (
             <View className="flex-row items-center bg-red-50 dark:bg-red-900/20 p-3 rounded-xl mb-4 border border-red-100 dark:border-red-900/30">
               <Ionicons name="alert-circle-outline" size={18} color="#EF4444" />
@@ -314,7 +314,10 @@ export default function CableTVScreen() {
                 )}
 
                 <Text className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-widest mb-3 mt-2 uppercase">Smartcard / IUC Number</Text>
-                <View className={`flex-row items-center bg-white dark:bg-slate-900 border rounded-2xl h-16 px-4 mb-4 ${isValidated ? 'border-emerald-400 dark:border-emerald-500/50' : 'border-slate-200 dark:border-slate-800'}`}>
+                <View className="flex-row items-center border rounded-2xl h-16 px-4 mb-4" style={{
+                  backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                  borderColor: isValidated ? (isDark ? 'rgba(16, 185, 129, 0.5)' : '#34d399') : (isDark ? '#1e293b' : '#e2e8f0')
+                }}>
                   <TextInput
                     className="flex-1 text-lg text-slate-900 dark:text-white font-bold tracking-wide"
                     placeholder="Enter decoder number"
@@ -359,7 +362,11 @@ export default function CableTVScreen() {
 
                 {!isValidated ? (
                   <TouchableOpacity
-                    className={`py-4 rounded-full items-center ${(isValidating || smartCardNumber.length < 8) ? 'bg-slate-200 dark:bg-slate-800' : 'bg-blue-600 dark:bg-blue-500 shadow-lg shadow-blue-500/30'}`}
+                    className="py-4 rounded-full items-center shadow-lg"
+                    style={{
+                      backgroundColor: (isValidating || smartCardNumber.length < 8) ? (isDark ? '#1e293b' : '#e2e8f0') : (isDark ? '#3b82f6' : '#2563eb'),
+                      shadowColor: (isValidating || smartCardNumber.length < 8) ? 'transparent' : '#3b82f6'
+                    }}
                     onPress={handleValidate}
                     disabled={isValidating || smartCardNumber.length < 8}
                     activeOpacity={0.8}
@@ -370,7 +377,7 @@ export default function CableTVScreen() {
                         <Text className="text-slate-500 dark:text-slate-400 text-base font-bold ml-2">Verifying...</Text>
                       </View>
                     ) : (
-                      <Text className={`text-base font-bold ${(isValidating || smartCardNumber.length < 8) ? 'text-slate-400 dark:text-slate-500' : 'text-white'}`}>Validate Smartcard</Text>
+                      <Text className="text-base font-bold" style={{ color: (isValidating || smartCardNumber.length < 8) ? (isDark ? '#64748b' : '#94a3b8') : '#ffffff' }}>Validate Smartcard</Text>
                     )}
                   </TouchableOpacity>
                 ) : (
@@ -447,12 +454,16 @@ export default function CableTVScreen() {
               {isValidated && (
                 <View className="pt-4 pb-2 bg-slate-50 dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800/50">
                   <TouchableOpacity
-                    className={`py-4 rounded-full items-center ${!selectedPlan ? 'bg-slate-200 dark:bg-slate-800' : 'bg-blue-600 dark:bg-blue-500 shadow-lg shadow-blue-500/30'}`}
+                    className="py-4 rounded-full items-center shadow-lg"
+                    style={{
+                      backgroundColor: !selectedPlan ? (isDark ? '#1e293b' : '#e2e8f0') : (isDark ? '#3b82f6' : '#2563eb'),
+                      shadowColor: !selectedPlan ? 'transparent' : '#3b82f6'
+                    }}
                     disabled={!selectedPlan}
                     onPress={() => setStep('CONFIRM')}
                     activeOpacity={0.8}
                   >
-                    <Text className={`text-base font-bold ${!selectedPlan ? 'text-slate-400 dark:text-slate-500' : 'text-white'}`}>Proceed to Payment</Text>
+                    <Text className="text-base font-bold" style={{ color: !selectedPlan ? (isDark ? '#64748b' : '#94a3b8') : '#ffffff' }}>Proceed to Payment</Text>
                   </TouchableOpacity>
                 </View>
               )}

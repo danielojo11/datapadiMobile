@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { Modal, View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import * as Clipboard from 'expo-clipboard';
+import { LinearGradient } from 'expo-linear-gradient';
+import React, { useState } from 'react';
+import { ActivityIndicator, Alert, Modal, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import generateReceipt from '../../../utils/generateReceipt';
 
 type TransactionDetailsModalProps = {
@@ -99,6 +99,8 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
         );
     };
 
+    const userPhone = transaction.data?.user?.phoneNumber || transaction.user?.phoneNumber || transaction.user?.phonenumber;
+
     const renderBasicDetails = () => (
         <View style={styles.card}>
             <DetailRow label="Date" value={formattedDate} boldValue />
@@ -108,7 +110,10 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
                 boldValue
                 copyable
             />
-            <DetailRow label="Type" value={transactionTypeStr} boldValue isLast />
+            <DetailRow label="Type" value={transactionTypeStr} boldValue isLast={!userPhone} />
+            {userPhone && (
+                <DetailRow label="Customer Phone" value={userPhone} boldValue isLast />
+            )}
         </View>
     );
 
@@ -187,14 +192,14 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
                 <>
                     <DetailRow label="Network" value={details?.network} boldValue />
                     <DetailRow label="Plan" value={details?.plan} boldValue />
-                    <DetailRow label="Phone Number" value={details?.phoneNumber} boldValue isLast />
+                    <DetailRow label="Phone Number" value={details?.phoneNumber || details?.user?.phoneNumber || details?.recipient || details?.targetNumber || userPhone} boldValue isLast />
                 </>
             );
         } else if (type === 'AIRTIME') {
             content = (
                 <>
                     <DetailRow label="Network" value={details?.network} boldValue />
-                    <DetailRow label="Phone Number" value={details?.phoneNumber} boldValue isLast />
+                    <DetailRow label="Phone Number" value={details?.user?.phoneNumber || details?.recipient || details?.targetNumber || userPhone} boldValue isLast />
                 </>
             );
         } else if (type === 'FLIGHT') {

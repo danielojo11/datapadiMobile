@@ -26,6 +26,16 @@ const generateReceipt = async (transaction: any) => {
             <span class="value">${transaction.type.replace('_', ' ')}</span>
         </div>
     `;
+
+  const userPhone = transaction.data?.user?.phoneNumber || transaction.user?.phoneNumber || transaction.user?.phonenumber;
+  if (userPhone) {
+    detailsHtml += `
+            <div class="row">
+                <span class="label">Customer Phone</span>
+                <span class="value">${userPhone}</span>
+            </div>
+        `;
+  }
   const addressStr = transaction.address || transaction.metadata?.address;
   if (addressStr) {
     detailsHtml += `
@@ -102,8 +112,8 @@ const generateReceipt = async (transaction: any) => {
         `;
   }
 
-  if (transaction.metadata?.phoneNumber || transaction.metadata?.recipient) {
-    const phoneToDisplay = transaction.metadata?.phoneNumber || transaction.metadata?.recipient;
+  if (transaction.metadata?.phoneNumber || transaction.metadata?.recipient || transaction.metadata?.user?.phoneNumber || transaction.user?.phoneNumber) {
+    const phoneToDisplay = transaction.metadata?.phoneNumber || transaction.metadata?.recipient || transaction.metadata?.user?.phoneNumber || transaction.user?.phoneNumber;
     const isAirtimeOrData = transaction.type === 'AIRTIME' || transaction.type === 'DATA';
     const labelToDisplay = isAirtimeOrData ? 'Phone Number' : 'Beneficiary';
     detailsHtml += `

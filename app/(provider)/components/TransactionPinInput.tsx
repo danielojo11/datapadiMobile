@@ -102,6 +102,9 @@ const TransactionPinInput: React.FC<Props> = ({ onComplete, error, clearError, i
                         keyboardType="number-pad"
                         maxLength={1}
                         editable={!isLoading}
+                        autoComplete="off"
+                        textContentType="oneTimeCode"
+                        importantForAutofill="no"
                     />
                 ))}
             </Animated.View>

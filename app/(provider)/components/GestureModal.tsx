@@ -1,6 +1,6 @@
 import * as Haptics from "expo-haptics";
 import React, { useEffect, useState } from "react";
-import { Dimensions, Modal, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Dimensions, Modal, StyleSheet, TouchableOpacity, View, KeyboardAvoidingView, Platform } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   runOnJS,
@@ -98,7 +98,10 @@ export default function GestureModal({
       onRequestClose={handleClose}
       statusBarTranslucent
     >
-      <View style={styles.root}>
+      <KeyboardAvoidingView 
+        style={styles.root}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
         <Animated.View style={[styles.backdrop, backdropStyle]}>
           <TouchableOpacity
             style={StyleSheet.absoluteFill}
@@ -114,7 +117,7 @@ export default function GestureModal({
             </Animated.View>
           </GestureDetector>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -122,6 +125,7 @@ export default function GestureModal({
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+    justifyContent: "flex-end",
   },
 
   backdrop: {

@@ -119,7 +119,7 @@ export default function ElectricityScreen() {
   };
 
   const handleClose = () => {
-    onClose();
+    router.back();
     setTimeout(resetState, 300);
   };
 
@@ -239,8 +239,8 @@ export default function ElectricityScreen() {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-50 dark:bg-slate-950" edges={["top", "bottom"]}>
-      <View className="flex-1 px-5 pt-4">
+    <SafeAreaView style={{ flex: 1, backgroundColor: isDark ? '#020617' : '#f8fafc' }} edges={["top", "bottom"]}>
+      <View className="flex-1 px-5 pt-1">
           {errorMessage && step !== 'SUCCESS' ? (
             <View className="flex-row items-center bg-red-50 dark:bg-red-900/20 p-3 rounded-xl mb-4 border border-red-100 dark:border-red-900/30">
               <Ionicons name="alert-circle-outline" size={18} color="#EF4444" />
@@ -294,16 +294,18 @@ export default function ElectricityScreen() {
               <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
                 <View className="flex-row bg-slate-200/50 dark:bg-slate-800 p-1 rounded-full mb-6">
                   <TouchableOpacity
-                    className={`flex-1 py-3 rounded-full items-center ${meterType === 'PREPAID' ? 'bg-white dark:bg-slate-700 shadow-sm' : ''}`}
+                    className="flex-1 py-3 rounded-full items-center"
+                    style={meterType === 'PREPAID' ? { backgroundColor: isDark ? '#334155' : '#ffffff', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 1, elevation: 1 } : {}}
                     onPress={() => { setMeterType('PREPAID'); setIsValidated(false); setCustomerName(''); }}
                   >
-                    <Text className={`text-sm font-bold ${meterType === 'PREPAID' ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>Prepaid</Text>
+                    <Text className="text-sm font-bold" style={{ color: meterType === 'PREPAID' ? (isDark ? '#ffffff' : '#0f172a') : (isDark ? '#94a3b8' : '#64748b') }}>Prepaid</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    className={`flex-1 py-3 rounded-full items-center ${meterType === 'POSTPAID' ? 'bg-white dark:bg-slate-700 shadow-sm' : ''}`}
+                    className="flex-1 py-3 rounded-full items-center"
+                    style={meterType === 'POSTPAID' ? { backgroundColor: isDark ? '#334155' : '#ffffff', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 1, elevation: 1 } : {}}
                     onPress={() => { setMeterType('POSTPAID'); setIsValidated(false); setCustomerName(''); }}
                   >
-                    <Text className={`text-sm font-bold ${meterType === 'POSTPAID' ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>Postpaid</Text>
+                    <Text className="text-sm font-bold" style={{ color: meterType === 'POSTPAID' ? (isDark ? '#ffffff' : '#0f172a') : (isDark ? '#94a3b8' : '#64748b') }}>Postpaid</Text>
                   </TouchableOpacity>
                 </View>
 
@@ -331,7 +333,10 @@ export default function ElectricityScreen() {
                 )}
 
                 <Text className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-widest mb-3 uppercase">Meter Number</Text>
-                <View className={`flex-row items-center bg-white dark:bg-slate-900 border rounded-2xl h-16 px-4 mb-4 ${isValidated ? 'border-emerald-400 dark:border-emerald-500/50' : 'border-slate-200 dark:border-slate-800'}`}>
+                <View className="flex-row items-center rounded-2xl h-16 px-4 mb-4 border" style={{
+                  backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                  borderColor: isValidated ? (isDark ? 'rgba(16, 185, 129, 0.5)' : '#34d399') : (isDark ? '#1e293b' : '#e2e8f0'),
+                }}>
                   <Ionicons name="flash-outline" size={20} color={isDark ? '#64748B' : '#9CA3AF'} />
                   <TextInput
                     className="flex-1 text-lg text-slate-900 dark:text-white font-bold tracking-wide ml-3"
@@ -412,12 +417,16 @@ export default function ElectricityScreen() {
 
               <View className="pt-4 pb-2 bg-slate-50 dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800/50">
                 <TouchableOpacity
-                  className={`py-4 rounded-full items-center ${(!isValidated || Number(amount) < 100) ? 'bg-slate-200 dark:bg-slate-800' : 'bg-orange-600 dark:bg-orange-500 shadow-lg shadow-orange-500/30'}`}
+                  className="py-4 rounded-full items-center shadow-lg"
+                  style={{
+                    backgroundColor: (!isValidated || Number(amount) < 100) ? (isDark ? '#1e293b' : '#e2e8f0') : (isDark ? '#f97316' : '#ea580c'),
+                    shadowColor: (!isValidated || Number(amount) < 100) ? 'transparent' : '#f97316',
+                  }}
                   disabled={!isValidated || Number(amount) < 100}
                   onPress={handleProceedToConfirm}
                   activeOpacity={0.8}
                 >
-                  <Text className={`text-base font-bold ${(!isValidated || Number(amount) < 100) ? 'text-slate-400 dark:text-slate-500' : 'text-white'}`}>Proceed</Text>
+                  <Text className="text-base font-bold" style={{ color: (!isValidated || Number(amount) < 100) ? (isDark ? '#64748b' : '#94a3b8') : '#ffffff' }}>Proceed</Text>
                 </TouchableOpacity>
               </View>
             </View>

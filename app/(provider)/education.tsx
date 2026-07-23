@@ -180,7 +180,7 @@ export default function EducationScreen() {
     };
 
     const handleClose = () => {
-        onClose();
+        router.back();
         setTimeout(resetState, 300);
     };
 
@@ -270,8 +270,8 @@ export default function EducationScreen() {
     );
 
     return (
-        <SafeAreaView className="flex-1 bg-slate-50 dark:bg-slate-950" edges={["top", "bottom"]}>
-            <View className="flex-1 px-5 pt-4">
+        <SafeAreaView style={{ flex: 1, backgroundColor: isDark ? '#020617' : '#f8fafc' }} edges={["top", "bottom"]}>
+            <View className="flex-1 px-5 pt-1">
                 {renderHeader()}
 
                 <View className="flex-1 flex-col">
@@ -338,10 +338,11 @@ export default function EducationScreen() {
                                 {isJamb && (
                                     <View className="mb-4">
                                         <Text className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-widest mb-3 uppercase">JAMB Profile ID</Text>
-                                        <View className={`flex-row items-center bg-white dark:bg-slate-900 border rounded-2xl h-16 px-4 ${profileId.length === 10 ? 'border-emerald-400 dark:border-emerald-500/50' : 'border-slate-200 dark:border-slate-800'}`}>
-                                            <View className="w-9 h-9 rounded-full bg-purple-600 items-center justify-center">
-                                                <Ionicons name="person" size={16} color="#FFF" />
-                                            </View>
+                                        <View className="flex-row items-center border rounded-2xl h-16 px-4" style={{
+                                          backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                                          borderColor: profileId.length === 10 ? (isDark ? 'rgba(16, 185, 129, 0.5)' : '#34d399') : (isDark ? '#1e293b' : '#e2e8f0')
+                                        }}>
+                                            <Ionicons name="card-outline" size={20} color={isDark ? '#64748B' : '#9CA3AF'} />
                                             <TextInput
                                                 className="flex-1 text-lg text-slate-900 dark:text-white font-bold tracking-wide ml-3"
                                                 placeholder="10-digit Profile ID"
@@ -400,10 +401,11 @@ export default function EducationScreen() {
                                 )}
 
                                 <Text className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-widest mb-3 uppercase">Phone Number</Text>
-                                <View className={`flex-row items-center bg-white dark:bg-slate-900 border rounded-2xl h-16 px-4 mb-4 ${phoneNo.length >= 10 ? 'border-emerald-400 dark:border-emerald-500/50' : 'border-slate-200 dark:border-slate-800'}`}>
-                                    <View className="w-9 h-9 rounded-full bg-emerald-500 items-center justify-center">
-                                        <Ionicons name="call" size={16} color="#FFF" />
-                                    </View>
+                                <View className="flex-row items-center border rounded-2xl h-16 px-4 mb-4" style={{
+                                  backgroundColor: isDark ? '#0f172a' : '#ffffff',
+                                  borderColor: phoneNo.length >= 10 ? (isDark ? 'rgba(16, 185, 129, 0.5)' : '#34d399') : (isDark ? '#1e293b' : '#e2e8f0')
+                                }}>
+                                    <Ionicons name="call-outline" size={20} color={isDark ? '#64748B' : '#9CA3AF'} />
                                     <TextInput
                                         className="flex-1 text-lg text-slate-900 dark:text-white font-bold tracking-wide ml-3"
                                         placeholder="08012345678"
@@ -447,12 +449,16 @@ export default function EducationScreen() {
 
                             <View className="pt-4 pb-2 bg-slate-50 dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800/50">
                                 <TouchableOpacity
-                                    className={`py-4 rounded-full items-center ${(phoneNo.length < 10 || (isJamb && (!verifiedName || profileId.length !== 10))) ? 'bg-slate-200 dark:bg-slate-800' : 'bg-slate-900 dark:bg-white shadow-xl shadow-slate-900/20 dark:shadow-white/20'}`}
+                                    className="py-4 rounded-full items-center shadow-xl"
+                                    style={{
+                                      backgroundColor: (phoneNo.length < 10 || (isJamb && (!verifiedName || profileId.length !== 10))) ? (isDark ? '#1e293b' : '#e2e8f0') : (isDark ? '#ffffff' : '#0f172a'),
+                                      shadowColor: (phoneNo.length < 10 || (isJamb && (!verifiedName || profileId.length !== 10))) ? 'transparent' : (isDark ? '#ffffff' : '#0f172a')
+                                    }}
                                     disabled={phoneNo.length < 10 || (isJamb && (!verifiedName || profileId.length !== 10))}
                                     onPress={handleProceedToConfirm}
                                     activeOpacity={0.8}
                                 >
-                                    <Text className={`text-base font-bold ${(phoneNo.length < 10 || (isJamb && (!verifiedName || profileId.length !== 10))) ? 'text-slate-400 dark:text-slate-500' : 'text-white dark:text-slate-900'}`}>
+                                    <Text className="text-base font-bold" style={{ color: (phoneNo.length < 10 || (isJamb && (!verifiedName || profileId.length !== 10))) ? (isDark ? '#64748b' : '#94a3b8') : (isDark ? '#0f172a' : '#ffffff') }}>
                                         {!phoneNo || phoneNo.length < 10
                                             ? 'Enter Phone Number'
                                             : isJamb && !verifiedName

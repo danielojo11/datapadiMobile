@@ -1,7 +1,7 @@
 import { View, TouchableOpacity, Platform } from "react-native";
 import React, { useEffect } from "react";
 import { Tabs } from "expo-router";
-import { BlurView } from "expo-blur";
+
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
@@ -105,8 +105,7 @@ const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => 
   return (
     <View className={`absolute left-5 right-5 z-50 flex-row justify-between items-center ${Platform.OS === 'ios' ? 'bottom-8' : 'bottom-6'}`}>
       {/* Main Routes Pill */}
-      <View className="flex-1 rounded-full mr-3 h-[56px] overflow-hidden shadow-2xl shadow-black/30 border border-white/20" style={{ elevation: 15 }}>
-        <BlurView tint="dark" intensity={80} style={{ position: 'absolute', width: '100%', height: '100%' }} />
+      <View className="flex-1 rounded-full mr-3 h-[56px] overflow-hidden shadow-2xl shadow-black/30 border border-white/20 bg-black" style={{ elevation: 15 }}>
         <View className="flex-1 flex-row items-center justify-around px-1 w-full h-full">
           {mainRoutes.map((route, index) => renderTab(route, index, false))}
         </View>

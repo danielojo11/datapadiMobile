@@ -237,8 +237,8 @@ export default function BuyDataScreen() {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-50 dark:bg-slate-950" edges={["top", "bottom"]}>
-      <View className="flex-1 px-5 pt-4">
+    <SafeAreaView style={{ flex: 1, backgroundColor: isDark ? '#020617' : '#f8fafc' }} edges={["top", "bottom"]}>
+      <View className="flex-1 px-5 pt-1">
           {errorMessage && step !== 'SUCCESS' ? (
             <View className="flex-row items-center bg-red-50 dark:bg-red-900/20 p-3 rounded-xl mb-4 border border-red-100 dark:border-red-900/30">
               <Ionicons name="alert-circle-outline" size={18} color="#EF4444" />
@@ -405,8 +405,11 @@ export default function BuyDataScreen() {
                   </View>
                 )}
 
-                <Text className={`text-xs font-bold text-slate-400 dark:text-slate-500 tracking-widest mb-3 uppercase ${beneficiaries.length > 0 ? 'mt-2' : 'mt-4'}`}>Phone Number</Text>
-                <View className={`flex-row items-center bg-white dark:bg-slate-900 border rounded-2xl h-16 px-4 mb-2 ${phoneNumber.length >= 10 ? 'border-emerald-400 dark:border-emerald-500/50 bg-emerald-50 dark:bg-emerald-500/10' : 'border-slate-200 dark:border-slate-800'}`}>
+                <Text className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-widest mb-3 uppercase" style={{ marginTop: beneficiaries.length > 0 ? 8 : 16 }}>Phone Number</Text>
+                <View className="flex-row items-center border rounded-2xl h-16 px-4 mb-2" style={{
+                  backgroundColor: isDark ? (phoneNumber.length >= 10 ? 'rgba(16, 185, 129, 0.1)' : '#0f172a') : (phoneNumber.length >= 10 ? '#ecfdf5' : '#ffffff'),
+                  borderColor: isDark ? (phoneNumber.length >= 10 ? 'rgba(16, 185, 129, 0.5)' : '#1e293b') : (phoneNumber.length >= 10 ? '#34d399' : '#e2e8f0'),
+                }}>
                   <View className="w-8 h-8 rounded-full items-center justify-center mr-3" style={{ backgroundColor: activeNetworkObj?.color || '#FFCC00' }}>
                     <Ionicons name="call" size={16} color="#fff" />
                   </View>
@@ -464,12 +467,16 @@ export default function BuyDataScreen() {
               
               <View className="pt-4 pb-2 bg-slate-50 dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800/50">
                 <TouchableOpacity
-                  className={`py-4 rounded-full items-center ${phoneNumber.length < 10 ? 'bg-slate-200 dark:bg-slate-800' : 'bg-blue-600 dark:bg-blue-500 shadow-lg shadow-blue-500/30'}`}
+                  className="py-4 rounded-full items-center shadow-lg"
+                  style={{
+                    backgroundColor: phoneNumber.length < 10 ? (isDark ? '#1e293b' : '#e2e8f0') : (isDark ? '#3b82f6' : '#2563eb'),
+                    shadowColor: phoneNumber.length < 10 ? 'transparent' : '#3b82f6',
+                  }}
                   disabled={phoneNumber.length < 10}
                   onPress={() => setStep('CONFIRM')}
                   activeOpacity={0.8}
                 >
-                  <Text className={`text-base font-bold ${phoneNumber.length < 10 ? 'text-slate-400 dark:text-slate-500' : 'text-white'}`}>Proceed</Text>
+                  <Text className="text-base font-bold" style={{ color: phoneNumber.length < 10 ? (isDark ? '#64748b' : '#94a3b8') : '#ffffff' }}>Proceed</Text>
                 </TouchableOpacity>
               </View>
             </View>

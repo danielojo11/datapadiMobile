@@ -1,34 +1,34 @@
-import React, { useEffect, useState, useContext } from "react";
+import { AuthContext } from "@/app/context/AppContext";
+import { initializeGatewayFunding } from "@/app/utils/payment";
+import { getProfileData, registerPushToken } from "@/app/utils/user";
+import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Clipboard from "expo-clipboard";
+import Constants from "expo-constants";
+import * as LocalAuthentication from "expo-local-authentication";
+import * as Notifications from "expo-notifications";
+import { useRouter } from "expo-router";
+import * as SecureStore from "expo-secure-store";
+import React, { useContext, useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
   ActivityIndicator,
-  TouchableOpacity,
-  TextInput,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
   RefreshControl,
-  Switch
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
-import * as Clipboard from "expo-clipboard";
-import { useRouter } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as LocalAuthentication from "expo-local-authentication";
-import * as SecureStore from "expo-secure-store";
-import * as Notifications from "expo-notifications";
-import { getProfileData } from "@/app/utils/user";
-import { initializeGatewayFunding } from "@/app/utils/payment";
-import { AuthContext } from "@/app/context/AppContext";
-import Constants from "expo-constants";
-import { Platform } from "react-native";
-import { registerPushToken } from "@/app/utils/user";
 import ActionRequired from "../components/drawers/ActionRequired";
 import BankTransferModal from "../components/drawers/BankTransferModal";
-import ResetPinModal from "../components/drawers/ResetPinModal";
 import PinCreationModal from "../components/drawers/PinCreationModal";
+import ResetPinModal from "../components/drawers/ResetPinModal";
 
 const CURRENCY = "₦";
 
@@ -93,10 +93,10 @@ export default function ProfileScreen() {
       const bioEnabled = await AsyncStorage.getItem("biometric_enabled");
       const pinEnabled = await AsyncStorage.getItem("pin_enabled");
       const notifEnabled = await AsyncStorage.getItem("notifications_enabled");
-      
+
       setIsBiometricEnabled(bioEnabled === "true");
       setIsPinEnabled(pinEnabled === "true");
-      
+
       let actualNotifEnabled = notifEnabled === "true";
       if (actualNotifEnabled) {
         try {
@@ -369,11 +369,13 @@ export default function ProfileScreen() {
           visible={resetPinModalVisible}
           onClose={() => setResetPinModalVisible(false)}
         />
-        <PinCreationModal
-          visible={pinCreationVisible}
-          onClose={() => { setPinCreationVisible(false); setIsPinEnabled(false); }}
-          onSuccess={handlePinCreationSuccess}
-        />
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <PinCreationModal
+            visible={pinCreationVisible}
+            onClose={() => { setPinCreationVisible(false); setIsPinEnabled(false); }}
+            onSuccess={handlePinCreationSuccess}
+          />
+        </KeyboardAvoidingView>
 
         <ScrollView
           style={styles.container}

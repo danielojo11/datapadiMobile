@@ -1,30 +1,45 @@
-import "../global.css";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { Stack } from "expo-router";
-import { AuthProvider } from "./context/AppContext";
-import { SocketProvider } from "./context/SocketContext";
-import { StatusBar } from "expo-status-bar";
-import { Alert, Linking, Platform } from "react-native";
-import Constants from "expo-constants";
-import * as Notifications from "expo-notifications";
-import { useContext, useEffect, useRef, useState } from "react";
-import * as Updates from "expo-updates";
-import { AuthContext } from "./context/AppContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import NetworkBanner from "./components/NetworkBanner";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import * as Notifications from "expo-notifications";
+import { Stack } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import * as Updates from "expo-updates";
+import { useContext, useEffect, useState } from "react";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import "../global.css";
+import NetworkBanner from "./components/NetworkBanner";
+import { AuthContext, AuthProvider } from "./context/AppContext";
+import { SocketProvider } from "./context/SocketContext";
+import { UpdateProvider, UpdateContext } from "./context/UpdateContext";
 
-import PushNotificationModal from "./(provider)/components/drawers/PushNotificationModal";
-import { usePushNotifications } from "./hooks/usePushNotifications";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { cssInterop } from "nativewind";
 import Animated from "react-native-reanimated";
+import { SafeAreaView } from "react-native-safe-area-context";
+import PushNotificationModal from "./(provider)/components/drawers/PushNotificationModal";
+import UpdatePromptModal from "./components/UpdatePromptModal";
+import UpdateAvailableModal from "./components/UpdateAvailableModal";
+import { usePushNotifications } from "./hooks/usePushNotifications";
 
 cssInterop(SafeAreaView, { className: "style" });
 cssInterop(Animated.View, { className: "style" });
 cssInterop(Animated.Text, { className: "style" });
 
 const queryClient = new QueryClient();
+
+// This component handles the OTA update lifecycle safely after providers mount
+function OtaUpdateManager() {
+  const { checkForUpdates } = useContext(UpdateContext);
+  
+  useEffect(() => {
+    // Wait slightly to ensure navigation and everything is ready
+    const timer = setTimeout(() => {
+      checkForUpdates();
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  return null;
+}
 
 export default function RootLayout() {
   const { isAuthenticated } = useContext(AuthContext);
@@ -67,62 +82,32 @@ export default function RootLayout() {
     await AsyncStorage.setItem("hasPromptedForPush", "true");
   };
 
-  useEffect(() => {
-    async function onFetchUpdateAsync() {
-      try {
-        const update = await Updates.checkForUpdateAsync();
-        if (update.isAvailable) {
-          await Updates.fetchUpdateAsync();
-          await Updates.reloadAsync();
-        }
-      } catch (error) {
-        console.log(`Error fetching latest Expo update: ${error}`);
-      }
-    }
-
-    if (!__DEV__) {
-      onFetchUpdateAsync();
-    }
-  }, []);
+  const [isUpdateModalVisible, setIsUpdateModalVisible] = useState(false);
+  const [updateType, setUpdateType] = useState<'STORE' | 'OTA'>('STORE');
+  const [latestAppVersion, setLatestAppVersion] = useState<string | undefined>();
 
   useEffect(() => {
-    const checkVersion = async () => {
+    const checkUpdates = async () => {
       try {
-        // Fetch the latest version from the backend
+        // 1. Check Store Version (Native Update)
         const response = await fetch("https://api.muftipay.com/api/v1/settings/version");
         const data = await response.json();
 
-        // Use the version from the backend or a default if not found
         const latestVersion = data.latestVersion || data.version;
-        const currentVersion = Constants.expoConfig?.version;
+        const currentVersion = "0.0.1"
 
-        // If versions don't match, prompt the user (you can also use semver comparison)
         if (latestVersion && currentVersion && latestVersion !== currentVersion) {
-          Alert.alert(
-            "Update Available",
-            `A new version (${latestVersion}) of MUFTI PAY is available. Please update to the latest version for the best experience.`,
-            [
-              { text: "Later", style: "cancel" },
-              {
-                text: "Update Now",
-                onPress: () => {
-                  const url = Platform.OS === 'android'
-                    ? 'https://play.google.com/store/apps/details?id=com.daniel_ojo.datapadi'
-                    : 'https://play.google.com/store/apps/details?id=com.daniel_ojo.datapadi'; // Replace with actual iOS link if needed
-                  Linking.openURL(url);
-                }
-              }
-            ]
-          );
+          setLatestAppVersion(latestVersion);
+          setUpdateType('STORE');
+          setIsUpdateModalVisible(true);
+          return; // Prioritize store update
         }
       } catch (error) {
-        console.log("Error checking for native updates:", error);
+        console.log("Error checking for native store updates:", error);
       }
     };
 
-    if (!__DEV__) {
-      checkVersion();
-    }
+    checkUpdates();
   }, []);
 
   return (
@@ -130,13 +115,22 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <SocketProvider>
-            <StatusBar style="dark" />
-            <NetworkBanner />
-            <PushNotificationModal 
-              visible={showPushModal} 
-              onClose={handleSkipPush} 
-              onAllow={handleAllowPush} 
+            <UpdateProvider>
+              <OtaUpdateManager />
+              <StatusBar style="dark" />
+              <NetworkBanner />
+            <PushNotificationModal
+              visible={showPushModal}
+              onClose={handleSkipPush}
+              onAllow={handleAllowPush}
             />
+            <UpdatePromptModal
+              visible={isUpdateModalVisible}
+              onClose={() => setIsUpdateModalVisible(false)}
+              type={updateType}
+              latestVersion={latestAppVersion}
+            />
+            <UpdateAvailableModal />
             <Stack>
               <Stack.Screen name="index" options={{ headerShown: false }} />
               <Stack.Screen name="(provider)" options={{ headerShown: false }} />
@@ -144,6 +138,7 @@ export default function RootLayout() {
               <Stack.Screen name="signup" options={{ headerShown: false }} />
               <Stack.Screen name="forgot" options={{ headerShown: false }} />
             </Stack>
+            </UpdateProvider>
           </SocketProvider>
         </AuthProvider>
       </QueryClientProvider>

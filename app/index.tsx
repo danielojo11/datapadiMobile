@@ -10,19 +10,19 @@ const { width, height } = Dimensions.get("window");
 const slides = [
   {
     id: "1",
-    image: require("../assets/images/onboard_1.png"),
+    image: require("../assets/images/onboard_1.jpg"),
     title: "Track Your Spending",
     subtitle: "See exactly where your money is going with our intuitive dashboard.",
   },
   {
     id: "2",
-    image: require("../assets/images/onboard_2.png"),
+    image: require("../assets/images/onboard_2.jpg"),
     title: "Pay Bills Easily",
     subtitle: "Airtime, data, and electricity top-ups at your fingertips.",
   },
   {
     id: "3",
-    image: require("../assets/images/onboard_3.png"),
+    image: require("../assets/images/onboard_3.jpg"),
     title: "Fast & Secure Transfers",
     subtitle: "Send money instantly with bank-grade security keeping you safe.",
   },

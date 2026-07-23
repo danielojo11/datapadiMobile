@@ -32,38 +32,43 @@ export default function LoginPinModal({ visible, onClose, onSubmit }: Props) {
 
     return (
         <GestureModal visible={visible} onClose={onClose}>
-                    <View style={styles.container}>
-                        <View style={styles.header}>
-                            <Text style={styles.title}>Enter App PIN</Text>
-                            <TouchableOpacity onPress={onClose}>
-                                <Ionicons name="close" size={24} color="#6B7280" />
-                            </TouchableOpacity>
-                        </View>
-
-                        <Text style={styles.subtitle}>
-                            Enter your 6-digit MuftiPay PIN to securely sign in.
-                        </Text>
-
-                        {!!error && (
-                            <Text style={styles.errorText}>{error}</Text>
-                        )}
-
-                        <TextInput
-                            style={styles.input}
-                            value={pin}
-                            onChangeText={setPin}
-                            keyboardType="number-pad"
-                            secureTextEntry
-                            maxLength={6}
-                            autoFocus
-                            placeholder="••••••"
-                            placeholderTextColor="#9CA3AF"
-                        />
-
-                        <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-                            <Text style={styles.buttonText}>Sign In</Text>
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+                <View style={styles.container}>
+                    <View style={styles.header}>
+                        <Text style={styles.title}>Enter App PIN</Text>
+                        <TouchableOpacity onPress={onClose}>
+                            <Ionicons name="close" size={24} color="#6B7280" />
                         </TouchableOpacity>
                     </View>
+
+                    <Text style={styles.subtitle}>
+                        Enter your 6-digit MuftiPay PIN to securely sign in.
+                    </Text>
+
+                    {!!error && (
+                        <Text style={styles.errorText}>{error}</Text>
+                    )}
+
+                    <TextInput
+                        style={styles.input}
+                        value={pin}
+                        onChangeText={setPin}
+                        keyboardType="number-pad"
+                        secureTextEntry
+                        maxLength={6}
+                        autoFocus
+                        placeholder="••••••"
+                        placeholderTextColor="#9CA3AF"
+                        autoComplete="off"
+                        textContentType="oneTimeCode"
+                        importantForAutofill="no"
+                    />
+
+                    <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+                        <Text style={styles.buttonText}>Sign In</Text>
+                    </TouchableOpacity>
+                </View>
+            </KeyboardAvoidingView>
         </GestureModal>
     );
 }

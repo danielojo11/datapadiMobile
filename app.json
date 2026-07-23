@@ -77,8 +77,10 @@
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/7530dd1b-0816-4d51-99dd-2cfbc4281475",
-      "fallbackToCacheTimeout": 3000
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/7530dd1b-0816-4d51-99dd-2cfbc4281475"
     },
     "extra": {
       "router": {},

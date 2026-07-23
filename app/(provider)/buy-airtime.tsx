@@ -133,8 +133,8 @@ export default function BuyAirtimeScreen() {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-50 dark:bg-slate-950" edges={["top", "bottom"]}>
-      <View className="flex-1 px-5 pt-4">
+    <SafeAreaView style={{ flex: 1, backgroundColor: isDark ? '#020617' : '#f8fafc' }} edges={["top", "bottom"]}>
+      <View className="flex-1 px-5 pt-1">
         {errorMessage && step !== 'SUCCESS' ? (
           <View className="flex-row items-center bg-red-50 dark:bg-red-900/20 p-3 rounded-xl mb-4 border border-red-100 dark:border-red-900/30">
             <Ionicons name="alert-circle-outline" size={18} color="#EF4444" />
@@ -232,7 +232,21 @@ export default function BuyAirtimeScreen() {
               </TouchableOpacity>
 
               <Text className="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-widest mt-4 mb-3 uppercase">Amount</Text>
-              <View className={`flex-row items-center bg-white dark:bg-slate-900 border rounded-2xl h-16 px-4 mb-3 ${amount && Number(amount) >= 50 ? 'border-emerald-400 dark:border-emerald-500/50 bg-emerald-50 dark:bg-emerald-500/10' : 'border-slate-200 dark:border-slate-800'}`}>
+              <View style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: (amount && Number(amount) >= 50) 
+                  ? (isDark ? '#064e3b' : '#ecfdf5') 
+                  : (isDark ? '#0f172a' : '#ffffff'),
+                borderWidth: 1,
+                borderRadius: 16,
+                height: 64,
+                paddingHorizontal: 16,
+                marginBottom: 12,
+                borderColor: (amount && Number(amount) >= 50) 
+                  ? (isDark ? '#10b98180' : '#34d399') 
+                  : (isDark ? '#1e293b' : '#e2e8f0')
+              }}>
                 <View className="bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-xl mr-3">
                   <Text className="text-base text-slate-500 dark:text-slate-400 font-extrabold">{CURRENCY}</Text>
                 </View>
@@ -255,12 +269,26 @@ export default function BuyAirtimeScreen() {
                   return (
                     <TouchableOpacity
                       key={amt}
-                      className={`flex-row items-center justify-center w-[31%] py-3 mb-3 rounded-xl border ${isSelected ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900'}`}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '31%',
+                        paddingVertical: 12,
+                        marginBottom: 12,
+                        borderRadius: 12,
+                        borderWidth: 1,
+                        borderColor: isSelected ? '#3b82f6' : (isDark ? '#1e293b' : '#e2e8f0'),
+                        backgroundColor: isSelected ? (isDark ? '#3b82f61a' : '#eff6ff') : (isDark ? '#0f172a' : '#ffffff')
+                      }}
                       onPress={() => setAmount(amt.toString())}
                       activeOpacity={0.7}
                     >
                       <Ionicons name="flash" size={14} color={isSelected ? '#3B82F6' : (isDark ? '#64748B' : '#94A3B8')} style={{ marginRight: 4 }} />
-                      <Text className={`font-bold ${isSelected ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400'}`}>
+                      <Text style={{
+                        fontWeight: '700',
+                        color: isSelected ? (isDark ? '#60a5fa' : '#2563eb') : (isDark ? '#94a3b8' : '#475569')
+                      }}>
                         {CURRENCY}{amt.toLocaleString()}
                       </Text>
                     </TouchableOpacity>
@@ -295,24 +323,40 @@ export default function BuyAirtimeScreen() {
 
             <View className="pt-4 pb-2 bg-slate-50 dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800/50">
               {selectedNetwork && phoneNumber.length >= 10 && Number(amount) >= 50 && activeNetworkObj && (
-                <View className="flex-row justify-between items-center bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 mb-4 shadow-sm shadow-slate-200/50 dark:shadow-none">
-                  <View className="flex-row items-center">
-                    <View className="w-8 h-8 rounded-full items-center justify-center mr-3" style={{ backgroundColor: isDark ? `${activeNetworkObj.color}20` : activeNetworkObj.bgColor }}>
-                      <Text className="font-extrabold text-sm" style={{ color: activeNetworkObj.color }}>{activeNetworkObj.label.charAt(0)}</Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: isDark ? '#0f172a' : '#ffffff', padding: 16, borderRadius: 16, borderWidth: 1, borderColor: isDark ? '#1e293b' : '#f1f5f9', marginBottom: 16 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <View style={{ width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginRight: 12, backgroundColor: isDark ? `${activeNetworkObj.color}20` : activeNetworkObj.bgColor }}>
+                      <Text style={{ fontWeight: '800', fontSize: 14, color: activeNetworkObj.color }}>{activeNetworkObj.label.charAt(0)}</Text>
                     </View>
-                    <Text className="text-base font-bold text-slate-900 dark:text-white">{phoneNumber}</Text>
+                    <Text style={{ fontSize: 16, fontWeight: '700', color: isDark ? '#ffffff' : '#0f172a' }}>{phoneNumber}</Text>
                   </View>
-                  <Text className="text-xl font-extrabold text-slate-900 dark:text-white">{CURRENCY}{Number(amount).toLocaleString()}</Text>
+                  <Text style={{ fontSize: 20, fontWeight: '800', color: isDark ? '#ffffff' : '#0f172a' }}>{CURRENCY}{Number(amount).toLocaleString()}</Text>
                 </View>
               )}
 
               <TouchableOpacity
-                className={`py-4 rounded-full items-center ${(!selectedNetwork || !amount || Number(amount) < 50 || phoneNumber.length < 10) ? 'bg-slate-200 dark:bg-slate-800' : 'bg-blue-600 dark:bg-blue-500 shadow-lg shadow-blue-500/30'}`}
+                style={{
+                  paddingVertical: 16,
+                  borderRadius: 9999,
+                  alignItems: 'center',
+                  backgroundColor: (!selectedNetwork || !amount || Number(amount) < 50 || phoneNumber.length < 10) 
+                    ? (isDark ? '#1e293b' : '#e2e8f0') 
+                    : (isDark ? '#3b82f6' : '#2563eb'),
+                  ...((!selectedNetwork || !amount || Number(amount) < 50 || phoneNumber.length < 10) ? {} : {
+                    shadowColor: '#3b82f6', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.3, shadowRadius: 15, elevation: 10
+                  })
+                }}
                 disabled={!selectedNetwork || !amount || Number(amount) < 50 || phoneNumber.length < 10}
                 onPress={() => setStep('CONFIRM')}
                 activeOpacity={0.8}
               >
-                <Text className={`text-base font-bold ${(!selectedNetwork || !amount || Number(amount) < 50 || phoneNumber.length < 10) ? 'text-slate-400 dark:text-slate-500' : 'text-white'}`}>
+                <Text style={{
+                  fontSize: 16,
+                  fontWeight: '700',
+                  color: (!selectedNetwork || !amount || Number(amount) < 50 || phoneNumber.length < 10) 
+                    ? (isDark ? '#64748b' : '#94a3b8') 
+                    : '#ffffff'
+                }}>
                   {!selectedNetwork ? 'Select a Network' :
                     phoneNumber.length < 10 ? 'Enter Phone Number' :
                       (!amount || Number(amount) < 50) ? 'Enter Amount' :

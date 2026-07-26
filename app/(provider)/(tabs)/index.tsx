@@ -1,4 +1,5 @@
 import * as Notifications from "expo-notifications";
+import Constants from "expo-constants";
 import {
   ScrollView,
   Text,
@@ -7,6 +8,7 @@ import {
   DeviceEventEmitter,
   RefreshControl,
   ActivityIndicator,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect, useRouter } from "expo-router";
@@ -17,9 +19,11 @@ import QuickActionButton from "../components/QuickActionButton";
 import RecentActivityItem from "../components/RecentActivityItem";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getDashboardData, DashboardData } from "@/app/utils/dashboard";
+import { registerPushToken } from "@/app/utils/user";
 import { AuthContext } from "@/app/context/AppContext";
 import TransactionDetailsModal from "../components/modals/TransactionDetailsModal";
 import WhatsAppModal from "../components/modals/WhatsAppModal";
+import PushNotificationModal from "../components/drawers/PushNotificationModal";
 import Animated, { FadeInDown } from "react-native-reanimated";
 
 interface StoredUser {
@@ -99,6 +103,8 @@ export default function Index() {
     };
   }, []);
 
+  const [pushModalVisible, setPushModalVisible] = useState(false);
+
   useEffect(() => {
     const checkWhatsAppModal = async () => {
       try {
@@ -114,8 +120,75 @@ export default function Index() {
         console.log("Error checking WhatsApp modal status:", error);
       }
     };
+
+    const checkPushNotificationPrompt = async () => {
+      try {
+        const notifEnabled = await AsyncStorage.getItem("notifications_enabled");
+        const notifPromptDismissed = await AsyncStorage.getItem("notif_prompt_dismissed");
+
+        // If not enabled in profile and user hasn't dismissed prompt recently
+        if (notifEnabled !== "true" && !notifPromptDismissed) {
+          const { status } = await Notifications.getPermissionsAsync();
+          if (status !== 'granted') {
+            setTimeout(() => {
+              setPushModalVisible(true);
+            }, 1000);
+            return;
+          }
+        }
+
+        // If enabled, automatically sync push token on login
+        if (notifEnabled === "true") {
+          const { status } = await Notifications.getPermissionsAsync();
+          if (status === 'granted') {
+            const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
+            const pushTokenData = await Notifications.getExpoPushTokenAsync(projectId ? { projectId } : undefined);
+            if (pushTokenData?.data) {
+              await registerPushToken(pushTokenData.data, Platform.OS);
+            }
+          }
+        }
+      } catch (error) {
+        console.log("Error checking push notification prompt status:", error);
+      }
+    };
+
+    checkPushNotificationPrompt();
     checkWhatsAppModal();
   }, []);
+
+  const handleAllowNotifications = async () => {
+    setPushModalVisible(false);
+    try {
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+      if (existingStatus !== 'granted') {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+      if (finalStatus === 'granted') {
+        await AsyncStorage.setItem("notifications_enabled", "true");
+        const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
+        const pushTokenData = await Notifications.getExpoPushTokenAsync(projectId ? { projectId } : undefined);
+        if (pushTokenData?.data) {
+          await registerPushToken(pushTokenData.data, Platform.OS);
+        }
+      } else {
+        await AsyncStorage.setItem("notifications_enabled", "false");
+      }
+    } catch (error) {
+      console.log("Error requesting notification permissions:", error);
+    }
+  };
+
+  const handleClosePushModal = async () => {
+    setPushModalVisible(false);
+    try {
+      await AsyncStorage.setItem("notif_prompt_dismissed", "true");
+    } catch (error) {
+      console.log("Error saving push notification prompt status:", error);
+    }
+  };
 
   const handleCloseWhatsAppModal = async () => {
     setWhatsappModalVisible(false);
@@ -238,6 +311,12 @@ export default function Index() {
       <WhatsAppModal
         visible={whatsappModalVisible}
         onClose={handleCloseWhatsAppModal}
+      />
+
+      <PushNotificationModal
+        visible={pushModalVisible}
+        onClose={handleClosePushModal}
+        onAllow={handleAllowNotifications}
       />
     </SafeAreaView>
   );

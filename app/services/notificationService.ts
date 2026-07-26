@@ -4,14 +4,21 @@ import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import api from '../utils/api';
 
-// Set up reasonable defaults for how notifications appear in the foreground
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Set up reasonable defaults for how notifications appear in the foreground, checking user setting first
 Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-        shouldShowBanner: true,
-        shouldShowList: true,
-        shouldPlaySound: true,
-        shouldSetBadge: true,
-    }),
+    handleNotification: async () => {
+        const notifEnabled = await AsyncStorage.getItem("notifications_enabled");
+        const enabled = notifEnabled === "true";
+
+        return {
+            shouldShowBanner: enabled,
+            shouldShowList: enabled,
+            shouldPlaySound: enabled,
+            shouldSetBadge: enabled,
+        };
+    },
 });
 
 /**

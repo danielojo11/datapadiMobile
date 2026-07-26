@@ -13,6 +13,7 @@ import React, { useContext, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  AppState,
   KeyboardAvoidingView,
   Platform,
   RefreshControl,
@@ -111,7 +112,20 @@ export default function ProfileScreen() {
       }
       setIsNotificationsEnabled(actualNotifEnabled);
     };
+
+    // Initial check
     checkSecurityOptions();
+
+    // Re-check when app comes to foreground (e.g. returning from settings)
+    const subscription = AppState.addEventListener("change", (nextAppState) => {
+      if (nextAppState === "active") {
+        checkSecurityOptions();
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
   }, []);
 
   const handleBiometricToggle = async (value: boolean) => {
@@ -225,10 +239,17 @@ export default function ProfileScreen() {
 
   const handleNotificationsToggle = async (value: boolean) => {
     if (value) {
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
-      let finalStatus = existingStatus;
-      if (existingStatus !== 'granted') {
-        const { status } = await Notifications.requestPermissionsAsync();
+      const permissions = await Notifications.getPermissionsAsync();
+      let finalStatus = permissions.status;
+      if (finalStatus !== 'granted' && permissions.canAskAgain) {
+        const { status } = await Notifications.requestPermissionsAsync({
+          ios: {
+            allowAlert: true,
+            allowBadge: true,
+            allowSound: true,
+            allowAnnouncements: true,
+          },
+        });
         finalStatus = status;
       }
       if (finalStatus !== 'granted') {
@@ -248,8 +269,21 @@ export default function ProfileScreen() {
         console.log("Failed to register push token", e);
       }
     } else {
-      setIsNotificationsEnabled(false);
-      await AsyncStorage.setItem("notifications_enabled", "false");
+      Alert.alert(
+        "Disable Notifications",
+        "To disable push notifications, please turn them off in your device settings.",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Open Settings", onPress: () => {
+              import("react-native").then(({ Linking }) => {
+                Linking.openSettings();
+              });
+            }
+          }
+        ]
+      );
+      // We don't change local state immediately since they might cancel or not actually change it.
+      // Next time the app loads, it will sync with the real system permission state.
     }
   };
 
@@ -681,7 +715,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 16,
     paddingTop: 32,
-    paddingBottom: 96,
+    paddingBottom: 130,
   },
 
   // Header

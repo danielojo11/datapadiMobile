@@ -88,7 +88,7 @@ export default function Forgot() {
         setLoading(true);
         setError("");
         try {
-            await resetPassword({ email, otp, password: password! });
+            await resetPassword({ email: email || "", otp: otp || "", password: password || "" });
             router.replace("/login");
         } catch (err: any) {
             setError(err?.message || "Failed to reset password. Please try again.");

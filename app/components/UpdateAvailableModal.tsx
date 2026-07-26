@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useUpdateContext } from '../hooks/useUpdateContext'; // We'll create this or just import context directly.
 import { UpdateContext } from '../context/UpdateContext';
 
 export default function UpdateAvailableModal() {

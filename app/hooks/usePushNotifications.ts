@@ -9,8 +9,8 @@ import { handleForegroundNotification, handleNotificationResponse } from '../uti
  */
 export function usePushNotifications() {
     const [expoPushToken, setExpoPushToken] = useState<string>('');
-    const notificationListener = useRef<Notifications.EventSubscription>();
-    const responseListener = useRef<Notifications.EventSubscription>();
+    const notificationListener = useRef<Notifications.EventSubscription>(undefined);
+    const responseListener = useRef<Notifications.EventSubscription>(undefined);
     
     useEffect(() => {
         // Listener fired whenever a notification is received while the app is in the foreground

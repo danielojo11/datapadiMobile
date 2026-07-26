@@ -1,25 +1,25 @@
 import React, { useState } from 'react';
 import { View, TextInput, Text, TouchableOpacity, TextInputProps } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Control, Controller } from 'react-hook-form';
+import { Control, Controller, FieldValues, Path } from 'react-hook-form';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
-interface InputProps extends TextInputProps {
+interface InputProps<TFieldValues extends FieldValues = any> extends TextInputProps {
   label: string;
-  name: string;
-  control: Control<any>;
+  name: Path<TFieldValues> | string;
+  control: Control<TFieldValues> | any;
   icon?: keyof typeof Ionicons.glyphMap;
   isPassword?: boolean;
 }
 
-export default function Input({ label, name, control, icon, isPassword, ...props }: InputProps) {
+export default function Input<TFieldValues extends FieldValues = any>({ label, name, control, icon, isPassword, ...props }: InputProps<TFieldValues>) {
   const [isSecure, setIsSecure] = useState(isPassword);
   const [isFocused, setIsFocused] = useState(false);
 
   return (
     <Controller
       control={control}
-      name={name}
+      name={name as any}
       render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
         <View className="mb-4">
           <Text className="text-textMuted font-bold mb-2 uppercase tracking-widest text-xs">{label}</Text>

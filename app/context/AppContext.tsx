@@ -88,7 +88,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
         setUserCredentials({ email: emailArg, password: passwordArg });
         await AsyncStorage.removeItem("credentials");
 
-        router.replace("/(provider)");
+        router.replace("/(provider)" as any);
         return response;
       }
 

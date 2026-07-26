@@ -47,12 +47,19 @@ export const notificationService = {
         }
 
         // Check current notification permissions
-        const { status: existingStatus } = await Notifications.getPermissionsAsync();
-        let finalStatus = existingStatus;
+        const permissions = await Notifications.getPermissionsAsync();
+        let finalStatus = permissions.status;
 
         // If not granted, explicitly request them
-        if (existingStatus !== 'granted') {
-            const { status } = await Notifications.requestPermissionsAsync();
+        if (finalStatus !== 'granted' && permissions.canAskAgain) {
+            const { status } = await Notifications.requestPermissionsAsync({
+                ios: {
+                    allowAlert: true,
+                    allowBadge: true,
+                    allowSound: true,
+                    allowAnnouncements: true,
+                },
+            });
             finalStatus = status;
         }
 

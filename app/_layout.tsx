@@ -6,6 +6,7 @@ import { StatusBar } from "expo-status-bar";
 import * as Updates from "expo-updates";
 import { useContext, useEffect, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { Alert } from "react-native";
 import "../global.css";
 import NetworkBanner from "./components/NetworkBanner";
 import { AuthContext, AuthProvider } from "./context/AppContext";
@@ -72,9 +73,20 @@ export default function RootLayout() {
   }, [isAuthenticated, registerAndSaveToken]);
 
   const handleAllowPush = async () => {
+    // Hide the modal so it doesn't block the OS prompt or look stuck
     setShowPushModal(false);
     await AsyncStorage.setItem("hasPromptedForPush", "true");
+    
+    // Request permission and register token
     await registerAndSaveToken();
+    
+    // Check if they actually granted it
+    const { status } = await Notifications.getPermissionsAsync();
+    if (status === "granted") {
+      await AsyncStorage.setItem("notifications_enabled", "true");
+    } else {
+      Alert.alert("Permission required", "Please enable notifications in your device settings.");
+    }
   };
 
   const handleSkipPush = async () => {
@@ -91,6 +103,11 @@ export default function RootLayout() {
       try {
         // 1. Check Store Version (Native Update)
         const response = await fetch("https://api.muftipay.com/api/v1/settings/version");
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch version: ${response.status} ${response.statusText}`);
+        }
+        
         const data = await response.json();
 
         const latestVersion = data.latestVersion || data.version;

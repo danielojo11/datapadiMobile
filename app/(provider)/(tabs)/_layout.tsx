@@ -62,9 +62,15 @@ const TabBarItem = ({ route, options, isFocused, onPress, onLongPress, isProfile
   );
 };
 
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
+  const insets = useSafeAreaInsets();
   const mainRoutes = state.routes.slice(0, 4);
   const profileRoute = state.routes[4];
+  
+  // Calculate dynamic bottom offset incorporating safe area insets + extra breathing room
+  const bottomOffset = Math.max(insets.bottom + 12, Platform.OS === 'ios' ? 36 : 28);
 
   const renderTab = (route: any, index: number, isProfile: boolean) => {
     const { options } = descriptors[route.key];
@@ -103,7 +109,10 @@ const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => 
   };
 
   return (
-    <View className={`absolute left-5 right-5 z-50 flex-row justify-between items-center ${Platform.OS === 'ios' ? 'bottom-8' : 'bottom-6'}`}>
+    <View 
+      style={{ bottom: bottomOffset }}
+      className="absolute left-5 right-5 z-50 flex-row justify-between items-center"
+    >
       {/* Main Routes Pill */}
       <View className="flex-1 rounded-full mr-3 h-[56px] overflow-hidden shadow-2xl shadow-black/30 border border-white/20 bg-black" style={{ elevation: 15 }}>
         <View className="flex-1 flex-row items-center justify-around px-1 w-full h-full">

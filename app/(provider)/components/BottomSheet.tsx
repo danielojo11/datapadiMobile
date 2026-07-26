@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, runOnJS } from "react-native-reanimated";
 import { GestureDetector, Gesture } from "react-native-gesture-handler";
 import * as Haptics from "expo-haptics";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -65,6 +66,8 @@ export default function BottomSheetContainer({ visible, title, onClose, children
     opacity: opacity.value,
   }));
 
+  const { bottom } = useSafeAreaInsets();
+
   if (!isMounted) return null;
 
   return (
@@ -87,7 +90,7 @@ export default function BottomSheetContainer({ visible, title, onClose, children
               </TouchableOpacity>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 30 }} bounces={false}>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: Math.max(bottom + 20, 40) }} bounces={false}>
               {children}
             </ScrollView>
           </Animated.View>

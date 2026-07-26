@@ -33,7 +33,7 @@ export default function OnboardingScreen() {
   const [isChecking, setIsChecking] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollX = useRef(new Animated.Value(0)).current;
-  const slidesRef = useRef(null);
+  const slidesRef = useRef<FlatList>(null);
 
   useEffect(() => {
     const checkFirstLaunch = async () => {

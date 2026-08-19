@@ -19,7 +19,7 @@ export default function QuickActionButton({
     <TouchableOpacity
       onPress={onPress}
       activeOpacity={0.7}
-      className="w-[22%] mb-5 items-center justify-start"
+      className="w-1/4 mb-5 items-center justify-start"
     >
       <View
         className="w-[52px] h-[52px] rounded-full items-center justify-center mb-2"

@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import { ActivityIndicator, Alert, Modal, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import generateReceipt from '../../../utils/generateReceipt';
+import { generateVerificationPDF } from '../../../utils/generateVerificationPDF';
 
 type TransactionDetailsModalProps = {
     isOpen: boolean;
@@ -25,7 +26,14 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
     const handleSaveReceipt = async () => {
         setIsSaving(true);
         try {
-            await generateReceipt(transaction);
+            if (transaction.type === 'NIN_VERIFICATION' || transaction.type === 'BVN_VERIFICATION') {
+                const verificationType = transaction.type === 'NIN_VERIFICATION' ? 'NIN' : 'BVN';
+                // Pass transaction details or metadata as the data object to PDF generator
+                const data = transaction.metadata || transaction.data || transaction.details || transaction;
+                await generateVerificationPDF(data, 'document', verificationType);
+            } else {
+                await generateReceipt(transaction);
+            }
         } catch (error) {
             console.error(error);
         } finally {
@@ -70,6 +78,10 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
         } else if (transaction.type === 'ELECTRICITY') {
             bgGradient = ['#4A1D96', '#E11D48'];
             iconName = 'flash-outline';
+        } else if (transaction.type === 'NIN_VERIFICATION' || transaction.type === 'BVN_VERIFICATION') {
+            bgGradient = ['#047857', '#059669'];
+            iconName = 'shield-checkmark-outline';
+            typeLabel = transaction.type.replace('_', ' ');
         }
 
         return (
@@ -225,6 +237,15 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
                             ))}
                         </View>
                     )}
+                </>
+            );
+        } else if (type === 'NIN_VERIFICATION' || type === 'BVN_VERIFICATION') {
+            content = (
+                <>
+                    <DetailRow label="Verification Status" value={details?.nin_suspension_status === true ? "SUSPENDED" : "VERIFIED"} boldValue />
+                    <DetailRow label="Name" value={`${details?.firstname || details?.firstName || ''} ${details?.surname || details?.lastName || ''}`.trim()} boldValue />
+                    <DetailRow label="Date of Birth" value={details?.birthdate || details?.dateOfBirth} boldValue />
+                    <DetailRow label="Phone Number" value={details?.telephoneno || details?.phoneNumber1} boldValue isLast />
                 </>
             );
         } else {

@@ -24,6 +24,8 @@ import { AuthContext } from "@/app/context/AppContext";
 import TransactionDetailsModal from "../components/modals/TransactionDetailsModal";
 import WhatsAppModal from "../components/modals/WhatsAppModal";
 import PushNotificationModal from "../components/drawers/PushNotificationModal";
+import NINModal from "../components/modals/NINModal";
+import BVNModal from "../components/modals/BVNModal";
 import Animated, { FadeInDown } from "react-native-reanimated";
 
 interface StoredUser {
@@ -45,6 +47,8 @@ export default function Index() {
   const [refreshing, setRefreshing] = useState(false);
   const [loadingRecentTransactions, setLoadingRecentTransactions] = useState(false);
   const [whatsappModalVisible, setWhatsappModalVisible] = useState(false);
+  const [ninModalVisible, setNinModalVisible] = useState(false);
+  const [bvnModalVisible, setBvnModalVisible] = useState(false);
 
   const loadAll = async () => {
     try {
@@ -235,12 +239,14 @@ export default function Index() {
             <Text className="text-[15px] font-black text-text tracking-wider uppercase">Quick Actions</Text>
           </View>
 
-          <View className="flex-row flex-wrap justify-between px-1">
+          <View className="flex-row flex-wrap justify-start px-1">
             <QuickActionButton iconName="wifi-outline" iconColor="#2563EB" label="Buy Data" onPress={() => router.push("/buy-data")} />
             <QuickActionButton iconName="phone-portrait-outline" iconColor="#10B981" label="Airtime" onPress={() => router.push("/buy-airtime")} />
             <QuickActionButton iconName="tv-outline" iconColor="#8B5CF6" label="Cable TV" onPress={() => router.push("/cable-tv")} />
             <QuickActionButton iconName="flash-outline" iconColor="#F59E0B" label="Electricity" onPress={() => router.push("/electricity")} />
             <QuickActionButton iconName="school-outline" iconColor="#4F46E5" label="Education" onPress={() => router.push("/education")} />
+            <QuickActionButton iconName="shield-checkmark-outline" iconColor="#047857" label="Verify BVN" onPress={() => setBvnModalVisible(true)} />
+            <QuickActionButton iconName="card-outline" iconColor="#0F766E" label="Verify NIN" onPress={() => setNinModalVisible(true)} />
           </View>
         </Animated.View>
 
@@ -317,6 +323,16 @@ export default function Index() {
         visible={pushModalVisible}
         onClose={handleClosePushModal}
         onAllow={handleAllowNotifications}
+      />
+
+      <NINModal 
+        visible={ninModalVisible} 
+        onClose={() => setNinModalVisible(false)} 
+      />
+
+      <BVNModal 
+        visible={bvnModalVisible} 
+        onClose={() => setBvnModalVisible(false)} 
       />
     </SafeAreaView>
   );

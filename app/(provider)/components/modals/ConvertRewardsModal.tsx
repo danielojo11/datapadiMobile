@@ -168,6 +168,7 @@ export default function ConvertRewardsModal({ visible, onClose, bonusBalance, on
 const styles = StyleSheet.create({
     container: {
         paddingTop: 8,
+        backgroundColor: "#FFFFFF",
     },
     balanceBadge: {
         flexDirection: "row",
